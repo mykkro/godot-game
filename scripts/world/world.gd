@@ -62,6 +62,46 @@ func get_cell_at(world_pos: Vector2) -> CellData:
 	return chunk.get_cell(lx, ly)
 
 
+## Returns the live ChunkNode for a loaded chunk, or null.
+func get_chunk_node(coord: Vector2i) -> ChunkNode:
+	return _nodes.get(coord, null)
+
+
+## Find the nearest passable, object-free cell within MAX_RADIUS of `near`,
+## add item_type to its CellData, spawn a PickableNode, and return true.
+## Returns false when no suitable cell is found.
+func drop_item_near(near: Vector2, item_type: int) -> bool:
+	const MAX_RADIUS := 8
+	var origin := world_to_cell_coords(near)
+
+	for radius in range(MAX_RADIUS + 1):
+		for dy in range(-radius, radius + 1):
+			for dx in range(-radius, radius + 1):
+				# Only check the outer ring at each radius step.
+				if abs(dx) != radius and abs(dy) != radius:
+					continue
+				var gc  := origin + Vector2i(dx, dy)
+				var cc  := Vector2i(
+					int(floor(float(gc.x) / CHUNK_SIZE)),
+					int(floor(float(gc.y) / CHUNK_SIZE))
+				)
+				var chunk := get_chunk(cc)
+				if chunk == null:
+					continue
+				var lx   := gc.x - cc.x * CHUNK_SIZE
+				var ly   := gc.y - cc.y * CHUNK_SIZE
+				var cell := chunk.get_cell(lx, ly)
+				if cell == null or cell.is_obstacle or not cell.objects.is_empty():
+					continue
+				cell.add_object(item_type)
+				var node := get_chunk_node(cc)
+				if node != null:
+					node.spawn_pickable_at(item_type, lx, ly)
+				return true
+
+	return false
+
+
 ## Convert a world-space position to chunk grid coordinates.
 func world_to_chunk_coords(world_pos: Vector2) -> Vector2i:
 	return Vector2i(
