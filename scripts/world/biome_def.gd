@@ -10,7 +10,7 @@ enum Type {
 }
 
 
-static func get_name(biome: int) -> String:
+static func get_display_name(biome: int) -> String:
 	match biome:
 		Type.PLAINS:  return "Plains"
 		Type.CAVES:   return "Caves"

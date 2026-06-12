@@ -160,7 +160,7 @@ func _build_text() -> String:
 	if _world != null:
 		var chunk := _world.get_chunk(chunk_coord)
 		if chunk != null:
-			var bname   := BiomeDef.get_name(chunk.biome)
+			var bname   := BiomeDef.get_display_name(chunk.biome)
 			var noise   := BiomeGenerator.get_noise_values(cell_global.x, cell_global.y)
 			biome_str    = "  Biome:    %s (%d)" % [bname, chunk.biome]
 			biome_str   += "\n  Alt:      %+.3f  Temp: %+.3f" % [noise.x, noise.y]
