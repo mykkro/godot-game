@@ -35,6 +35,12 @@ func update_avatar_position(world_pos: Vector2) -> void:
 	_update_all_fog(world_pos)
 
 
+## Persist all currently loaded fog chunks to disk (call before quitting/menu).
+func save_all() -> void:
+	for coord in _fog_data:
+		FogPersistence.save(_fog_data[coord])
+
+
 # ── Chunk event handlers ──────────────────────────────────────────────────────
 
 func _on_chunk_loaded(coord: Vector2i) -> void:
