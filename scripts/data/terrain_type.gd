@@ -22,3 +22,12 @@ static func is_passable(type: int) -> bool:
 	match type:
 		Type.WATER: return false
 	return true
+
+## Filename (relative to res://media/rpg-tiles/) for the terrain tile texture.
+static func get_texture_filename(type: int) -> String:
+	match type:
+		Type.GRASS: return "grass.png"
+		Type.DIRT:  return "mud.png"
+		Type.STONE: return "granite floor.png"
+		Type.WATER: return "water.png"
+	return "grass.png"

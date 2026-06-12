@@ -9,6 +9,11 @@ var _data: ChunkData  = null
 var _body: StaticBody2D = null
 
 
+func _ready() -> void:
+	# Pixel-art tiles – no interpolation between pixels.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+
+
 ## Call once after adding to the scene tree.
 func initialize(data: ChunkData) -> void:
 	_data = data
@@ -75,14 +80,18 @@ func _draw() -> void:
 
 			var px := x * CELL_SIZE
 			var py := y * CELL_SIZE
+			var cell_rect := Rect2(px, py, CELL_SIZE, CELL_SIZE)
 
-			# Terrain fill.
-			draw_rect(Rect2(px, py, CELL_SIZE, CELL_SIZE),
-					  TerrainType.get_color(cell.terrain_type))
+			# Terrain fill: texture when available, fallback to flat color.
+			var tex := TextureCache.get_texture(
+					TerrainType.get_texture_filename(cell.terrain_type))
+			if tex != null:
+				draw_texture_rect(tex, cell_rect, false)
+			else:
+				draw_rect(cell_rect, TerrainType.get_color(cell.terrain_type))
 
 			# Subtle grid lines.
-			draw_rect(Rect2(px, py, CELL_SIZE, CELL_SIZE),
-					  Color(0, 0, 0, 0.07), false, 1.0)
+			draw_rect(cell_rect, Color(0, 0, 0, 0.07), false, 1.0)
 
 			# Objects.
 			for obj_type in cell.objects:
