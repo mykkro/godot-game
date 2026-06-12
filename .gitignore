@@ -10,3 +10,9 @@
 .DS_Store
 
 export/
+
+# Git worktrees
+.worktrees/
+
+# Brainstorming / superpowers artifacts
+.superpowers/
