@@ -23,7 +23,7 @@ func _ready() -> void:
 	_avatar.setup(_world, _fog_manager, _inventory_ui)
 	_inventory_ui.drop_requested.connect(_avatar.drop_item)
 	_debug.setup(_world, _fog_manager, _avatar)
-	_pause_menu.setup(_fog_manager, _avatar)
+	_pause_menu.setup(_fog_manager, _avatar, _npc_manager)
 	_inventory_ui.setup(_avatar.inventory)
 	_pickup_hint.setup(_avatar)
 	_minimap.setup(_world, _fog_manager, _avatar)
@@ -39,6 +39,7 @@ func _ready() -> void:
 		_avatar.heading = float(player_data.get("heading", 0.0))
 	_world.update_avatar_position(spawn)
 	_fog_manager.update_avatar_position(spawn)
+	_npc_manager.load_and_spawn()
 
 
 func _input(event: InputEvent) -> void:

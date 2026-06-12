@@ -3,17 +3,19 @@ extends CanvasLayer
 
 const MENU_SCENE := "res://scenes/menu.tscn"
 
-var _fog_manager: FogManager = null
-var _avatar:      Avatar     = null
+var _fog_manager:  FogManager  = null
+var _avatar:       Avatar      = null
+var _npc_manager:  NpcManager  = null
 
 var _panel:  PanelContainer = null
 var _vbox:   VBoxContainer  = null
 
 
 ## Call from main._ready() after all other nodes are set up.
-func setup(fog_manager: FogManager, avatar: Avatar) -> void:
+func setup(fog_manager: FogManager, avatar: Avatar, npc_manager: NpcManager) -> void:
 	_fog_manager = fog_manager
 	_avatar      = avatar
+	_npc_manager = npc_manager
 
 
 func _ready() -> void:
@@ -104,13 +106,15 @@ func _set_paused(paused: bool) -> void:
 	get_tree().paused = paused
 
 
-## Save all persistent game state: fog, chunks (via world unload), player pos.
+## Save all persistent game state: fog, chunks (via world unload), player pos, NPCs.
 func _save_all() -> void:
 	if _fog_manager != null:
 		_fog_manager.save_all()
 	if _avatar != null:
 		SaveManager.save_player(_avatar.position, _avatar.heading)
 		SaveManager.save_inventory(_avatar.inventory)
+	if _npc_manager != null:
+		_npc_manager.save()
 
 
 func _add_button(label: String, callback: Callable) -> void:

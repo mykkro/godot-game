@@ -7,6 +7,7 @@ const FOG_DIR        := "user://fog/"
 const PLAYER_FILE    := "user://player.json"
 const INVENTORY_FILE := "user://inventory.json"
 const SETTINGS_FILE  := "user://settings.json"
+const NPCS_FILE      := "user://npcs.json"
 
 
 ## Returns true when a previous game session exists (any saved chunk).
@@ -60,10 +61,9 @@ static func load_player() -> Dictionary:
 static func wipe() -> void:
 	_wipe_dir(CHUNKS_DIR)
 	_wipe_dir(FOG_DIR)
-	if FileAccess.file_exists(PLAYER_FILE):
-		DirAccess.remove_absolute(PLAYER_FILE)
-	if FileAccess.file_exists(INVENTORY_FILE):
-		DirAccess.remove_absolute(INVENTORY_FILE)
+	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
 
 
 ## Persist the player inventory.
@@ -115,6 +115,34 @@ static func load_settings() -> Dictionary:
 	if json.parse(text) != OK:
 		return {}
 	return json.data as Dictionary
+
+
+static func save_npcs(data: Array) -> void:
+	var file := FileAccess.open(NPCS_FILE, FileAccess.WRITE)
+	if file == null:
+		push_error("SaveManager: cannot write npcs save (error %d)" \
+				% FileAccess.get_open_error())
+		return
+	file.store_string(JSON.stringify(data))
+	file.close()
+
+
+static func load_npcs() -> Array:
+	if not FileAccess.file_exists(NPCS_FILE):
+		return []
+	var file := FileAccess.open(NPCS_FILE, FileAccess.READ)
+	if file == null:
+		return []
+	var text := file.get_as_text()
+	file.close()
+	var json := JSON.new()
+	if json.parse(text) != OK:
+		push_error("SaveManager: failed to parse npcs save")
+		return []
+	var result: Variant = json.data
+	if result is Array:
+		return result
+	return []
 
 
 static func _wipe_dir(path: String) -> void:

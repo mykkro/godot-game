@@ -12,6 +12,24 @@ func setup(world: World) -> void:
 	world.chunk_loaded.connect(_on_chunk_loaded)
 
 
+## Collect every live NpcKnight and persist their state.
+func save() -> void:
+	var data: Array = []
+	for child in _world.get_children():
+		if child is NpcKnight:
+			data.append((child as NpcKnight).to_dict())
+	SaveManager.save_npcs(data)
+
+
+## Spawn NpcKnights from a previously saved snapshot.
+## Call after world.start() so the scene tree is ready.
+func load_and_spawn() -> void:
+	for entry in SaveManager.load_npcs():
+		var npc := NpcKnight.new()
+		_world.add_child(npc)
+		npc.restore_from_dict(entry as Dictionary)
+
+
 func _on_chunk_loaded(coord: Vector2i) -> void:
 	if randf() > SPAWN_CHANCE:
 		return

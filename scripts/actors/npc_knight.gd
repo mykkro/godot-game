@@ -103,3 +103,18 @@ func _go_idle() -> void:
 	velocity    = Vector2.ZERO
 	_idle_timer = randf_range(IDLE_MIN, IDLE_MAX)
 	_state      = State.IDLE
+
+
+func to_dict() -> Dictionary:
+	return {
+		"x":       position.x,
+		"y":       position.y,
+		"heading": heading,
+		"elapsed": _elapsed,
+	}
+
+
+func restore_from_dict(data: Dictionary) -> void:
+	position = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
+	heading  = float(data.get("heading", 0.0))
+	_elapsed = float(data.get("elapsed", 0.0))

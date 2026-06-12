@@ -3,6 +3,13 @@ class_name PickableItemDef
 ## Static registry: maps MapObject.Type int → display metadata.
 ## Only types listed here are treated as pickable (passable, can be picked up).
 
+## Maximum items per inventory stack. 1 = non-stackable.
+static func max_stack_size(obj_type: int) -> int:
+	match obj_type:
+		MapObject.Type.COIN: return 100
+	return 1
+
+
 ## Returns true when this object type can be picked up by the avatar.
 static func is_pickable(obj_type: int) -> bool:
 	match obj_type:
