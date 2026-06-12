@@ -5,21 +5,25 @@ const INDEX_PATH := "res://media/rpg-tiles/index.json"
 var _tiles: Dictionary = {}
 
 
-func _init() -> void:
+func _ready() -> void:
 	var file := FileAccess.open(INDEX_PATH, FileAccess.READ)
 	if file == null:
 		push_error("TileRegistry: cannot open %s" % INDEX_PATH)
 		return
+	var text := file.get_as_text()
+	file.close()
 	var json := JSON.new()
-	if json.parse(file.get_as_text()) != OK:
+	if json.parse(text) != OK:
 		push_error("TileRegistry: JSON parse error in index")
 		return
-	file.close()
+	if json.data is not Dictionary:
+		push_error("TileRegistry: unexpected JSON root type")
+		return
 	_tiles = (json.data as Dictionary).get("textures", {})
 
 
-func get_all_tiles() -> Array:
-	var result: Array = []
+func get_all_tiles() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
 	for filename in _tiles:
 		var entry: Dictionary = (_tiles[filename] as Dictionary).duplicate()
 		entry["filename"] = filename
@@ -38,18 +42,22 @@ func get_tile(filename: String) -> Dictionary:
 	return (_tiles.get(filename, {}) as Dictionary).duplicate()
 
 
-func get_categories() -> Array:
+func get_categories() -> Array[String]:
 	var seen: Dictionary = {}
 	for filename in _tiles:
 		seen[(_tiles[filename] as Dictionary).get("category", "")] = true
-	var cats := seen.keys()
+	var cats: Array[String] = []
+	for key in seen.keys():
+		cats.append(key as String)
 	cats.sort()
 	return cats
 
 
 func is_passable(filename: String) -> bool:
-	return bool((_tiles.get(filename, {"passable": true}) as Dictionary).get("passable", true))
+	var tile: Dictionary = _tiles.get(filename, {})
+	return bool(tile.get("passable", true))
 
 
 func get_speed_modifier(filename: String) -> float:
-	return float((_tiles.get(filename, {"speed_modifier": 1.0}) as Dictionary).get("speed_modifier", 1.0))
+	var tile: Dictionary = _tiles.get(filename, {})
+	return float(tile.get("speed_modifier", 1.0))
