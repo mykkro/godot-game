@@ -9,6 +9,7 @@ const PANEL_WIDTH := 260
 
 var _lbl_chunk:     Label            = null
 var _lbl_cell:      Label            = null
+var _lbl_terrain:   Label            = null
 var _lbl_saved:     Label            = null
 var _lbl_status:    Label            = null
 var _chk_autosave:  CheckButton      = null
@@ -46,6 +47,11 @@ func set_chunk_coords(cc: Vector2i) -> void:
 func set_cell_coords(lc: Vector2i) -> void:
 	if _lbl_cell != null:
 		_lbl_cell.text = "Cell: (%d, %d)" % [lc.x, lc.y]
+
+
+func set_hover_terrain(terrain: String) -> void:
+	if _lbl_terrain != null:
+		_lbl_terrain.text = "Terrain: %s" % terrain
 
 
 func set_unsaved(dirty: bool) -> void:
@@ -155,6 +161,12 @@ func _build_right_panel() -> void:
 	_lbl_cell.text = "Cell: —"
 	_lbl_cell.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(_lbl_cell)
+
+	_lbl_terrain = Label.new()
+	_lbl_terrain.text = "Terrain: —"
+	_lbl_terrain.add_theme_font_size_override("font_size", 12)
+	_lbl_terrain.add_theme_color_override("font_color", Color(0.55, 0.85, 0.55))
+	vbox.add_child(_lbl_terrain)
 
 	_add_separator(vbox)
 

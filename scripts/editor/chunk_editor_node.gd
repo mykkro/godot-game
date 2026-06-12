@@ -80,7 +80,7 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 	if PickableItemDef.is_pickable(obj_type):
 		var tex := TextureCache.get_object_texture(PickableItemDef.get_sprite(obj_type))
 		if tex != null:
-			var s  := float(CELL_SIZE) * 0.72
+			var s  := float(CELL_SIZE) * 0.50
 			var ox := px + (CELL_SIZE - s) * 0.5
 			var oy := py + (CELL_SIZE - s) * 0.5
 			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)

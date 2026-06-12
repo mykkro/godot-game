@@ -3,28 +3,23 @@ extends VBoxContainer
 
 signal item_selected(obj_type: int)
 
-const TILE_SIZE := 48
+const TILE_SIZE := 38
 const NONE_TYPE := -1
 
-var _selected:     int           = NONE_TYPE
-var _selected_btn: Button        = null
-var _buttons:      Array[Button] = []
+var _selected:         int   = NONE_TYPE
+var _selected_overlay: Panel = null
 
-var _style_normal:   StyleBoxFlat = null
-var _style_selected: StyleBoxFlat = null
+var _style_overlay: StyleBoxFlat = null
 
 
 func _ready() -> void:
-	_style_normal = StyleBoxFlat.new()
-	_style_normal.bg_color = Color(0, 0, 0, 0)
-
-	_style_selected = StyleBoxFlat.new()
-	_style_selected.bg_color = Color(0, 0, 0, 0)
-	_style_selected.border_color = Color(0, 0.9, 0.9)
+	_style_overlay = StyleBoxFlat.new()
+	_style_overlay.bg_color    = Color(0, 0, 0, 0)
+	_style_overlay.border_color = Color(0, 0.9, 0.9)
 	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
-		_style_selected.set_border_width(side, 3)
+		_style_overlay.set_border_width(side, 3)
 	for corner in range(4):
-		_style_selected.set_corner_radius(corner, 4)
+		_style_overlay.set_corner_radius(corner, 4)
 
 	var lbl := Label.new()
 	lbl.text = "Objects"
@@ -36,16 +31,13 @@ func _ready() -> void:
 	grid.columns = 3
 	add_child(grid)
 
-	# "None / erase" entry.
-	var none_btn := _make_button(NONE_TYPE, null, "None (erase)")
-	grid.add_child(none_btn)
+	grid.add_child(_make_button(NONE_TYPE, null, "None (erase)"))
 
 	for obj_type in MapObject.Type.values():
 		var tex: Texture2D = null
 		if PickableItemDef.is_pickable(obj_type):
 			tex = TextureCache.get_object_texture(PickableItemDef.get_sprite(obj_type))
-		var btn := _make_button(obj_type, tex, MapObject.get_display_name(obj_type))
-		grid.add_child(btn)
+		grid.add_child(_make_button(obj_type, tex, MapObject.get_display_name(obj_type)))
 
 
 func get_selected() -> int:
@@ -56,11 +48,9 @@ func _make_button(obj_type: int, tex: Texture2D, tip: String) -> Button:
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(TILE_SIZE + 4, TILE_SIZE + 4)
 	btn.tooltip_text = tip
-	btn.pressed.connect(_on_item_pressed.bind(obj_type, btn))
-	_buttons.append(btn)
 
 	var container := CenterContainer.new()
-	container.custom_minimum_size = Vector2(TILE_SIZE, TILE_SIZE)
+	container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	btn.add_child(container)
 
@@ -70,31 +60,39 @@ func _make_button(obj_type: int, tex: Texture2D, tip: String) -> Button:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.custom_minimum_size = Vector2(TILE_SIZE, TILE_SIZE)
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tr.mouse_filter   = Control.MOUSE_FILTER_IGNORE
 		container.add_child(tr)
 	elif obj_type >= 0:
-		# No sprite — draw a coloured circle placeholder matching in-world rendering.
 		var cr := ColorRect.new()
 		cr.color = ChunkEditorNode.OBJ_COLORS.get(obj_type, Color(0.7, 0.7, 0.7))
 		cr.custom_minimum_size = Vector2(TILE_SIZE * 0.6, TILE_SIZE * 0.6)
 		cr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		container.add_child(cr)
 	else:
-		var lbl := Label.new()
-		lbl.text = "✕"
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.add_theme_font_size_override("font_size", 22)
-		lbl.add_theme_color_override("font_color", Color(0.8, 0.4, 0.4))
-		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		container.add_child(lbl)
+		var none_lbl := Label.new()
+		none_lbl.text = "✕"
+		none_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		none_lbl.add_theme_font_size_override("font_size", 22)
+		none_lbl.add_theme_color_override("font_color", Color(0.8, 0.4, 0.4))
+		none_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		container.add_child(none_lbl)
 
+	# Cyan outline drawn on top of the icon when this object is selected.
+	var overlay := Panel.new()
+	overlay.add_theme_stylebox_override("panel", _style_overlay)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.visible = false
+	btn.add_child(overlay)
+
+	btn.pressed.connect(_on_item_pressed.bind(obj_type, overlay))
 	return btn
 
 
-func _on_item_pressed(obj_type: int, btn: Button) -> void:
+func _on_item_pressed(obj_type: int, overlay: Panel) -> void:
 	_selected = obj_type
-	if _selected_btn != null:
-		_selected_btn.add_theme_stylebox_override("normal", _style_normal)
-	_selected_btn = btn
-	btn.add_theme_stylebox_override("normal", _style_selected)
+	if _selected_overlay != null:
+		_selected_overlay.visible = false
+	_selected_overlay = overlay
+	overlay.visible = true
 	item_selected.emit(obj_type)

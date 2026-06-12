@@ -144,6 +144,10 @@ func _on_erase_cell(cc: Vector2i, lc: Vector2i) -> void:
 func _on_hover_cell(cc: Vector2i, lc: Vector2i) -> void:
 	_ui.set_chunk_coords(cc)
 	_ui.set_cell_coords(lc)
+	if _chunks.has(cc):
+		var cell := (_chunks[cc] as ChunkEditorNode).get_data().get_cell(lc.x, lc.y)
+		if cell != null:
+			_ui.set_hover_terrain(cell.terrain_type)
 	for coord in _chunks.keys():
 		(_chunks[coord] as ChunkEditorNode).set_hover(
 				lc if coord == cc else Vector2i(-1, -1))

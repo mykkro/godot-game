@@ -3,37 +3,31 @@ extends VBoxContainer
 
 signal terrain_selected(filename: String)
 
-const TILE_SIZE    := 46
+const TILE_SIZE    := 38
 const GRID_COLUMNS := 4
 
-# Tag priority order for group assignment.
 const TAG_GROUPS := [
 	"grass", "mud", "sand", "gravel", "path", "wood",
 	"cave", "rock", "aquatic", "swamp", "highland",
 	"arctic", "ice", "jungle", "volcanic", "constructed",
 ]
 
-var _search:        LineEdit      = null
-var _content:       VBoxContainer = null
-var _selected:      String        = ""
-var _buttons:       Array[Button] = []
-var _selected_btn:  Button        = null
+var _search:           LineEdit      = null
+var _content:          VBoxContainer = null
+var _selected:         String        = ""
+var _selected_overlay: Panel         = null
 
-var _style_normal:   StyleBoxFlat = null
-var _style_selected: StyleBoxFlat = null
+var _style_overlay: StyleBoxFlat = null
 
 
 func _ready() -> void:
-	_style_normal = StyleBoxFlat.new()
-	_style_normal.bg_color = Color(0, 0, 0, 0)
-
-	_style_selected = StyleBoxFlat.new()
-	_style_selected.bg_color = Color(0, 0, 0, 0)
-	_style_selected.border_color = Color(0, 0.9, 0.9)
+	_style_overlay = StyleBoxFlat.new()
+	_style_overlay.bg_color    = Color(0, 0, 0, 0)
+	_style_overlay.border_color = Color(0, 0.9, 0.9)
 	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
-		_style_selected.set_border_width(side, 3)
+		_style_overlay.set_border_width(side, 3)
 	for corner in range(4):
-		_style_selected.set_corner_radius(corner, 4)
+		_style_overlay.set_corner_radius(corner, 4)
 
 	_search = LineEdit.new()
 	_search.placeholder_text = "Search tiles..."
@@ -55,7 +49,7 @@ func get_selected() -> String:
 func _build_palette(filter: String) -> void:
 	for child in _content.get_children():
 		child.queue_free()
-	_buttons.clear()
+	_selected_overlay = null   # children freed above
 
 	var all_tiles := TileRegistry.get_all_tiles()
 	var terrain_tiles: Array[Dictionary] = []
@@ -67,7 +61,6 @@ func _build_palette(filter: String) -> void:
 			continue
 		terrain_tiles.append(tile as Dictionary)
 
-	# Group tiles by primary tag.
 	var groups: Dictionary = {}
 	for tile in terrain_tiles:
 		var group := _primary_group(tile.get("tags", []) as Array)
@@ -75,13 +68,11 @@ func _build_palette(filter: String) -> void:
 			groups[group] = []
 		(groups[group] as Array).append(tile)
 
-	# Render each group.
 	for group_name in TAG_GROUPS:
 		if not groups.has(group_name):
 			continue
 		_add_group(group_name.capitalize(), groups[group_name] as Array)
 
-	# Remaining groups not in TAG_GROUPS order.
 	for group_name in groups.keys():
 		if group_name in TAG_GROUPS:
 			continue
@@ -108,25 +99,35 @@ func _add_group(title: String, tiles: Array) -> void:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(TILE_SIZE + 4, TILE_SIZE + 4)
 		btn.tooltip_text = fname
-		btn.pressed.connect(_on_tile_pressed.bind(fname, btn))
 		grid.add_child(btn)
-		_buttons.append(btn)
 
 		var tex_rect := TextureRect.new()
 		tex_rect.texture = TextureCache.get_texture(fname)
 		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tex_rect.custom_minimum_size = Vector2(TILE_SIZE, TILE_SIZE)
+		tex_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		tex_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tex_rect.mouse_filter   = Control.MOUSE_FILTER_IGNORE
 		btn.add_child(tex_rect)
 
+		# Cyan outline drawn on top of the icon when this tile is selected.
+		var overlay := Panel.new()
+		overlay.add_theme_stylebox_override("panel", _style_overlay)
+		overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		overlay.visible = (fname == _selected)
+		if fname == _selected:
+			_selected_overlay = overlay
+		btn.add_child(overlay)
 
-func _on_tile_pressed(fname: String, btn: Button) -> void:
+		btn.pressed.connect(_on_tile_pressed.bind(fname, overlay))
+
+
+func _on_tile_pressed(fname: String, overlay: Panel) -> void:
 	_selected = fname
-	if _selected_btn != null:
-		_selected_btn.add_theme_stylebox_override("normal", _style_normal)
-	_selected_btn = btn
-	btn.add_theme_stylebox_override("normal", _style_selected)
+	if _selected_overlay != null:
+		_selected_overlay.visible = false
+	_selected_overlay = overlay
+	overlay.visible = true
 	terrain_selected.emit(fname)
 
 
