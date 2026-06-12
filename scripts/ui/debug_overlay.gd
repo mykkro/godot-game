@@ -29,7 +29,7 @@ func _ready() -> void:
 	_panel = PanelContainer.new()
 	_panel.position = Vector2(8, 8)
 	# Fixed width so the panel never resizes as text changes.
-	_panel.custom_minimum_size = Vector2(340, 0)
+	_panel.custom_minimum_size = Vector2(360, 0)
 	add_child(_panel)
 
 	var style := StyleBoxFlat.new()
@@ -152,6 +152,19 @@ func _build_text() -> String:
 					names.append(key)
 				cell_str += "\n  Objects:  " + ", ".join(names)
 	lines.append(cell_str)
+	lines.append("")
+
+	# Biome.
+	lines.append("[Biome]")
+	var biome_str := "  (chunk not loaded)"
+	if _world != null:
+		var chunk := _world.get_chunk(chunk_coord)
+		if chunk != null:
+			var bname   := BiomeDef.get_name(chunk.biome)
+			var noise   := BiomeGenerator.get_noise_values(cell_global.x, cell_global.y)
+			biome_str    = "  Biome:    %s (%d)" % [bname, chunk.biome]
+			biome_str   += "\n  Alt:      %+.3f  Temp: %+.3f" % [noise.x, noise.y]
+	lines.append(biome_str)
 	lines.append("")
 
 	# Fog.

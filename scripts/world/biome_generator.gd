@@ -23,6 +23,16 @@ static func get_biome(cell_x: int, cell_y: int) -> BiomeDef.Type:
 	return _classify(alt, temp)
 
 
+## Returns raw (altitude, temperature) noise values at a cell position.
+## Useful for debug display and biome boundary tuning.
+static func get_noise_values(cell_x: int, cell_y: int) -> Vector2:
+	_init_noise()
+	return Vector2(
+		_altitude.get_noise_2d(float(cell_x), float(cell_y)),
+		_temp.get_noise_2d(float(cell_x), float(cell_y))
+	)
+
+
 ## Convenience: returns the dominant biome for a chunk by sampling its centre.
 static func get_chunk_biome(chunk_x: int, chunk_y: int) -> BiomeDef.Type:
 	var cx := chunk_x * ChunkData.CHUNK_SIZE + ChunkData.CHUNK_SIZE / 2
