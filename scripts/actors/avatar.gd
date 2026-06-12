@@ -53,16 +53,19 @@ func _ready() -> void:
 	_pickup_sound = AudioStreamPlayer.new()
 	_pickup_sound.stream    = load("res://sounds/RPG Sound Pack/inventory/beads.wav")
 	_pickup_sound.volume_db = linear_to_db(PICKUP_SOUND_VOLUME)
+	_pickup_sound.bus       = AudioManager.SFX_BUS
 	add_child(_pickup_sound)
 
 	_shoot_sound = AudioStreamPlayer.new()
 	_shoot_sound.stream    = load("res://sounds/RPG Sound Pack/battle/swing.wav")
 	_shoot_sound.volume_db = linear_to_db(SHOOT_SOUND_VOLUME)
+	_shoot_sound.bus       = AudioManager.SFX_BUS
 	add_child(_shoot_sound)
 
 	_drop_sound = AudioStreamPlayer.new()
 	_drop_sound.stream    = load("res://sounds/RPG Sound Pack/inventory/coin.wav")
 	_drop_sound.volume_db = linear_to_db(DROP_SOUND_VOLUME)
+	_drop_sound.bus       = AudioManager.SFX_BUS
 	add_child(_drop_sound)
 
 

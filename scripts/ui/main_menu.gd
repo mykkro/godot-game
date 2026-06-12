@@ -1,7 +1,6 @@
 extends Control
 
-const MAIN_SCENE            := "res://scenes/main.tscn"
-const DEFAULT_MASTER_VOLUME := 0.5
+const MAIN_SCENE := "res://scenes/main.tscn"
 
 @onready var _vbox:         VBoxContainer = $VBox
 @onready var _btn_continue: Button        = $VBox/BtnContinue
@@ -9,9 +8,18 @@ const DEFAULT_MASTER_VOLUME := 0.5
 @onready var _btn_options:  Button        = $VBox/BtnOptions
 @onready var _btn_quit:     Button        = $VBox/BtnQuit
 
-var _options_panel: PanelContainer = null
-var _volume_slider: HSlider        = null
-var _volume_label:  Label          = null
+var _options_panel:   PanelContainer = null
+var _master_slider:   HSlider        = null
+var _master_label:    Label          = null
+var _music_slider:    HSlider        = null
+var _music_label:     Label          = null
+var _effects_slider:  HSlider        = null
+var _effects_label:   Label          = null
+
+# Current values kept in sync for SaveManager calls.
+var _master_vol:  float = AudioManager.DEFAULT_MASTER_VOLUME
+var _music_vol:   float = AudioManager.DEFAULT_MUSIC_VOLUME
+var _effects_vol: float = AudioManager.DEFAULT_EFFECTS_VOLUME
 
 
 func _ready() -> void:
@@ -24,11 +32,16 @@ func _ready() -> void:
 	_build_options_panel()
 	_build_version_label()
 
-	var settings := SaveManager.load_settings()
-	var vol      := float(settings.get("master_volume", DEFAULT_MASTER_VOLUME))
-	_apply_master_volume(vol)
-	_volume_slider.value = vol * 100.0
-	_update_volume_label(vol * 100.0)
+	var settings := AudioManager.apply_saved_settings()
+	_master_vol  = float(settings.get("master_volume",  AudioManager.DEFAULT_MASTER_VOLUME))
+	_music_vol   = float(settings.get("music_volume",   AudioManager.DEFAULT_MUSIC_VOLUME))
+	_effects_vol = float(settings.get("effects_volume", AudioManager.DEFAULT_EFFECTS_VOLUME))
+	_master_slider.value  = _master_vol  * 100.0
+	_music_slider.value   = _music_vol   * 100.0
+	_effects_slider.value = _effects_vol * 100.0
+	_update_label(_master_label,  "Master Volume",  _master_vol  * 100.0)
+	_update_label(_music_label,   "Music Volume",   _music_vol   * 100.0)
+	_update_label(_effects_label, "Effects Volume", _effects_vol * 100.0)
 
 
 func _on_new_game() -> void:
@@ -54,20 +67,29 @@ func _on_quit() -> void:
 	get_tree().quit()
 
 
-func _on_volume_changed(value: float) -> void:
-	_update_volume_label(value)
-	var vol := value / 100.0
-	_apply_master_volume(vol)
-	SaveManager.save_settings(vol)
+func _on_master_changed(value: float) -> void:
+	_master_vol = value / 100.0
+	AudioManager.set_master_volume(_master_vol)
+	_update_label(_master_label, "Master Volume", value)
+	SaveManager.save_settings(_master_vol, _music_vol, _effects_vol)
 
 
-func _update_volume_label(value: float) -> void:
-	_volume_label.text = "Master Volume:  %d%%" % int(value)
+func _on_music_changed(value: float) -> void:
+	_music_vol = value / 100.0
+	AudioManager.set_music_volume(_music_vol)
+	_update_label(_music_label, "Music Volume", value)
+	SaveManager.save_settings(_master_vol, _music_vol, _effects_vol)
 
 
-func _apply_master_volume(linear: float) -> void:
-	var bus := AudioServer.get_bus_index("Master")
-	AudioServer.set_bus_volume_db(bus, linear_to_db(linear))
+func _on_effects_changed(value: float) -> void:
+	_effects_vol = value / 100.0
+	AudioManager.set_effects_volume(_effects_vol)
+	_update_label(_effects_label, "Effects Volume", value)
+	SaveManager.save_settings(_master_vol, _music_vol, _effects_vol)
+
+
+func _update_label(lbl: Label, name: String, value: float) -> void:
+	lbl.text = "%s:  %d%%" % [name, int(value)]
 
 
 func _build_options_panel() -> void:
@@ -100,22 +122,33 @@ func _build_options_panel() -> void:
 	section.add_theme_color_override("font_color", Color(0.75, 0.75, 0.9))
 	vbox.add_child(section)
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	vbox.add_child(row)
+	var sliders := [
+		["Master Volume",  _on_master_changed],
+		["Music Volume",   _on_music_changed],
+		["Effects Volume", _on_effects_changed],
+	]
+	for entry in sliders:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 16)
+		vbox.add_child(row)
 
-	_volume_label = Label.new()
-	_volume_label.custom_minimum_size = Vector2(240, 0)
-	_volume_label.add_theme_font_size_override("font_size", 18)
-	row.add_child(_volume_label)
+		var lbl := Label.new()
+		lbl.custom_minimum_size = Vector2(240, 0)
+		lbl.add_theme_font_size_override("font_size", 18)
+		row.add_child(lbl)
 
-	_volume_slider = HSlider.new()
-	_volume_slider.min_value           = 0.0
-	_volume_slider.max_value           = 100.0
-	_volume_slider.step                = 1.0
-	_volume_slider.custom_minimum_size = Vector2(220, 0)
-	_volume_slider.value_changed.connect(_on_volume_changed)
-	row.add_child(_volume_slider)
+		var slider := HSlider.new()
+		slider.min_value           = 0.0
+		slider.max_value           = 100.0
+		slider.step                = 1.0
+		slider.custom_minimum_size = Vector2(220, 0)
+		slider.value_changed.connect((entry as Array)[1] as Callable)
+		row.add_child(slider)
+
+		match (entry as Array)[0]:
+			"Master Volume":  _master_label  = lbl; _master_slider  = slider
+			"Music Volume":   _music_label   = lbl; _music_slider   = slider
+			"Effects Volume": _effects_label = lbl; _effects_slider = slider
 
 	var btn_back := Button.new()
 	btn_back.text = "Back"

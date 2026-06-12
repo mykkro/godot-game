@@ -146,6 +146,7 @@ func _ready() -> void:
 	_open_sound = AudioStreamPlayer.new()
 	_open_sound.stream    = load("res://sounds/RPG Sound Pack/interface/interface3.wav")
 	_open_sound.volume_db = linear_to_db(OPEN_SOUND_VOLUME)
+	_open_sound.bus       = AudioManager.SFX_BUS
 	add_child(_open_sound)
 
 	_center.visible = false

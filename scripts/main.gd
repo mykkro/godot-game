@@ -1,5 +1,7 @@
 extends Node2D
 
+var _music: AudioStreamPlayer = null
+
 @onready var _world:        World        = $World
 @onready var _fog_manager:  FogManager   = $FogManager
 @onready var _avatar:       Avatar       = $Avatar
@@ -12,6 +14,9 @@ extends Node2D
 
 
 func _ready() -> void:
+	AudioManager.apply_saved_settings()
+	_start_music()
+
 	# Wire FogManager and NpcManager to World signals BEFORE world.start() so
 	# that every chunk_loaded signal fired during startup is received by both.
 	_fog_manager.setup(_world)
@@ -82,6 +87,16 @@ func _find_spawn_position() -> Vector2:
 	# Fallback: centre of chunk 0,0 (shouldn't normally be needed).
 	return Vector2(ChunkData.CHUNK_PIXEL_SIZE * 0.5,
 				   ChunkData.CHUNK_PIXEL_SIZE * 0.5)
+
+
+func _start_music() -> void:
+	var stream := load("res://media/music/guilhermebernardes-transient-204416.mp3") as AudioStreamMP3
+	stream.loop  = true
+	_music        = AudioStreamPlayer.new()
+	_music.stream = stream
+	_music.bus    = AudioManager.MUSIC_BUS
+	add_child(_music)
+	_music.play()
 
 
 static func _is_cell_clear(cell: CellData) -> bool:
