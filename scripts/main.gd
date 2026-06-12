@@ -18,6 +18,7 @@ func _ready() -> void:
 	_avatar.inventory = SaveManager.load_inventory()
 
 	_avatar.setup(_world, _fog_manager, _inventory_ui)
+	_inventory_ui.drop_requested.connect(_avatar.drop_item)
 	_debug.setup(_world, _fog_manager, _avatar)
 	_pause_menu.setup(_fog_manager, _avatar)
 	_inventory_ui.setup(_avatar.inventory)
