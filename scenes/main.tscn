@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/world/world.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/fog/fog_manager.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/actors/avatar.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/ui/debug_overlay.gd" id="5"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1")
@@ -19,3 +20,6 @@ script = ExtResource("4")
 
 [node name="Camera2D" type="Camera2D" parent="Avatar"]
 zoom = Vector2(1.5, 1.5)
+
+[node name="DebugOverlay" type="CanvasLayer" parent="."]
+script = ExtResource("5")

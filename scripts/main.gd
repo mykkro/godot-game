@@ -1,8 +1,9 @@
 extends Node2D
 
-@onready var _world:       World      = $World
-@onready var _fog_manager: FogManager = $FogManager
-@onready var _avatar:      Avatar     = $Avatar
+@onready var _world:       World        = $World
+@onready var _fog_manager: FogManager   = $FogManager
+@onready var _avatar:      Avatar       = $Avatar
+@onready var _debug:       DebugOverlay = $DebugOverlay
 
 
 func _ready() -> void:
@@ -10,6 +11,7 @@ func _ready() -> void:
 	# chunk_loaded signal fired during startup is received by FogManager.
 	_fog_manager.setup(_world)
 	_avatar.setup(_world, _fog_manager)
+	_debug.setup(_world, _fog_manager, _avatar)
 
 	# Now load the initial chunks; signals will reach FogManager correctly.
 	_world.start()
