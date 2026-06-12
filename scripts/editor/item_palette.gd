@@ -30,7 +30,7 @@ func _ready() -> void:
 		if PickableItemDef.is_pickable(obj_type):
 			fname = PickableItemDef.get_sprite(obj_type)
 		var tex := TextureCache.get_texture(fname) if fname != "" else null
-		var btn := _make_button(obj_type, tex, MapObject.get_name(obj_type))
+		var btn := _make_button(obj_type, tex, MapObject.get_display_name(obj_type))
 		grid.add_child(btn)
 
 

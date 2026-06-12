@@ -23,7 +23,7 @@ static func get_color(obj_type: int) -> Color:
 	return Color.WHITE
 
 ## Human-readable display name.
-static func get_name(obj_type: int) -> String:
+static func get_display_name(obj_type: int) -> String:
 	match obj_type:
 		Type.ROCK:    return "Rock"
 		Type.HERB:    return "Herb"
