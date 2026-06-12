@@ -43,9 +43,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -120.0
-offset_top = -80.0
+offset_top = -128.0
 offset_right = 120.0
-offset_bottom = 80.0
+offset_bottom = 128.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
@@ -60,6 +60,12 @@ theme_override_font_sizes/font_size = 20
 custom_minimum_size = Vector2(240, 52)
 layout_mode = 2
 text = "New Game"
+theme_override_font_sizes/font_size = 20
+
+[node name="BtnOptions" type="Button" parent="VBox"]
+custom_minimum_size = Vector2(240, 52)
+layout_mode = 2
+text = "Options"
 theme_override_font_sizes/font_size = 20
 
 [node name="BtnQuit" type="Button" parent="VBox"]

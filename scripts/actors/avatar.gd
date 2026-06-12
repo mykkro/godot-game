@@ -6,6 +6,11 @@ const PICKUP_RADIUS  := 52.0   # pixels; pickup detection zone radius
 ## Collision layer mask for PickableNode (must match PickableNode.LAYER_PICKABLE).
 const PICKUP_MASK    := 2
 
+## Collision circle constants (world pixels at scale 0.56 / 256-px frame).
+const COLL_RADIUS        := 18.75
+const PICKUP_SOUND_VOLUME := 1.0
+const COLL_OFFSET_Y := -29.4
+
 var _world:        World        = null
 var _fog_manager:  FogManager   = null
 var _inventory_ui: InventoryUI  = null
@@ -14,7 +19,9 @@ var inventory: Inventory = Inventory.new()
 
 ## Nearby pickable items tracked via Area2D overlap signals.
 var _nearby_pickables: Dictionary = {}   # PickableNode → true
-var _pickup_area: Area2D = null
+var _pickup_area:  Area2D            = null
+var _sprite:       KnightSprite      = null
+var _pickup_sound: AudioStreamPlayer = null
 
 
 ## Must be called after the node is in the scene tree (from Main._ready).
@@ -26,9 +33,18 @@ func setup(world: World, fog_manager: FogManager,
 
 
 func _ready() -> void:
-	collision_radius = 14.0
-	super._ready()
+	super._ready()   # calls _setup_collision() → overridden below
 	_setup_pickup_area()
+
+	_sprite = KnightSprite.new()
+	_sprite.scale  = Vector2(0.56, 0.56)
+	_sprite.offset = Vector2(0.0, -45.0)
+	add_child(_sprite)
+
+	_pickup_sound = AudioStreamPlayer.new()
+	_pickup_sound.stream    = load("res://sounds/pickup.wav")
+	_pickup_sound.volume_db = linear_to_db(PICKUP_SOUND_VOLUME)
+	add_child(_pickup_sound)
 
 
 func _physics_process(_delta: float) -> void:
@@ -48,7 +64,8 @@ func _physics_process(_delta: float) -> void:
 	if _fog_manager != null:
 		_fog_manager.update_avatar_position(position)
 
-	queue_redraw()
+	if _sprite != null:
+		_sprite.update_anim(velocity != Vector2.ZERO, heading)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -68,15 +85,16 @@ func get_nearest_pickable_name() -> String:
 	return PickableItemDef.get_display_name(nearest.item_type)
 
 
-func _draw() -> void:
-	draw_circle(Vector2.ZERO, collision_radius, Color(0.20, 0.55, 1.00))
-	var tip := Vector2(cos(heading), sin(heading)) * (collision_radius + 5.0)
-	draw_line(Vector2.ZERO, tip, Color.WHITE, 2.5)
-	draw_arc(Vector2.ZERO, collision_radius, 0.0, TAU, 24,
-			 Color(0.10, 0.30, 0.70), 1.5)
-
-
 # ── Private ──────────────────────────────────────────────────────────────────
+
+func _setup_collision() -> void:
+	var col    := CollisionShape2D.new()
+	var circle := CircleShape2D.new()
+	circle.radius = COLL_RADIUS
+	col.shape     = circle
+	col.position  = Vector2(0.0, COLL_OFFSET_Y)
+	add_child(col)
+
 
 func _setup_pickup_area() -> void:
 	_pickup_area = Area2D.new()
@@ -85,8 +103,9 @@ func _setup_pickup_area() -> void:
 
 	var col    := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
-	circle.radius = PICKUP_RADIUS
+	circle.radius = COLL_RADIUS
 	col.shape     = circle
+	col.position  = Vector2(0.0, COLL_OFFSET_Y)
 	_pickup_area.add_child(col)
 	add_child(_pickup_area)
 
@@ -126,6 +145,8 @@ func _try_pickup() -> void:
 	inventory.add(target.item_type)
 	_nearby_pickables.erase(target)
 	target.remove_from_world()
+	if _pickup_sound != null:
+		_pickup_sound.play()
 	if _inventory_ui != null:
 		_inventory_ui.notify_changed()
 

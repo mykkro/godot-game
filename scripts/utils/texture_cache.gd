@@ -9,12 +9,12 @@ static var _cache: Dictionary = {}
 
 ## Terrain tile texture (from rpg-tiles/).
 static func get_texture(filename: String) -> Texture2D:
-	return _get(TILES_PATH + filename)
+	return _load_texture(TILES_PATH + filename)
 
 
 ## Object/item sprite (from raven-objects/).
 static func get_object_texture(filename: String) -> Texture2D:
-	return _get(OBJECTS_PATH + filename)
+	return _load_texture(OBJECTS_PATH + filename)
 
 
 ## Discard cached textures (useful for hot-reload in editor).
@@ -22,7 +22,7 @@ static func clear() -> void:
 	_cache.clear()
 
 
-static func _get(full_path: String) -> Texture2D:
+static func _load_texture(full_path: String) -> Texture2D:
 	if _cache.has(full_path):
 		return _cache[full_path]
 	var tex := load(full_path) as Texture2D

@@ -37,6 +37,17 @@ func _ready() -> void:
 	_fog_manager.update_avatar_position(spawn)
 
 
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var ke := event as InputEventKey
+	if not ke.pressed or ke.echo:
+		return
+	if ke.keycode == KEY_F4:
+		get_tree().debug_collisions_hint = not get_tree().debug_collisions_hint
+		get_viewport().set_input_as_handled()
+
+
 # ── Private ──────────────────────────────────────────────────────────────────
 
 ## Returns saved avatar position when a save exists, otherwise scans for

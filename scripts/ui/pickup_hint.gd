@@ -36,6 +36,11 @@ func _process(_delta: float) -> void:
 	var nearby := _avatar.get_nearest_pickable_name()
 	if nearby.is_empty():
 		_label.visible = false
+	elif not _avatar.inventory.has_space():
+		_label.text    = "Inventory full"
+		_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.25))
+		_label.visible = true
 	else:
 		_label.text    = "E  pick up  " + nearby
+		_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.5))
 		_label.visible = true

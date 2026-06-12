@@ -85,8 +85,6 @@ static func _place_objects(rng: RandomNumberGenerator, cell: CellData) -> void:
 	elif roll < ROCK_DENSITY + 0.082:
 		cell.add_object(MapObject.Type.POTION)
 
-	return chunk
-
 
 ## Returns a fresh mutable copy of the base weights array.
 static func _base_weights_array() -> Array:

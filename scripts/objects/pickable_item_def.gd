@@ -15,7 +15,7 @@ static func is_pickable(obj_type: int) -> bool:
 
 
 ## Human-readable name shown in the inventory.
-static func get_name(obj_type: int) -> String:
+static func get_display_name(obj_type: int) -> String:
 	match obj_type:
 		MapObject.Type.HERB:    return "Herb"
 		MapObject.Type.CRYSTAL: return "Crystal"

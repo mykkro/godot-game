@@ -3,10 +3,10 @@ extends Area2D
 
 ## Collision layer for pickable items (distinct from physics layer 1).
 const LAYER_PICKABLE := 2
-## Visual half-size for the sprite display (pixels).
-const SPRITE_SCALE   := 1.8
+## Visual scale applied to the sprite (0.5 = half natural size).
+const SPRITE_SCALE   := 0.375
 ## Pickup detection radius.
-const AREA_RADIUS    := 20.0
+const AREA_RADIUS    := 15.0
 
 ## The item type this node represents (MapObject.Type value).
 var item_type: int = 0
