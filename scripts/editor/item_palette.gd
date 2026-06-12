@@ -6,11 +6,26 @@ signal item_selected(obj_type: int)
 const TILE_SIZE := 48
 const NONE_TYPE := -1
 
-var _selected: int         = NONE_TYPE
-var _buttons:  Array[Button] = []
+var _selected:     int           = NONE_TYPE
+var _selected_btn: Button        = null
+var _buttons:      Array[Button] = []
+
+var _style_normal:   StyleBoxFlat = null
+var _style_selected: StyleBoxFlat = null
 
 
 func _ready() -> void:
+	_style_normal = StyleBoxFlat.new()
+	_style_normal.bg_color = Color(0, 0, 0, 0)
+
+	_style_selected = StyleBoxFlat.new()
+	_style_selected.bg_color = Color(0, 0.9, 0.9, 0.12)
+	_style_selected.border_color = Color(0, 0.9, 0.9)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		_style_selected.set_border_width(side, 2)
+	for corner in range(4):
+		_style_selected.set_corner_radius(corner, 5)
+
 	var lbl := Label.new()
 	lbl.text = "Objects"
 	lbl.add_theme_font_size_override("font_size", 13)
@@ -78,7 +93,8 @@ func _make_button(obj_type: int, tex: Texture2D, tip: String) -> Button:
 
 func _on_item_pressed(obj_type: int, btn: Button) -> void:
 	_selected = obj_type
-	for b in _buttons:
-		b.button_pressed = false
-	btn.button_pressed = true
+	if _selected_btn != null:
+		_selected_btn.add_theme_stylebox_override("normal", _style_normal)
+	_selected_btn = btn
+	btn.add_theme_stylebox_override("normal", _style_selected)
 	item_selected.emit(obj_type)

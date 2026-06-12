@@ -114,6 +114,7 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 	if terrain_sel != "":
 		cell.terrain_type = terrain_sel
 		cell.is_obstacle  = not TileRegistry.is_passable(terrain_sel)
+		cell.objects.clear()
 
 	if item_sel != ItemPalette.NONE_TYPE:
 		if not cell.objects.has(item_sel):

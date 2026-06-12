@@ -3,7 +3,7 @@ extends VBoxContainer
 
 signal terrain_selected(filename: String)
 
-const TILE_SIZE    := 48
+const TILE_SIZE    := 54
 const GRID_COLUMNS := 4
 
 # Tag priority order for group assignment.
@@ -13,13 +13,28 @@ const TAG_GROUPS := [
 	"arctic", "ice", "jungle", "volcanic", "constructed",
 ]
 
-var _search:   LineEdit      = null
-var _content:  VBoxContainer = null
-var _selected: String        = ""
-var _buttons:  Array[Button] = []
+var _search:        LineEdit      = null
+var _content:       VBoxContainer = null
+var _selected:      String        = ""
+var _buttons:       Array[Button] = []
+var _selected_btn:  Button        = null
+
+var _style_normal:   StyleBoxFlat = null
+var _style_selected: StyleBoxFlat = null
 
 
 func _ready() -> void:
+	_style_normal = StyleBoxFlat.new()
+	_style_normal.bg_color = Color(0, 0, 0, 0)
+
+	_style_selected = StyleBoxFlat.new()
+	_style_selected.bg_color = Color(0, 0.9, 0.9, 0.12)
+	_style_selected.border_color = Color(0, 0.9, 0.9)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		_style_selected.set_border_width(side, 2)
+	for corner in range(4):
+		_style_selected.set_corner_radius(corner, 5)
+
 	_search = LineEdit.new()
 	_search.placeholder_text = "Search tiles..."
 	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -85,6 +100,7 @@ func _add_group(title: String, tiles: Array) -> void:
 
 	var grid := GridContainer.new()
 	grid.columns = GRID_COLUMNS
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content.add_child(grid)
 
 	for tile in tiles:
@@ -107,10 +123,10 @@ func _add_group(title: String, tiles: Array) -> void:
 
 func _on_tile_pressed(fname: String, btn: Button) -> void:
 	_selected = fname
-	# Highlight the selected button.
-	for b in _buttons:
-		b.button_pressed = false
-	btn.button_pressed = true
+	if _selected_btn != null:
+		_selected_btn.add_theme_stylebox_override("normal", _style_normal)
+	_selected_btn = btn
+	btn.add_theme_stylebox_override("normal", _style_selected)
 	terrain_selected.emit(fname)
 
 

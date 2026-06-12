@@ -4,14 +4,9 @@ extends Node2D
 const CELL_SIZE  := ChunkData.CELL_SIZE
 const CHUNK_SIZE := ChunkData.CHUNK_SIZE
 
-# Object dot colours, keyed by MapObject.Type int value.
+# Fallback colours for objects without a sprite (keyed by MapObject.Type).
 const OBJ_COLORS := {
 	0: Color(0.55, 0.50, 0.45),  # ROCK
-	1: Color(0.30, 0.70, 0.35),  # HERB
-	2: Color(0.40, 0.70, 0.90),  # CRYSTAL
-	3: Color(0.95, 0.85, 0.20),  # COIN
-	4: Color(0.80, 0.75, 0.60),  # FEATHER
-	5: Color(0.70, 0.30, 0.80),  # POTION
 }
 
 var _data:        ChunkData = null
@@ -65,9 +60,7 @@ func _draw() -> void:
 			draw_rect(rect, Color(0, 0, 0, 0.07), false, 1.0)
 
 			for obj_type in cell.objects:
-				var center := Vector2(px + CELL_SIZE * 0.5, py + CELL_SIZE * 0.5)
-				var col: Color = OBJ_COLORS.get(obj_type, Color(1, 1, 1))
-				draw_circle(center, CELL_SIZE * 0.22, col)
+				_draw_object(obj_type, px, py)
 
 	# Hover highlight.
 	if _hover_cell.x >= 0 and _hover_cell.x < CHUNK_SIZE \
@@ -81,3 +74,18 @@ func _draw() -> void:
 
 	# Chunk border.
 	draw_rect(Rect2(0, 0, chunk_px, chunk_px), Color(0.6, 0.6, 0.6, 0.5), false, 1.5)
+
+
+func _draw_object(obj_type: int, px: int, py: int) -> void:
+	if PickableItemDef.is_pickable(obj_type):
+		var tex := TextureCache.get_object_texture(PickableItemDef.get_sprite(obj_type))
+		if tex != null:
+			var s  := float(CELL_SIZE) * 0.72
+			var ox := px + (CELL_SIZE - s) * 0.5
+			var oy := py + (CELL_SIZE - s) * 0.5
+			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
+			return
+	# Fallback: coloured square for ROCK / unknown.
+	var col: Color = OBJ_COLORS.get(obj_type, Color(0.7, 0.7, 0.7))
+	var m := CELL_SIZE * 0.2
+	draw_rect(Rect2(px + m, py + m, CELL_SIZE - m * 2, CELL_SIZE - m * 2), col)
