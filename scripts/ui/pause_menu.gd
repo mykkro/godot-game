@@ -4,14 +4,16 @@ extends CanvasLayer
 const MENU_SCENE := "res://scenes/menu.tscn"
 
 var _fog_manager: FogManager = null
+var _avatar:      Avatar     = null
 
 var _panel:  PanelContainer = null
 var _vbox:   VBoxContainer  = null
 
 
 ## Call from main._ready() after all other nodes are set up.
-func setup(fog_manager: FogManager) -> void:
+func setup(fog_manager: FogManager, avatar: Avatar) -> void:
 	_fog_manager = fog_manager
+	_avatar      = avatar
 
 
 func _ready() -> void:
@@ -81,12 +83,12 @@ func _on_resume() -> void:
 
 
 func _on_save_exit() -> void:
-	_save_fog()
+	_save_all()
 	get_tree().quit()
 
 
 func _on_main_menu() -> void:
-	_save_fog()
+	_save_all()
 	_set_paused(false)
 	get_tree().change_scene_to_file(MENU_SCENE)
 
@@ -102,9 +104,12 @@ func _set_paused(paused: bool) -> void:
 	get_tree().paused = paused
 
 
-func _save_fog() -> void:
+## Save all persistent game state: fog, chunks (via world unload), player pos.
+func _save_all() -> void:
 	if _fog_manager != null:
 		_fog_manager.save_all()
+	if _avatar != null:
+		SaveManager.save_player(_avatar.position, _avatar.heading)
 
 
 func _add_button(label: String, callback: Callable) -> void:

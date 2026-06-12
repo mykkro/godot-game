@@ -13,19 +13,30 @@ func _ready() -> void:
 	_fog_manager.setup(_world)
 	_avatar.setup(_world, _fog_manager)
 	_debug.setup(_world, _fog_manager, _avatar)
-	_pause_menu.setup(_fog_manager)
+	_pause_menu.setup(_fog_manager, _avatar)
 
 	# Now load the initial chunks; signals will reach FogManager correctly.
 	_world.start()
 
-	# Position the avatar on the first passable cell near chunk (0,0) centre.
-	var spawn := _find_spawn_position()
+	# Restore saved position, or find a spawn point for a fresh game.
+	var spawn := _load_or_find_spawn()
 	_avatar.position = spawn
+	var player_data  := SaveManager.load_player()
+	if not player_data.is_empty():
+		_avatar.heading = float(player_data.get("heading", 0.0))
 	_world.update_avatar_position(spawn)
 	_fog_manager.update_avatar_position(spawn)
 
 
 # ── Private ──────────────────────────────────────────────────────────────────
+
+## Returns saved avatar position when a save exists, otherwise scans for
+## the first passable cell near the origin.
+func _load_or_find_spawn() -> Vector2:
+	var data := SaveManager.load_player()
+	if not data.is_empty():
+		return Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
+	return _find_spawn_position()
 
 func _find_spawn_position() -> Vector2:
 	var chunk := _world.get_chunk(Vector2i(0, 0))

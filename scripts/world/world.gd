@@ -124,6 +124,10 @@ func _spawn_node(coord: Vector2i, data: ChunkData) -> void:
 
 func _unload_chunk(coord: Vector2i) -> void:
 	emit_signal("chunk_unloaded", coord)
+	# Re-save chunk so any runtime mutations (picked-up/dropped objects, etc.)
+	# are persisted before the data is discarded from memory.
+	if _chunks.has(coord):
+		ChunkPersistence.save(_chunks[coord])
 	if _nodes.has(coord):
 		(_nodes[coord] as ChunkNode).queue_free()
 		_nodes.erase(coord)
