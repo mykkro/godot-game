@@ -22,6 +22,7 @@ func _ready() -> void:
 	_btn_quit.pressed.connect(_on_quit)
 
 	_build_options_panel()
+	_build_version_label()
 
 	var settings := SaveManager.load_settings()
 	var vol      := float(settings.get("master_volume", DEFAULT_MASTER_VOLUME))
@@ -125,3 +126,22 @@ func _build_options_panel() -> void:
 
 	_options_panel.visible = false
 	add_child(_options_panel)
+
+
+func _build_version_label() -> void:
+	var ver := "v?"
+	var f := FileAccess.open("res://VERSION", FileAccess.READ)
+	if f != null:
+		ver = "v" + f.get_as_text().strip_edges()
+		f.close()
+
+	var lbl := Label.new()
+	lbl.text = ver
+	lbl.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	lbl.offset_left   = 10
+	lbl.offset_top    = -28
+	lbl.offset_right  = 80
+	lbl.offset_bottom = -8
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+	add_child(lbl)

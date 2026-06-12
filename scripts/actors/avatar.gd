@@ -10,6 +10,8 @@ const PICKUP_MASK    := 2
 const COLL_RADIUS         := 18.75
 const COLL_OFFSET_Y       := -29.4
 const PICKUP_SOUND_VOLUME := 1.0
+const SHOOT_SOUND_VOLUME  := 0.8
+const DROP_SOUND_VOLUME   := 0.9
 const SHOOT_COOLDOWN      := 0.5
 
 var _world:        World        = null
@@ -23,6 +25,8 @@ var _nearby_pickables: Dictionary = {}   # PickableNode → true
 var _pickup_area:  Area2D            = null
 var _sprite:       KnightSprite      = null
 var _pickup_sound: AudioStreamPlayer = null
+var _shoot_sound:  AudioStreamPlayer = null
+var _drop_sound:   AudioStreamPlayer = null
 var _shoot_cooldown: float           = 0.0
 
 
@@ -47,9 +51,19 @@ func _ready() -> void:
 	add_child(_sprite)
 
 	_pickup_sound = AudioStreamPlayer.new()
-	_pickup_sound.stream    = load("res://sounds/pickup.wav")
+	_pickup_sound.stream    = load("res://sounds/RPG Sound Pack/inventory/beads.wav")
 	_pickup_sound.volume_db = linear_to_db(PICKUP_SOUND_VOLUME)
 	add_child(_pickup_sound)
+
+	_shoot_sound = AudioStreamPlayer.new()
+	_shoot_sound.stream    = load("res://sounds/RPG Sound Pack/battle/swing.wav")
+	_shoot_sound.volume_db = linear_to_db(SHOOT_SOUND_VOLUME)
+	add_child(_shoot_sound)
+
+	_drop_sound = AudioStreamPlayer.new()
+	_drop_sound.stream    = load("res://sounds/RPG Sound Pack/inventory/coin.wav")
+	_drop_sound.volume_db = linear_to_db(DROP_SOUND_VOLUME)
+	add_child(_drop_sound)
 
 
 func _physics_process(delta: float) -> void:
@@ -172,6 +186,8 @@ func _try_shoot() -> void:
 	var proj   := ProjectileNode.new()
 	proj.initialize(origin, dir, _world)
 	_world.add_child(proj)
+	if _shoot_sound != null:
+		_shoot_sound.play()
 
 
 ## Called by Main when InventoryUI emits drop_requested(slot_index).
@@ -182,6 +198,8 @@ func drop_item(slot_index: int) -> void:
 	if not _world.drop_item_near(position, item_type):
 		return  # No free cell found; item stays in inventory.
 	inventory.items.remove_at(slot_index)
+	if _drop_sound != null:
+		_drop_sound.play()
 	if _inventory_ui != null:
 		_inventory_ui.notify_changed()
 

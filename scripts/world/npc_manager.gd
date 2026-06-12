@@ -1,7 +1,7 @@
 class_name NpcManager
 extends Node
 
-const SPAWN_CHANCE := 0.35   # probability per newly loaded chunk
+const SPAWN_CHANCE := 0.70   # probability per newly loaded chunk
 
 var _world: World = null
 

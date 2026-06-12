@@ -2,7 +2,7 @@ class_name NpcKnight
 extends Actor
 
 const MOVE_SPEED     := 80.0
-const LIFETIME       := 30.0
+const LIFETIME       := 60.0
 const IDLE_MIN       := 1.0
 const IDLE_MAX       := 3.5
 const STEP_CELLS_MIN := 3

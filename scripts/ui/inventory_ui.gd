@@ -1,13 +1,15 @@
 class_name InventoryUI
 extends CanvasLayer
 
-const COLS      := 10
-const ROWS      := 5
-const SLOT_SIZE := 54
-const SLOT_PAD  := 5
+const COLS             := 10
+const ROWS             := 5
+const SLOT_SIZE        := 54
+const SLOT_PAD         := 5
+const OPEN_SOUND_VOLUME := 0.3
 
-var _visible_flag: bool      = false
-var _inventory:    Inventory = null
+var _visible_flag: bool             = false
+var _inventory:    Inventory        = null
+var _open_sound:   AudioStreamPlayer = null
 
 var _center:      CenterContainer = null
 var _panel:       PanelContainer  = null
@@ -133,6 +135,11 @@ func _ready() -> void:
 	_context_menu.visible = false
 	add_child(_context_menu)   # added after backdrop so it renders in front
 
+	_open_sound = AudioStreamPlayer.new()
+	_open_sound.stream    = load("res://sounds/RPG Sound Pack/interface/interface3.wav")
+	_open_sound.volume_db = linear_to_db(OPEN_SOUND_VOLUME)
+	add_child(_open_sound)
+
 	_center.visible = false
 
 
@@ -157,6 +164,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_center.visible = _visible_flag
 		if _visible_flag:
 			_refresh()
+			if _open_sound != null:
+				_open_sound.play()
 		else:
 			_close_context_menu()
 		get_viewport().set_input_as_handled()
