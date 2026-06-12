@@ -7,8 +7,9 @@ var _fog_manager:  FogManager  = null
 var _avatar:       Avatar      = null
 var _npc_manager:  NpcManager  = null
 
-var _panel:  PanelContainer = null
-var _vbox:   VBoxContainer  = null
+var _center: CenterContainer = null
+var _panel:  PanelContainer  = null
+var _vbox:   VBoxContainer   = null
 
 
 ## Call from main._ready() after all other nodes are set up.
@@ -23,11 +24,13 @@ func _ready() -> void:
 	# Keep processing input even while the scene tree is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
-	_panel = PanelContainer.new()
-	_panel.process_mode = Node.PROCESS_MODE_ALWAYS
+	_center = CenterContainer.new()
+	_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_center.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_center)
 
-	# Centre the panel on screen.
-	_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_panel = PanelContainer.new()
+	_panel.process_mode       = Node.PROCESS_MODE_ALWAYS
 	_panel.custom_minimum_size = Vector2(280, 0)
 
 	var style := StyleBoxFlat.new()
@@ -44,7 +47,7 @@ func _ready() -> void:
 	style.set_content_margin_all(24)
 	_panel.add_theme_stylebox_override("panel", style)
 
-	add_child(_panel)
+	_center.add_child(_panel)
 
 	_vbox = VBoxContainer.new()
 	_vbox.add_theme_constant_override("separation", 14)
@@ -63,7 +66,7 @@ func _ready() -> void:
 	_add_button("Main Menu",     _on_main_menu)
 	_add_button("Exit",          _on_exit)
 
-	_panel.visible = false
+	_center.visible = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -102,7 +105,7 @@ func _on_exit() -> void:
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 func _set_paused(paused: bool) -> void:
-	_panel.visible    = paused
+	_center.visible   = paused
 	get_tree().paused = paused
 
 

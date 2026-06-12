@@ -8,6 +8,10 @@ const CHUNK_PIXEL_SIZE := ChunkData.CHUNK_PIXEL_SIZE
 
 ## Chebyshev radius (in chunks) to keep loaded around the avatar.
 const LOAD_RADIUS := 2
+## Preload one extra ring beyond LOAD_RADIUS — data only, no scene nodes.
+const PRELOAD_RADIUS    := 3
+## Max milliseconds per frame spent preloading (keeps frame time stable).
+const PRELOAD_BUDGET_MS := 2
 
 ## Emitted after a ChunkNode is added to the scene tree.
 signal chunk_loaded(coord: Vector2i)
@@ -20,10 +24,26 @@ var _chunks: Dictionary = {}
 var _nodes:  Dictionary = {}
 # last chunk the avatar was in; sentinel forces a load on first frame
 var _last_avatar_chunk := Vector2i(999999, 999999)
+# preloaded ChunkData for the ring just outside LOAD_RADIUS (no scene nodes yet)
+var _preload_cache: Dictionary = {}
+# ordered list of chunk coords still waiting to be preloaded
+var _preload_queue: Array = []
 
 
 func _ready() -> void:
 	pass  # Intentionally empty; call start() after connecting signals.
+
+
+func _process(_delta: float) -> void:
+	# Time-budgeted preloading: generate/load chunk data without spawning nodes.
+	var t0 := Time.get_ticks_msec()
+	while not _preload_queue.is_empty():
+		if Time.get_ticks_msec() - t0 >= PRELOAD_BUDGET_MS:
+			break
+		var coord: Vector2i = _preload_queue.pop_front()
+		if _chunks.has(coord) or _preload_cache.has(coord):
+			continue
+		_preload_cache[coord] = _load_or_generate(coord)
 
 
 ## Load the initial chunks around the world origin.
@@ -124,13 +144,13 @@ func world_to_cell_coords(world_pos: Vector2) -> Vector2i:
 # ── Private ──────────────────────────────────────────────────────────────────
 
 func _update_chunks(center: Vector2i) -> void:
-	# Build the set of chunks that should be loaded.
+	# Build the set of chunks that should be actively loaded (with scene nodes).
 	var needed: Dictionary = {}
 	for dy in range(-LOAD_RADIUS, LOAD_RADIUS + 1):
 		for dx in range(-LOAD_RADIUS, LOAD_RADIUS + 1):
 			needed[center + Vector2i(dx, dy)] = true
 
-	# Load any missing chunks.
+	# Load any missing chunks (uses preload cache when available).
 	for coord in needed:
 		if not _chunks.has(coord):
 			var data := _load_or_generate(coord)
@@ -145,8 +165,30 @@ func _update_chunks(center: Vector2i) -> void:
 	for coord in to_remove:
 		_unload_chunk(coord)
 
+	# Rebuild preload queue for the ring just outside the active zone.
+	var preload_ring: Dictionary = {}
+	for dy in range(-PRELOAD_RADIUS, PRELOAD_RADIUS + 1):
+		for dx in range(-PRELOAD_RADIUS, PRELOAD_RADIUS + 1):
+			var coord := center + Vector2i(dx, dy)
+			if not needed.has(coord):
+				preload_ring[coord] = true
+
+	_preload_queue.clear()
+	for coord in preload_ring:
+		if not _chunks.has(coord) and not _preload_cache.has(coord):
+			_preload_queue.append(coord)
+
+	# Evict cached data for coords no longer in the preload ring.
+	for coord in _preload_cache.keys():
+		if not preload_ring.has(coord):
+			_preload_cache.erase(coord)
+
 
 func _load_or_generate(coord: Vector2i) -> ChunkData:
+	if _preload_cache.has(coord):
+		var data: ChunkData = _preload_cache[coord]
+		_preload_cache.erase(coord)
+		return data
 	if ChunkPersistence.exists(coord.x, coord.y):
 		var loaded := ChunkPersistence.load_chunk(coord.x, coord.y)
 		if loaded != null:
