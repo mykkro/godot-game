@@ -9,6 +9,7 @@ const PANEL_WIDTH := 260
 
 var _lbl_chunk:     Label            = null
 var _lbl_cell:      Label            = null
+var _lbl_world:     Label            = null
 var _lbl_terrain:   Label            = null
 var _lbl_saved:     Label            = null
 var _lbl_status:    Label            = null
