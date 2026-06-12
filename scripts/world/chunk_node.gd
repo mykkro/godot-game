@@ -37,16 +37,17 @@ func _spawn_pickables() -> void:
 						(y + 0.5) * CELL_SIZE
 					)
 					add_child(node)
-					node.initialize(obj_type, x, y, _data)
+					node.initialize(obj_type, x, y, _data,
+							_data.get_pickable_count(x, y))
 
 
 ## Spawn a single PickableNode for an item already added to _data.
 ## Called by World.drop_item_near after mutating the ChunkData.
-func spawn_pickable_at(item_type: int, lx: int, ly: int) -> void:
+func spawn_pickable_at(item_type: int, lx: int, ly: int, count: int = 1) -> void:
 	var node := PickableNode.new()
 	node.position = Vector2((lx + 0.5) * CELL_SIZE, (ly + 0.5) * CELL_SIZE)
 	add_child(node)
-	node.initialize(item_type, lx, ly, _data)
+	node.initialize(item_type, lx, ly, _data, count)
 
 
 ## Rebuild the StaticBody2D collision shapes from current chunk data.

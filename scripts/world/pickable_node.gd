@@ -10,16 +10,19 @@ const AREA_RADIUS    := 15.0
 
 ## The item type this node represents (MapObject.Type value).
 var item_type: int = 0
+## Number of items in this world pile.
+var count: int = 1
 
-var _cell_x:    int       = 0
-var _cell_y:    int       = 0
+var _cell_x:     int       = 0
+var _cell_y:     int       = 0
 var _chunk_data: ChunkData = null
 
 
 ## Call immediately after adding to the scene tree.
 func initialize(p_item_type: int, p_cx: int, p_cy: int,
-				p_chunk_data: ChunkData) -> void:
+				p_chunk_data: ChunkData, p_count: int = 1) -> void:
 	item_type   = p_item_type
+	count       = maxi(1, p_count)
 	_cell_x     = p_cx
 	_cell_y     = p_cy
 	_chunk_data = p_chunk_data
@@ -44,10 +47,18 @@ func initialize(p_item_type: int, p_cx: int, p_cy: int,
 	add_child(col)
 
 
-## Remove from both the world node tree and CellData, then free self.
+## Reduce the pile count, keeping ChunkData in sync for persistence.
+func update_count(new_count: int) -> void:
+	count = new_count
+	if _chunk_data != null:
+		_chunk_data.set_pickable_count(_cell_x, _cell_y, count)
+
+
+## Fully remove from both the world node tree and CellData, then free self.
 func remove_from_world() -> void:
 	if _chunk_data != null:
 		var cell := _chunk_data.get_cell(_cell_x, _cell_y)
 		if cell != null:
 			cell.objects.erase(item_type)
+		_chunk_data.erase_pickable_count(_cell_x, _cell_y)
 	queue_free()

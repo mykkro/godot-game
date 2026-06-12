@@ -68,9 +68,9 @@ func get_chunk_node(coord: Vector2i) -> ChunkNode:
 
 
 ## Find the nearest passable, object-free cell within MAX_RADIUS of `near`,
-## add item_type to its CellData, spawn a PickableNode, and return true.
+## add item_type to its CellData, spawn a PickableNode with count, return true.
 ## Returns false when no suitable cell is found.
-func drop_item_near(near: Vector2, item_type: int) -> bool:
+func drop_item_near(near: Vector2, item_type: int, count: int = 1) -> bool:
 	if not PickableItemDef.is_pickable(item_type):
 		return false
 	const MAX_RADIUS := 8
@@ -96,9 +96,10 @@ func drop_item_near(near: Vector2, item_type: int) -> bool:
 				if cell == null or cell.is_obstacle or not cell.objects.is_empty():
 					continue
 				cell.add_object(item_type)
+				chunk.set_pickable_count(lx, ly, count)
 				var node := get_chunk_node(cc)
 				if node != null:
-					node.spawn_pickable_at(item_type, lx, ly)
+					node.spawn_pickable_at(item_type, lx, ly, count)
 				return true
 
 	return false

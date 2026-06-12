@@ -63,6 +63,8 @@ static func generate(chunk_x: int, chunk_y: int) -> ChunkData:
 			var cell := CellData.new(terrain)
 			if not cell.is_obstacle:
 				_place_objects(rng, cell)
+				if cell.objects.has(MapObject.Type.COIN):
+					chunk.set_pickable_count(x, y, _coin_stack_count(rng))
 			chunk.set_cell(x, y, cell)
 
 	return chunk
@@ -106,6 +108,11 @@ static func _pick_weighted(rng: RandomNumberGenerator, weights: Array) -> int:
 		if roll < acc:
 			return (entry as Array)[0]
 	return (weights[0] as Array)[0]
+
+
+## Random coin stack size 1-30, heavily weighted toward lower values.
+static func _coin_stack_count(rng: RandomNumberGenerator) -> int:
+	return int(rng.randf() * rng.randf() * 29.0) + 1
 
 
 ## Deterministic FNV-1a-inspired seed from chunk grid coordinates.

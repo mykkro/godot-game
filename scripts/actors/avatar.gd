@@ -102,12 +102,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## Returns the name of the nearest pickable for the hint UI, or "".
+## Returns the hint label for the nearest pickable ("12 × Coin"), or "".
 func get_nearest_pickable_name() -> String:
 	var nearest := _get_nearest_pickable()
 	if nearest == null:
 		return ""
-	return PickableItemDef.get_display_name(nearest.item_type)
+	var name := PickableItemDef.get_display_name(nearest.item_type)
+	if nearest.count > 1:
+		return "%d × %s" % [nearest.count, name]
+	return name
+
+
+## Returns the item type of the nearest pickable, or -1 if none.
+func get_nearest_pickable_type() -> int:
+	var nearest := _get_nearest_pickable()
+	return nearest.item_type if nearest != null else -1
 
 
 # ── Private ──────────────────────────────────────────────────────────────────
@@ -165,15 +174,33 @@ func _try_pickup() -> void:
 	var target := _get_nearest_pickable()
 	if target == null:
 		return
-	if not inventory.has_space():
+	var can_take := _space_for_item(target.item_type)
+	if can_take == 0:
 		return
-	inventory.add(target.item_type)
-	_nearby_pickables.erase(target)
-	target.remove_from_world()
+	var take := mini(target.count, can_take)
+	for _i in range(take):
+		inventory.add(target.item_type)
+	if take >= target.count:
+		_nearby_pickables.erase(target)
+		target.remove_from_world()
+	else:
+		target.update_count(target.count - take)
 	if _pickup_sound != null:
 		_pickup_sound.play()
 	if _inventory_ui != null:
 		_inventory_ui.notify_changed()
+
+
+## How many of item_type can be absorbed into the current inventory
+## (filling existing partial stacks first, then empty slots).
+func _space_for_item(item_type: int) -> int:
+	var max_stack := PickableItemDef.max_stack_size(item_type)
+	var space     := 0
+	for i in range(inventory.count()):
+		if inventory.get_type(i) == item_type:
+			space += max_stack - inventory.get_count(i)
+	space += (Inventory.MAX_ITEMS - inventory.count()) * max_stack
+	return space
 
 
 func _try_shoot() -> void:
@@ -190,14 +217,42 @@ func _try_shoot() -> void:
 		_shoot_sound.play()
 
 
-## Called by Main when InventoryUI emits drop_requested(slot_index).
-func drop_item(slot_index: int) -> void:
-	if slot_index < 0 or slot_index >= inventory.items.size():
+## Called by InventoryUI via drop_requested(slot_index, count).
+## Merges into nearby same-type piles first, then drops any remainder as a new pile.
+func drop_item(slot_index: int, count: int) -> void:
+	if slot_index < 0 or slot_index >= inventory.count():
 		return
-	var item_type := inventory.items[slot_index]
-	if not _world.drop_item_near(position, item_type):
-		return  # No free cell found; item stays in inventory.
-	inventory.items.remove_at(slot_index)
+	var item_type  := inventory.get_type(slot_index)
+	var remaining  := count
+	var max_stack  := PickableItemDef.max_stack_size(item_type)
+
+	# Merge into nearby stackable piles before creating a new one.
+	if max_stack > 1:
+		for node in _nearby_pickables.keys():
+			if remaining <= 0:
+				break
+			if not is_instance_valid(node):
+				continue
+			var p := node as PickableNode
+			if p.item_type != item_type:
+				continue
+			var space := max_stack - p.count
+			if space <= 0:
+				continue
+			var merge := mini(remaining, space)
+			p.update_count(p.count + merge)
+			remaining -= merge
+
+	# Drop any remainder onto an adjacent free cell.
+	var drop_origin := position + Vector2(0.0, COLL_OFFSET_Y)
+	if remaining > 0:
+		if _world.drop_item_near(drop_origin, item_type, remaining):
+			remaining = 0
+
+	var dropped := count - remaining
+	if dropped == 0:
+		return
+	inventory.remove_from_slot(slot_index, dropped)
 	if _drop_sound != null:
 		_drop_sound.play()
 	if _inventory_ui != null:

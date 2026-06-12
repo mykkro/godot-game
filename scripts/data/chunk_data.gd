@@ -13,12 +13,15 @@ var chunk_y: int = 0
 
 ## 2-D grid of CellData, indexed as cells[y][x].
 var cells: Array = []
+## Stack counts for pickable objects, keyed by x * CHUNK_SIZE + y.
+var pickable_counts: Dictionary = {}
 
 
 func _init(p_cx: int = 0, p_cy: int = 0) -> void:
-	chunk_x = p_cx
-	chunk_y = p_cy
-	cells   = []
+	chunk_x        = p_cx
+	chunk_y        = p_cy
+	cells          = []
+	pickable_counts = {}
 	for _y in range(CHUNK_SIZE):
 		var row: Array = []
 		for _x in range(CHUNK_SIZE):
@@ -39,6 +42,18 @@ func set_cell(x: int, y: int, cell: CellData) -> void:
 	cells[y][x] = cell
 
 
+func get_pickable_count(x: int, y: int) -> int:
+	return pickable_counts.get(x * CHUNK_SIZE + y, 1)
+
+
+func set_pickable_count(x: int, y: int, n: int) -> void:
+	pickable_counts[x * CHUNK_SIZE + y] = n
+
+
+func erase_pickable_count(x: int, y: int) -> void:
+	pickable_counts.erase(x * CHUNK_SIZE + y)
+
+
 ## Unique string key for this chunk (used for file naming).
 func get_key() -> String:
 	return "%d_%d" % [chunk_x, chunk_y]
@@ -51,10 +66,16 @@ func to_dict() -> Dictionary:
 		for x in range(CHUNK_SIZE):
 			row.append((cells[y][x] as CellData).to_dict())
 		rows.append(row)
+	# Serialize pickable_counts as [[key, value], ...] (JSON keys must be strings,
+	# but we want int keys internally; storing as pairs avoids string→int round-trip).
+	var pc_pairs: Array = []
+	for k in pickable_counts:
+		pc_pairs.append([int(k), int(pickable_counts[k])])
 	return {
-		"chunk_x": chunk_x,
-		"chunk_y": chunk_y,
-		"cells":   rows,
+		"chunk_x":        chunk_x,
+		"chunk_y":        chunk_y,
+		"cells":          rows,
+		"pickable_counts": pc_pairs,
 	}
 
 
@@ -65,4 +86,6 @@ static func from_dict(data: Dictionary) -> ChunkData:
 		var row: Array = rows[y]
 		for x in range(mini(row.size(), CHUNK_SIZE)):
 			chunk.cells[y][x] = CellData.from_dict(row[x])
+	for pair in data.get("pickable_counts", []):
+		chunk.pickable_counts[int((pair as Array)[0])] = int((pair as Array)[1])
 	return chunk
