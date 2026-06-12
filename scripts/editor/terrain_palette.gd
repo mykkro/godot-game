@@ -3,7 +3,7 @@ extends VBoxContainer
 
 signal terrain_selected(filename: String)
 
-const TILE_SIZE    := 54
+const TILE_SIZE    := 46
 const GRID_COLUMNS := 4
 
 # Tag priority order for group assignment.
@@ -28,12 +28,12 @@ func _ready() -> void:
 	_style_normal.bg_color = Color(0, 0, 0, 0)
 
 	_style_selected = StyleBoxFlat.new()
-	_style_selected.bg_color = Color(0, 0.9, 0.9, 0.12)
+	_style_selected.bg_color = Color(0, 0, 0, 0)
 	_style_selected.border_color = Color(0, 0.9, 0.9)
 	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
-		_style_selected.set_border_width(side, 2)
+		_style_selected.set_border_width(side, 3)
 	for corner in range(4):
-		_style_selected.set_corner_radius(corner, 5)
+		_style_selected.set_corner_radius(corner, 4)
 
 	_search = LineEdit.new()
 	_search.placeholder_text = "Search tiles..."

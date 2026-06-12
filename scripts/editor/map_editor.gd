@@ -35,8 +35,9 @@ func _build_scene_tree() -> void:
 	add_child(world_layer)
 
 	_camera = EditorCamera.new()
-	_camera.position = Vector2.ZERO
-	_camera.zoom     = Vector2(1.0, 1.0)
+	# Centre on chunk (0,0); zoom out so the full chunk is visible at startup.
+	_camera.position = Vector2(512, 512)
+	_camera.zoom     = Vector2(0.5, 0.5)
 	world_layer.add_child(_camera)
 	_camera.make_current()
 
