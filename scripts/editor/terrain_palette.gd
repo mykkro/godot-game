@@ -13,26 +13,22 @@ const TAG_GROUPS := [
 	"arctic", "ice", "jungle", "volcanic", "constructed",
 ]
 
-var _search:   LineEdit       = null
-var _scroll:   ScrollContainer = null
-var _content:  VBoxContainer  = null
-var _selected: String         = ""
-var _buttons:  Array[Button]  = []
+var _search:   LineEdit      = null
+var _content:  VBoxContainer = null
+var _selected: String        = ""
+var _buttons:  Array[Button] = []
 
 
 func _ready() -> void:
 	_search = LineEdit.new()
 	_search.placeholder_text = "Search tiles..."
+	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_search.text_changed.connect(_on_search_changed)
 	add_child(_search)
 
-	_scroll = ScrollContainer.new()
-	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(_scroll)
-
 	_content = VBoxContainer.new()
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_scroll.add_child(_content)
+	add_child(_content)
 
 	_build_palette("")
 
