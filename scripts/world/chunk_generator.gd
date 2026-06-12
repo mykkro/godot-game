@@ -39,14 +39,14 @@ static func generate(chunk_x: int, chunk_y: int) -> ChunkData:
 
 			# Left neighbour boosts its terrain type (smooths within-biome patches).
 			if x > 0:
-				var left_type: int = t_row[x - 1]
+				var left_type: String = t_row[x - 1]
 				for i in range(weights.size()):
 					if (weights[i] as Array)[0] == left_type:
 						(weights[i] as Array)[1] = int((weights[i] as Array)[1] * (1.0 + BLEND_FACTOR * 3.0))
 
 			# Top neighbour boosts its terrain type.
 			if y > 0:
-				var top_type: int = (terrain_grid[y - 1] as Array)[x]
+				var top_type: String = (terrain_grid[y - 1] as Array)[x]
 				for i in range(weights.size()):
 					if (weights[i] as Array)[0] == top_type:
 						(weights[i] as Array)[1] = int((weights[i] as Array)[1] * (1.0 + BLEND_FACTOR * 3.0))
@@ -58,7 +58,7 @@ static func generate(chunk_x: int, chunk_y: int) -> ChunkData:
 	# Second pass: build CellData, place objects using each cell's own biome.
 	for y in range(ChunkData.CHUNK_SIZE):
 		for x in range(ChunkData.CHUNK_SIZE):
-			var terrain:    int = (terrain_grid[y] as Array)[x]
+			var terrain: String = (terrain_grid[y] as Array)[x]
 			var cell_biome: int = (biome_grid[y]   as Array)[x]
 			var cell := CellData.new(terrain)
 			if not cell.is_obstacle:
@@ -96,8 +96,8 @@ static func _copy_weights(source: Array) -> Array:
 	return out
 
 
-## Weighted random pick: each entry is [type_int, weight_int].
-static func _pick_weighted(rng: RandomNumberGenerator, weights: Array) -> int:
+## Weighted random pick: each entry is [filename String, weight_int].
+static func _pick_weighted(rng: RandomNumberGenerator, weights: Array) -> String:
 	var total := 0
 	for entry in weights:
 		total += (entry as Array)[1]
@@ -106,8 +106,8 @@ static func _pick_weighted(rng: RandomNumberGenerator, weights: Array) -> int:
 	for entry in weights:
 		acc += (entry as Array)[1]
 		if roll < acc:
-			return (entry as Array)[0]
-	return (weights[0] as Array)[0]
+			return str((entry as Array)[0])
+	return str((weights[0] as Array)[0])
 
 
 ## Random coin stack size 1-30, heavily weighted toward lower values.
