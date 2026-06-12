@@ -65,7 +65,7 @@ func get_nearest_pickable_name() -> String:
 	var nearest := _get_nearest_pickable()
 	if nearest == null:
 		return ""
-	return PickableItemDef.get_name(nearest.item_type)
+	return PickableItemDef.get_display_name(nearest.item_type)
 
 
 func _draw() -> void:
@@ -126,6 +126,18 @@ func _try_pickup() -> void:
 	inventory.add(target.item_type)
 	_nearby_pickables.erase(target)
 	target.remove_from_world()
+	if _inventory_ui != null:
+		_inventory_ui.notify_changed()
+
+
+## Called by Main when InventoryUI emits drop_requested(slot_index).
+func drop_item(slot_index: int) -> void:
+	if slot_index < 0 or slot_index >= inventory.items.size():
+		return
+	var item_type := inventory.items[slot_index]
+	if not _world.drop_item_near(position, item_type):
+		return  # No free cell found; item stays in inventory.
+	inventory.items.remove_at(slot_index)
 	if _inventory_ui != null:
 		_inventory_ui.notify_changed()
 
