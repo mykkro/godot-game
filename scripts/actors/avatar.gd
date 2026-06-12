@@ -7,9 +7,10 @@ const PICKUP_RADIUS  := 52.0   # pixels; pickup detection zone radius
 const PICKUP_MASK    := 2
 
 ## Collision circle constants (world pixels at scale 0.56 / 256-px frame).
-const COLL_RADIUS        := 18.75
+const COLL_RADIUS         := 18.75
+const COLL_OFFSET_Y       := -29.4
 const PICKUP_SOUND_VOLUME := 1.0
-const COLL_OFFSET_Y := -29.4
+const SHOOT_COOLDOWN      := 0.5
 
 var _world:        World        = null
 var _fog_manager:  FogManager   = null
@@ -22,6 +23,7 @@ var _nearby_pickables: Dictionary = {}   # PickableNode → true
 var _pickup_area:  Area2D            = null
 var _sprite:       KnightSprite      = null
 var _pickup_sound: AudioStreamPlayer = null
+var _shoot_cooldown: float           = 0.0
 
 
 ## Must be called after the node is in the scene tree (from Main._ready).
@@ -33,6 +35,9 @@ func setup(world: World, fog_manager: FogManager,
 
 
 func _ready() -> void:
+	# All actors share ACTOR_LAYER so player and NPCs block each other.
+	collision_layer = ACTOR_LAYER
+	collision_mask  = ACTOR_LAYER
 	super._ready()   # calls _setup_collision() → overridden below
 	_setup_pickup_area()
 
@@ -47,7 +52,7 @@ func _ready() -> void:
 	add_child(_pickup_sound)
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	var dir := _read_input()
 
 	if dir != Vector2.ZERO:
@@ -64,6 +69,9 @@ func _physics_process(_delta: float) -> void:
 	if _fog_manager != null:
 		_fog_manager.update_avatar_position(position)
 
+	if _shoot_cooldown > 0.0:
+		_shoot_cooldown -= delta
+
 	if _sprite != null:
 		_sprite.update_anim(velocity != Vector2.ZERO, heading)
 
@@ -74,6 +82,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	var ke := event as InputEventKey
 	if ke.keycode == KEY_E and ke.pressed and not ke.echo:
 		_try_pickup()
+		get_viewport().set_input_as_handled()
+	elif ke.keycode == KEY_CTRL and ke.pressed and not ke.echo:
+		_try_shoot()
 		get_viewport().set_input_as_handled()
 
 
@@ -149,6 +160,18 @@ func _try_pickup() -> void:
 		_pickup_sound.play()
 	if _inventory_ui != null:
 		_inventory_ui.notify_changed()
+
+
+func _try_shoot() -> void:
+	if _shoot_cooldown > 0.0 or _world == null:
+		return
+	_shoot_cooldown = SHOOT_COOLDOWN
+	var dir    := Vector2(cos(heading), sin(heading))
+	var origin := position + Vector2(0.0, COLL_OFFSET_Y) \
+			+ dir * (COLL_RADIUS + ProjectileNode.RADIUS + 2.0)
+	var proj   := ProjectileNode.new()
+	proj.initialize(origin, dir, _world)
+	_world.add_child(proj)
 
 
 ## Called by Main when InventoryUI emits drop_requested(slot_index).

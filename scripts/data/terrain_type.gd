@@ -29,6 +29,13 @@ static func get_color(type: int) -> Color:
 		Type.PATH:       return Color(0.70, 0.60, 0.42)
 	return Color.MAGENTA
 
+## Whether projectiles are stopped by this terrain type.
+## Water/deep-water are impassable for actors but shots fly freely over them.
+## Future wall terrains should return true here.
+static func blocks_projectile(type: int) -> bool:
+	return false
+
+
 ## Whether actors can walk on this terrain type.
 static func is_passable(type: int) -> bool:
 	match type:

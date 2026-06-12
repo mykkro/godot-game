@@ -7,12 +7,15 @@ extends Node2D
 @onready var _pause_menu:   PauseMenu    = $PauseMenu
 @onready var _inventory_ui: InventoryUI  = $InventoryUI
 @onready var _pickup_hint:  PickupHint   = $PickupHint
+@onready var _minimap:      MinimapUI    = $MinimapUI
+@onready var _npc_manager:  NpcManager   = $NpcManager
 
 
 func _ready() -> void:
-	# Wire FogManager to World signals BEFORE world.start() so that every
-	# chunk_loaded signal fired during startup is received by FogManager.
+	# Wire FogManager and NpcManager to World signals BEFORE world.start() so
+	# that every chunk_loaded signal fired during startup is received by both.
 	_fog_manager.setup(_world)
+	_npc_manager.setup(_world)
 
 	# Load saved inventory (empty Inventory if no save exists).
 	_avatar.inventory = SaveManager.load_inventory()
@@ -23,6 +26,7 @@ func _ready() -> void:
 	_pause_menu.setup(_fog_manager, _avatar)
 	_inventory_ui.setup(_avatar.inventory)
 	_pickup_hint.setup(_avatar)
+	_minimap.setup(_world, _fog_manager, _avatar)
 
 	# Now load the initial chunks; signals will reach FogManager correctly.
 	_world.start()

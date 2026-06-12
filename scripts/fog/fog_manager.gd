@@ -21,6 +21,11 @@ var _renderers: Dictionary = {}  # Vector2i → FogRenderer
 var _last_update_pos := Vector2(INF, INF)
 
 
+## Returns the FogData for a loaded chunk, or null if not loaded.
+func get_fog_data(coord: Vector2i) -> FogData:
+	return _fog_data.get(coord, null)
+
+
 ## Wire this to the World node.  Call from main._ready() BEFORE world.start().
 func setup(world: World) -> void:
 	world.chunk_loaded.connect(_on_chunk_loaded)

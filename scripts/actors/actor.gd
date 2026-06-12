@@ -1,6 +1,9 @@
 class_name Actor
 extends CharacterBody2D
 
+## Physics layer shared by all actor types so they collide with each other.
+const ACTOR_LAYER := 1
+
 ## Facing direction in radians.  0 = right (+X), PI/2 = down (+Y).
 var heading: float = 0.0
 
