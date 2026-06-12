@@ -34,61 +34,61 @@ static func get_icon_filename(biome: int) -> String:
 
 
 ## Terrain-type weights for chunk generation.
-## Each entry: [TerrainType.Type value, weight int].
+## Each entry: [filename String, weight int].
 static func terrain_weights(biome: int) -> Array:
 	match biome:
 		Type.PLAINS:
 			return [
-				[TerrainType.Type.GRASS,       60],
-				[TerrainType.Type.DIRT,        20],
-				[TerrainType.Type.STONE,        4],
-				[TerrainType.Type.WATER,        4],
-				[TerrainType.Type.SAND,         5],
-				[TerrainType.Type.SWAMP,        3],
-				[TerrainType.Type.GRAVEL,       4],
+				["grass.png",           60],
+				["mud.png",             20],
+				["granite floor.png",    4],
+				["water.png",            4],
+				["sand.png",             5],
+				["swamp grass sep.png",  3],
+				["gravel.png",           4],
 			]
 		Type.CAVES:
 			return [
-				[TerrainType.Type.STONE,       55],
-				[TerrainType.Type.GRAVEL,      25],
-				[TerrainType.Type.DIRT,        10],
-				[TerrainType.Type.WATER,        8],
-				[TerrainType.Type.DEEP_WATER,   2],
+				["granite floor.png",   55],
+				["gravel.png",          25],
+				["mud.png",             10],
+				["water.png",            8],
+				["deepocean.png",        2],
 			]
 		Type.SEA:
 			return [
-				[TerrainType.Type.DEEP_WATER,  45],
-				[TerrainType.Type.WATER,       40],
-				[TerrainType.Type.SAND,        15],
+				["deepocean.png",       45],
+				["water.png",           40],
+				["sand.png",            15],
 			]
 		Type.ROCKIES:
 			return [
-				[TerrainType.Type.STONE,       45],
-				[TerrainType.Type.GRAVEL,      30],
-				[TerrainType.Type.DIRT,        10],
-				[TerrainType.Type.SNOW,         7],
-				[TerrainType.Type.PATH,         5],
-				[TerrainType.Type.SAND,         3],
+				["granite floor.png",   45],
+				["gravel.png",          30],
+				["mud.png",             10],
+				["snow.png",             7],
+				["path.png",             5],
+				["sand.png",             3],
 			]
 		Type.SNOW:
 			return [
-				[TerrainType.Type.SNOW,        65],
-				[TerrainType.Type.STONE,       12],
-				[TerrainType.Type.GRAVEL,       8],
-				[TerrainType.Type.WATER,        5],
-				[TerrainType.Type.DIRT,         5],
-				[TerrainType.Type.PATH,         5],
+				["snow.png",            65],
+				["granite floor.png",   12],
+				["gravel.png",           8],
+				["water.png",            5],
+				["mud.png",              5],
+				["path.png",             5],
 			]
 		Type.FIELDS:
 			return [
-				[TerrainType.Type.GRASS,       50],
-				[TerrainType.Type.DIRT,        30],
-				[TerrainType.Type.SAND,         6],
-				[TerrainType.Type.WATER,        6],
-				[TerrainType.Type.SWAMP,        4],
-				[TerrainType.Type.PATH,         4],
+				["grass.png",           50],
+				["mud.png",             30],
+				["sand.png",             6],
+				["water.png",            6],
+				["swamp grass sep.png",  4],
+				["path.png",             4],
 			]
-	return [[TerrainType.Type.GRASS, 1]]
+	return [["grass.png", 1]]
 
 
 ## Probability that a passable cell receives a rock obstacle.
