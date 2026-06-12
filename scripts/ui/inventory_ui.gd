@@ -157,6 +157,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_center.visible = _visible_flag
 		if _visible_flag:
 			_refresh()
+		else:
+			_close_context_menu()
 		get_viewport().set_input_as_handled()
 
 
