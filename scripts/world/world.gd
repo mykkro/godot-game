@@ -1,0 +1,130 @@
+class_name World
+extends Node2D
+
+## Pixel size of one cell and one chunk (mirrors ChunkData constants).
+const CELL_SIZE        := ChunkData.CELL_SIZE
+const CHUNK_SIZE       := ChunkData.CHUNK_SIZE
+const CHUNK_PIXEL_SIZE := ChunkData.CHUNK_PIXEL_SIZE
+
+## Chebyshev radius (in chunks) to keep loaded around the avatar.
+const LOAD_RADIUS := 2
+
+## Emitted after a ChunkNode is added to the scene tree.
+signal chunk_loaded(coord: Vector2i)
+## Emitted just before a ChunkNode is freed.
+signal chunk_unloaded(coord: Vector2i)
+
+# loaded chunk data, keyed by Vector2i chunk coordinates
+var _chunks: Dictionary = {}
+# live ChunkNode scene nodes, keyed by Vector2i chunk coordinates
+var _nodes:  Dictionary = {}
+# last chunk the avatar was in; sentinel forces a load on first frame
+var _last_avatar_chunk := Vector2i(999999, 999999)
+
+
+func _ready() -> void:
+	pass  # Intentionally empty; call start() after connecting signals.
+
+
+## Load the initial chunks around the world origin.
+## Call this from main._ready() AFTER wiring up all signal listeners
+## (e.g. FogManager) so they receive chunk_loaded for every startup chunk.
+func start() -> void:
+	_update_chunks(Vector2i(0, 0))
+
+
+## Called by Avatar every physics frame.  Triggers chunk streaming when
+## the avatar crosses into a new chunk.
+func update_avatar_position(world_pos: Vector2) -> void:
+	var coord := world_to_chunk_coords(world_pos)
+	if coord != _last_avatar_chunk:
+		_last_avatar_chunk = coord
+		_update_chunks(coord)
+
+
+## Returns the ChunkData for a loaded chunk, or null.
+func get_chunk(coord: Vector2i) -> ChunkData:
+	return _chunks.get(coord, null)
+
+
+## Returns the CellData at the given world position, or null if not loaded.
+func get_cell_at(world_pos: Vector2) -> CellData:
+	var gc    := world_to_cell_coords(world_pos)
+	var cc    := Vector2i(
+		int(floor(float(gc.x) / CHUNK_SIZE)),
+		int(floor(float(gc.y) / CHUNK_SIZE))
+	)
+	var chunk := get_chunk(cc)
+	if chunk == null:
+		return null
+	var lx := gc.x - cc.x * CHUNK_SIZE
+	var ly := gc.y - cc.y * CHUNK_SIZE
+	return chunk.get_cell(lx, ly)
+
+
+## Convert a world-space position to chunk grid coordinates.
+func world_to_chunk_coords(world_pos: Vector2) -> Vector2i:
+	return Vector2i(
+		int(floor(world_pos.x / CHUNK_PIXEL_SIZE)),
+		int(floor(world_pos.y / CHUNK_PIXEL_SIZE))
+	)
+
+
+## Convert a world-space position to global cell coordinates.
+func world_to_cell_coords(world_pos: Vector2) -> Vector2i:
+	return Vector2i(
+		int(floor(world_pos.x / CELL_SIZE)),
+		int(floor(world_pos.y / CELL_SIZE))
+	)
+
+
+# ── Private ──────────────────────────────────────────────────────────────────
+
+func _update_chunks(center: Vector2i) -> void:
+	# Build the set of chunks that should be loaded.
+	var needed: Dictionary = {}
+	for dy in range(-LOAD_RADIUS, LOAD_RADIUS + 1):
+		for dx in range(-LOAD_RADIUS, LOAD_RADIUS + 1):
+			needed[center + Vector2i(dx, dy)] = true
+
+	# Load any missing chunks.
+	for coord in needed:
+		if not _chunks.has(coord):
+			var data := _load_or_generate(coord)
+			_chunks[coord] = data
+			_spawn_node(coord, data)
+
+	# Unload chunks that are too far away.
+	var to_remove: Array = []
+	for coord in _chunks:
+		if not needed.has(coord):
+			to_remove.append(coord)
+	for coord in to_remove:
+		_unload_chunk(coord)
+
+
+func _load_or_generate(coord: Vector2i) -> ChunkData:
+	if ChunkPersistence.exists(coord.x, coord.y):
+		var loaded := ChunkPersistence.load_chunk(coord.x, coord.y)
+		if loaded != null:
+			return loaded
+	var chunk := ChunkGenerator.generate(coord.x, coord.y)
+	ChunkPersistence.save(chunk)
+	return chunk
+
+
+func _spawn_node(coord: Vector2i, data: ChunkData) -> void:
+	var node      := ChunkNode.new()
+	node.position  = Vector2(coord.x * CHUNK_PIXEL_SIZE, coord.y * CHUNK_PIXEL_SIZE)
+	add_child(node)
+	node.initialize(data)
+	_nodes[coord] = node
+	emit_signal("chunk_loaded", coord)
+
+
+func _unload_chunk(coord: Vector2i) -> void:
+	emit_signal("chunk_unloaded", coord)
+	if _nodes.has(coord):
+		(_nodes[coord] as ChunkNode).queue_free()
+		_nodes.erase(coord)
+	_chunks.erase(coord)

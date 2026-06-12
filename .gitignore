@@ -1,0 +1,10 @@
+# Godot editor and cache files
+.godot/
+
+# Exported binaries
+*.exe
+*.x86_64
+*.apk
+
+# macOS
+.DS_Store
