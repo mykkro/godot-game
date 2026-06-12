@@ -110,6 +110,7 @@ func _save_all() -> void:
 		_fog_manager.save_all()
 	if _avatar != null:
 		SaveManager.save_player(_avatar.position, _avatar.heading)
+		SaveManager.save_inventory(_avatar.inventory)
 
 
 func _add_button(label: String, callback: Callable) -> void:

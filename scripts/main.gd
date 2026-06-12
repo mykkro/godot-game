@@ -1,19 +1,27 @@
 extends Node2D
 
-@onready var _world:       World        = $World
-@onready var _fog_manager: FogManager   = $FogManager
-@onready var _avatar:      Avatar       = $Avatar
-@onready var _debug:       DebugOverlay = $DebugOverlay
-@onready var _pause_menu:  PauseMenu    = $PauseMenu
+@onready var _world:        World        = $World
+@onready var _fog_manager:  FogManager   = $FogManager
+@onready var _avatar:       Avatar       = $Avatar
+@onready var _debug:        DebugOverlay = $DebugOverlay
+@onready var _pause_menu:   PauseMenu    = $PauseMenu
+@onready var _inventory_ui: InventoryUI  = $InventoryUI
+@onready var _pickup_hint:  PickupHint   = $PickupHint
 
 
 func _ready() -> void:
 	# Wire FogManager to World signals BEFORE world.start() so that every
 	# chunk_loaded signal fired during startup is received by FogManager.
 	_fog_manager.setup(_world)
-	_avatar.setup(_world, _fog_manager)
+
+	# Load saved inventory (empty Inventory if no save exists).
+	_avatar.inventory = SaveManager.load_inventory()
+
+	_avatar.setup(_world, _fog_manager, _inventory_ui)
 	_debug.setup(_world, _fog_manager, _avatar)
 	_pause_menu.setup(_fog_manager, _avatar)
+	_inventory_ui.setup(_avatar.inventory)
+	_pickup_hint.setup(_avatar)
 
 	# Now load the initial chunks; signals will reach FogManager correctly.
 	_world.start()

@@ -2,9 +2,10 @@ class_name SaveManager
 
 ## Central place for save-game path constants and wipe helpers.
 
-const CHUNKS_DIR  := "user://chunks/"
-const FOG_DIR     := "user://fog/"
-const PLAYER_FILE := "user://player.json"
+const CHUNKS_DIR     := "user://chunks/"
+const FOG_DIR        := "user://fog/"
+const PLAYER_FILE    := "user://player.json"
+const INVENTORY_FILE := "user://inventory.json"
 
 
 ## Returns true when a previous game session exists (any saved chunk).
@@ -60,6 +61,35 @@ static func wipe() -> void:
 	_wipe_dir(FOG_DIR)
 	if FileAccess.file_exists(PLAYER_FILE):
 		DirAccess.remove_absolute(PLAYER_FILE)
+	if FileAccess.file_exists(INVENTORY_FILE):
+		DirAccess.remove_absolute(INVENTORY_FILE)
+
+
+## Persist the player inventory.
+static func save_inventory(inv: Inventory) -> void:
+	var file := FileAccess.open(INVENTORY_FILE, FileAccess.WRITE)
+	if file == null:
+		push_error("SaveManager: cannot write inventory save (error %d)" \
+				% FileAccess.get_open_error())
+		return
+	file.store_string(JSON.stringify(inv.to_dict()))
+	file.close()
+
+
+## Load inventory from disk.  Returns a new empty Inventory when no save exists.
+static func load_inventory() -> Inventory:
+	if not FileAccess.file_exists(INVENTORY_FILE):
+		return Inventory.new()
+	var file := FileAccess.open(INVENTORY_FILE, FileAccess.READ)
+	if file == null:
+		return Inventory.new()
+	var text := file.get_as_text()
+	file.close()
+	var json := JSON.new()
+	if json.parse(text) != OK:
+		push_error("SaveManager: failed to parse inventory save")
+		return Inventory.new()
+	return Inventory.from_dict(json.data as Dictionary)
 
 
 static func _wipe_dir(path: String) -> void:

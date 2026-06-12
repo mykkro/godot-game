@@ -18,7 +18,26 @@ func _ready() -> void:
 func initialize(data: ChunkData) -> void:
 	_data = data
 	_rebuild_collision()
+	_spawn_pickables()
 	queue_redraw()
+
+
+## Spawn Area2D PickableNodes for every pickable object in the chunk.
+func _spawn_pickables() -> void:
+	for y in range(CHUNK_SIZE):
+		for x in range(CHUNK_SIZE):
+			var cell := _data.get_cell(x, y)
+			if cell == null:
+				continue
+			for obj_type in cell.objects:
+				if PickableItemDef.is_pickable(obj_type):
+					var node := PickableNode.new()
+					node.position = Vector2(
+						(x + 0.5) * CELL_SIZE,
+						(y + 0.5) * CELL_SIZE
+					)
+					add_child(node)
+					node.initialize(obj_type, x, y, _data)
 
 
 ## Rebuild the StaticBody2D collision shapes from current chunk data.
@@ -99,6 +118,9 @@ func _draw() -> void:
 
 
 func _draw_object(obj_type: int, px: int, py: int) -> void:
+	# Pickable objects are rendered via their own PickableNode sprites.
+	if PickableItemDef.is_pickable(obj_type):
+		return
 	var center := Vector2(px + CELL_SIZE * 0.5, py + CELL_SIZE * 0.5)
 	match obj_type:
 		MapObject.Type.ROCK:

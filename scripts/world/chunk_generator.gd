@@ -61,9 +61,29 @@ static func generate(chunk_x: int, chunk_y: int) -> ChunkData:
 		for x in range(ChunkData.CHUNK_SIZE):
 			var terrain: int = (terrain_grid[y] as Array)[x]
 			var cell := CellData.new(terrain)
-			if not cell.is_obstacle and rng.randf() < ROCK_DENSITY:
-				cell.add_object(MapObject.Type.ROCK)
+			if not cell.is_obstacle:
+				_place_objects(rng, cell)
 			chunk.set_cell(x, y, cell)
+
+	return chunk
+
+
+## Randomly place objects in a passable cell.
+static func _place_objects(rng: RandomNumberGenerator, cell: CellData) -> void:
+	# Each cell gets at most one object; order of checks sets priority.
+	var roll := rng.randf()
+	if roll < ROCK_DENSITY:
+		cell.add_object(MapObject.Type.ROCK)
+	elif roll < ROCK_DENSITY + 0.03:
+		cell.add_object(MapObject.Type.HERB)
+	elif roll < ROCK_DENSITY + 0.05:
+		cell.add_object(MapObject.Type.CRYSTAL)
+	elif roll < ROCK_DENSITY + 0.065:
+		cell.add_object(MapObject.Type.COIN)
+	elif roll < ROCK_DENSITY + 0.075:
+		cell.add_object(MapObject.Type.FEATHER)
+	elif roll < ROCK_DENSITY + 0.082:
+		cell.add_object(MapObject.Type.POTION)
 
 	return chunk
 
