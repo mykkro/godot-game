@@ -1,6 +1,8 @@
 extends Node2D
 
-var _music: AudioStreamPlayer = null
+var _music:        AudioStreamPlayer = null
+var _music_tracks: Array             = []   # shuffled list of res:// paths
+var _music_index:  int               = 0
 
 @onready var _world:        World        = $World
 @onready var _fog_manager:  FogManager   = $FogManager
@@ -90,13 +92,34 @@ func _find_spawn_position() -> Vector2:
 
 
 func _start_music() -> void:
-	var stream := load("res://media/music/guilhermebernardes-transient-204416.mp3") as AudioStreamMP3
-	stream.loop  = true
-	_music        = AudioStreamPlayer.new()
-	_music.stream = stream
-	_music.bus    = AudioManager.MUSIC_BUS
+	for f in DirAccess.get_files_at("res://media/music/"):
+		if f.get_extension() == "mp3":
+			_music_tracks.append("res://media/music/" + f)
+	if _music_tracks.is_empty():
+		return
+	_music_tracks.shuffle()
+
+	_music     = AudioStreamPlayer.new()
+	_music.bus = AudioManager.MUSIC_BUS
+	_music.finished.connect(_on_music_finished)
 	add_child(_music)
+	_play_track(0)
+
+
+func _play_track(index: int) -> void:
+	_music_index = index
+	var stream := load(_music_tracks[_music_index]) as AudioStreamMP3
+	stream.loop   = false
+	_music.stream = stream
 	_music.play()
+
+
+func _on_music_finished() -> void:
+	var next := _music_index + 1
+	if next >= _music_tracks.size():
+		_music_tracks.shuffle()
+		next = 0
+	_play_track(next)
 
 
 static func _is_cell_clear(cell: CellData) -> bool:
