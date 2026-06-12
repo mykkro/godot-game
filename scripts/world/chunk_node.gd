@@ -111,13 +111,12 @@ func _draw() -> void:
 			var py := y * CELL_SIZE
 			var cell_rect := Rect2(px, py, CELL_SIZE, CELL_SIZE)
 
-			# Terrain fill: texture when available, fallback to flat color.
-			var tex := TextureCache.get_texture(
-					TerrainType.get_texture_filename(cell.terrain_type))
+			# Terrain fill: texture when available, fallback to flat colour.
+			var tex := TextureCache.get_texture(cell.terrain_type)
 			if tex != null:
 				draw_texture_rect(tex, cell_rect, false)
 			else:
-				draw_rect(cell_rect, TerrainType.get_color(cell.terrain_type))
+				draw_rect(cell_rect, Color(0.22, 0.65, 0.18))
 
 			# Subtle grid lines.
 			draw_rect(cell_rect, Color(0, 0, 0, 0.07), false, 1.0)
