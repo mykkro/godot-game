@@ -8,46 +8,61 @@ const BLEND_FACTOR := 0.72
 ## Generate a new ChunkData for the given grid coordinates.
 ## The result is deterministic: same (chunk_x, chunk_y) always yields the same chunk.
 static func generate(chunk_x: int, chunk_y: int) -> ChunkData:
-	var chunk        := ChunkData.new(chunk_x, chunk_y)
-	chunk.biome       = BiomeGenerator.get_chunk_biome(chunk_x, chunk_y)
-	var base_weights := BiomeDef.terrain_weights(chunk.biome)
-	var rock_density := BiomeDef.rock_density(chunk.biome)
+	var chunk   := ChunkData.new(chunk_x, chunk_y)
+	# Dominant biome (chunk centre) — used for metadata/icons.
+	chunk.biome  = BiomeGenerator.get_chunk_biome(chunk_x, chunk_y)
 
 	var rng  := RandomNumberGenerator.new()
 	rng.seed  = _chunk_seed(chunk_x, chunk_y)
 
-	# First pass: raw terrain type per cell (stored as int grid).
-	var terrain_grid: Array = []
-	for y in range(ChunkData.CHUNK_SIZE):
-		var row: Array = []
-		for x in range(ChunkData.CHUNK_SIZE):
-			# Start with a mutable copy of this biome's terrain weights.
-			var weights := _copy_weights(base_weights)
+	# Cache weight arrays so each biome's Array is allocated only once per chunk.
+	var weights_cache: Dictionary = {}
+	for bt in BiomeDef.Type.values():
+		weights_cache[bt] = BiomeDef.terrain_weights(bt)
 
-			# Left neighbour boosts its own terrain type.
+	# First pass: per-cell biome sampling → terrain type.
+	# biome_grid[y][x] stores the BiomeDef.Type for each cell.
+	var terrain_grid: Array = []
+	var biome_grid:   Array = []
+	for y in range(ChunkData.CHUNK_SIZE):
+		var t_row: Array = []
+		var b_row: Array = []
+		for x in range(ChunkData.CHUNK_SIZE):
+			# Sample biome at the global cell position.
+			var gx := chunk_x * ChunkData.CHUNK_SIZE + x
+			var gy := chunk_y * ChunkData.CHUNK_SIZE + y
+			var cell_biome := BiomeGenerator.get_biome(gx, gy)
+			b_row.append(cell_biome)
+
+			# Start with a mutable copy of this cell's biome weights.
+			var weights := _copy_weights(weights_cache[cell_biome])
+
+			# Left neighbour boosts its terrain type (smooths within-biome patches).
 			if x > 0:
-				var left_type: int = row[x - 1]
+				var left_type: int = t_row[x - 1]
 				for i in range(weights.size()):
 					if (weights[i] as Array)[0] == left_type:
 						(weights[i] as Array)[1] = int((weights[i] as Array)[1] * (1.0 + BLEND_FACTOR * 3.0))
 
-			# Top neighbour boosts its own terrain type.
+			# Top neighbour boosts its terrain type.
 			if y > 0:
 				var top_type: int = (terrain_grid[y - 1] as Array)[x]
 				for i in range(weights.size()):
 					if (weights[i] as Array)[0] == top_type:
 						(weights[i] as Array)[1] = int((weights[i] as Array)[1] * (1.0 + BLEND_FACTOR * 3.0))
 
-			row.append(_pick_weighted(rng, weights))
-		terrain_grid.append(row)
+			t_row.append(_pick_weighted(rng, weights))
+		terrain_grid.append(t_row)
+		biome_grid.append(b_row)
 
-	# Second pass: build CellData from terrain grid, add objects.
+	# Second pass: build CellData, place objects using each cell's own biome.
 	for y in range(ChunkData.CHUNK_SIZE):
 		for x in range(ChunkData.CHUNK_SIZE):
-			var terrain: int = (terrain_grid[y] as Array)[x]
+			var terrain:    int = (terrain_grid[y] as Array)[x]
+			var cell_biome: int = (biome_grid[y]   as Array)[x]
 			var cell := CellData.new(terrain)
 			if not cell.is_obstacle:
-				_place_objects(rng, cell, rock_density)
+				_place_objects(rng, cell, BiomeDef.rock_density(cell_biome))
 				if cell.objects.has(MapObject.Type.COIN):
 					chunk.set_pickable_count(x, y, _coin_stack_count(rng))
 			chunk.set_cell(x, y, cell)
