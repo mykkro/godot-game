@@ -1,52 +1,37 @@
 class_name ChunkGenerator
 
-## Probability that a passable cell receives a rock.
-const ROCK_DENSITY := 0.05
-
 ## How strongly a cell inherits its left/top neighbour's terrain (0-1).
-## Higher values = larger, smoother biome blobs.
+## Higher values = larger, smoother terrain blobs within a biome.
 const BLEND_FACTOR := 0.72
-
-## Base terrain distribution: terrain type → base weight.
-## Weights are normalised internally; they don't need to sum to 1.
-const _BASE_WEIGHTS: Array = [
-	# [TerrainType.Type value, base weight]
-	[0,  35],  # GRASS
-	[1,  15],  # DIRT
-	[2,  10],  # STONE
-	[3,   7],  # WATER
-	[4,   8],  # SAND
-	[5,   6],  # SWAMP
-	[6,   6],  # SNOW
-	[7,   7],  # GRAVEL
-	[8,   3],  # DEEP_WATER
-	[9,   3],  # PATH
-]
 
 
 ## Generate a new ChunkData for the given grid coordinates.
 ## The result is deterministic: same (chunk_x, chunk_y) always yields the same chunk.
 static func generate(chunk_x: int, chunk_y: int) -> ChunkData:
-	var chunk    := ChunkData.new(chunk_x, chunk_y)
-	var rng      := RandomNumberGenerator.new()
-	rng.seed      = _chunk_seed(chunk_x, chunk_y)
+	var chunk        := ChunkData.new(chunk_x, chunk_y)
+	chunk.biome       = BiomeGenerator.get_chunk_biome(chunk_x, chunk_y)
+	var base_weights := BiomeDef.terrain_weights(chunk.biome)
+	var rock_density := BiomeDef.rock_density(chunk.biome)
+
+	var rng  := RandomNumberGenerator.new()
+	rng.seed  = _chunk_seed(chunk_x, chunk_y)
 
 	# First pass: raw terrain type per cell (stored as int grid).
 	var terrain_grid: Array = []
 	for y in range(ChunkData.CHUNK_SIZE):
 		var row: Array = []
 		for x in range(ChunkData.CHUNK_SIZE):
-			# Build blended weight array from neighbours.
-			var weights := _base_weights_array()
+			# Start with a mutable copy of this biome's terrain weights.
+			var weights := _copy_weights(base_weights)
 
-			# Left neighbour.
+			# Left neighbour boosts its own terrain type.
 			if x > 0:
 				var left_type: int = row[x - 1]
 				for i in range(weights.size()):
 					if (weights[i] as Array)[0] == left_type:
 						(weights[i] as Array)[1] = int((weights[i] as Array)[1] * (1.0 + BLEND_FACTOR * 3.0))
 
-			# Top neighbour.
+			# Top neighbour boosts its own terrain type.
 			if y > 0:
 				var top_type: int = (terrain_grid[y - 1] as Array)[x]
 				for i in range(weights.size()):
@@ -62,7 +47,7 @@ static func generate(chunk_x: int, chunk_y: int) -> ChunkData:
 			var terrain: int = (terrain_grid[y] as Array)[x]
 			var cell := CellData.new(terrain)
 			if not cell.is_obstacle:
-				_place_objects(rng, cell)
+				_place_objects(rng, cell, rock_density)
 				if cell.objects.has(MapObject.Type.COIN):
 					chunk.set_pickable_count(x, y, _coin_stack_count(rng))
 			chunk.set_cell(x, y, cell)
@@ -71,27 +56,27 @@ static func generate(chunk_x: int, chunk_y: int) -> ChunkData:
 
 
 ## Randomly place objects in a passable cell.
-static func _place_objects(rng: RandomNumberGenerator, cell: CellData) -> void:
-	# Each cell gets at most one object; order of checks sets priority.
+static func _place_objects(rng: RandomNumberGenerator, cell: CellData,
+		rock_density: float) -> void:
 	var roll := rng.randf()
-	if roll < ROCK_DENSITY:
+	if roll < rock_density:
 		cell.add_object(MapObject.Type.ROCK)
-	elif roll < ROCK_DENSITY + 0.03:
+	elif roll < rock_density + 0.030:
 		cell.add_object(MapObject.Type.HERB)
-	elif roll < ROCK_DENSITY + 0.05:
+	elif roll < rock_density + 0.050:
 		cell.add_object(MapObject.Type.CRYSTAL)
-	elif roll < ROCK_DENSITY + 0.065:
+	elif roll < rock_density + 0.065:
 		cell.add_object(MapObject.Type.COIN)
-	elif roll < ROCK_DENSITY + 0.075:
+	elif roll < rock_density + 0.075:
 		cell.add_object(MapObject.Type.FEATHER)
-	elif roll < ROCK_DENSITY + 0.082:
+	elif roll < rock_density + 0.082:
 		cell.add_object(MapObject.Type.POTION)
 
 
-## Returns a fresh mutable copy of the base weights array.
-static func _base_weights_array() -> Array:
+## Returns a fresh mutable copy of a weights array (so blending doesn't mutate the source).
+static func _copy_weights(source: Array) -> Array:
 	var out: Array = []
-	for entry in _BASE_WEIGHTS:
+	for entry in source:
 		out.append([(entry as Array)[0], (entry as Array)[1]])
 	return out
 

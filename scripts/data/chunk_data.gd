@@ -15,13 +15,16 @@ var chunk_y: int = 0
 var cells: Array = []
 ## Stack counts for pickable objects, keyed by x * CHUNK_SIZE + y.
 var pickable_counts: Dictionary = {}
+## Dominant biome for this chunk (BiomeDef.Type value).
+var biome: int = BiomeDef.Type.PLAINS
 
 
 func _init(p_cx: int = 0, p_cy: int = 0) -> void:
-	chunk_x        = p_cx
-	chunk_y        = p_cy
-	cells          = []
+	chunk_x         = p_cx
+	chunk_y         = p_cy
+	cells           = []
 	pickable_counts = {}
+	biome           = BiomeDef.Type.PLAINS
 	for _y in range(CHUNK_SIZE):
 		var row: Array = []
 		for _x in range(CHUNK_SIZE):
@@ -72,15 +75,17 @@ func to_dict() -> Dictionary:
 	for k in pickable_counts:
 		pc_pairs.append([int(k), int(pickable_counts[k])])
 	return {
-		"chunk_x":        chunk_x,
-		"chunk_y":        chunk_y,
-		"cells":          rows,
+		"chunk_x":         chunk_x,
+		"chunk_y":         chunk_y,
+		"biome":           biome,
+		"cells":           rows,
 		"pickable_counts": pc_pairs,
 	}
 
 
 static func from_dict(data: Dictionary) -> ChunkData:
 	var chunk := ChunkData.new(data.get("chunk_x", 0), data.get("chunk_y", 0))
+	chunk.biome = int(data.get("biome", BiomeDef.Type.PLAINS))
 	var rows: Array = data.get("cells", [])
 	for y in range(mini(rows.size(), CHUNK_SIZE)):
 		var row: Array = rows[y]
