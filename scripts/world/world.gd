@@ -71,6 +71,8 @@ func get_chunk_node(coord: Vector2i) -> ChunkNode:
 ## add item_type to its CellData, spawn a PickableNode, and return true.
 ## Returns false when no suitable cell is found.
 func drop_item_near(near: Vector2, item_type: int) -> bool:
+	if not PickableItemDef.is_pickable(item_type):
+		return false
 	const MAX_RADIUS := 8
 	var origin := world_to_cell_coords(near)
 
