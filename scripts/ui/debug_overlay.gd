@@ -45,7 +45,6 @@ func _ready() -> void:
 	var mono_font := SystemFont.new()
 	mono_font.font_names = PackedStringArray(
 			["Courier New", "Consolas", "Lucida Console", "DejaVu Sans Mono", "monospace"])
-	mono_font.font_style = TextServer.FONT_BOLD
 
 	# --- Label inside the panel -------------------------------------------
 	_label = Label.new()
