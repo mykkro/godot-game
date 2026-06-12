@@ -1,12 +1,14 @@
 extends Control
 
-const MAIN_SCENE := "res://scenes/main.tscn"
+const MAIN_SCENE       := "res://scenes/main.tscn"
+const MAP_EDITOR_SCENE := "res://scenes/map_editor.tscn"
 
-@onready var _vbox:         VBoxContainer = $VBox
-@onready var _btn_continue: Button        = $VBox/BtnContinue
-@onready var _btn_new:      Button        = $VBox/BtnNew
-@onready var _btn_options:  Button        = $VBox/BtnOptions
-@onready var _btn_quit:     Button        = $VBox/BtnQuit
+@onready var _vbox:           VBoxContainer = $VBox
+@onready var _btn_continue:   Button        = $VBox/BtnContinue
+@onready var _btn_new:        Button        = $VBox/BtnNew
+@onready var _btn_options:    Button        = $VBox/BtnOptions
+@onready var _btn_map_editor: Button        = $VBox/BtnMapEditor
+@onready var _btn_quit:       Button        = $VBox/BtnQuit
 
 var _options_panel:   PanelContainer = null
 var _master_slider:   HSlider        = null
@@ -27,6 +29,7 @@ func _ready() -> void:
 	_btn_new.pressed.connect(_on_new_game)
 	_btn_continue.pressed.connect(_on_continue)
 	_btn_options.pressed.connect(_on_options)
+	_btn_map_editor.pressed.connect(_on_map_editor)
 	_btn_quit.pressed.connect(_on_quit)
 
 	_build_options_panel()
@@ -61,6 +64,10 @@ func _on_options() -> void:
 func _on_options_back() -> void:
 	_options_panel.visible = false
 	_vbox.visible          = true
+
+
+func _on_map_editor() -> void:
+	get_tree().change_scene_to_file(MAP_EDITOR_SCENE)
 
 
 func _on_quit() -> void:

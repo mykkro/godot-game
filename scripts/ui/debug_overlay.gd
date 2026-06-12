@@ -138,9 +138,7 @@ func _build_text() -> String:
 	if _world != null:
 		var cell := _world.get_cell_at(pos)
 		if cell != null:
-			var terrain_name: String = TerrainType.Type.keys()[cell.terrain_type] \
-					if cell.terrain_type < TerrainType.Type.size() else "?"
-			cell_str  = "  Terrain:  %s (%d)" % [terrain_name, cell.terrain_type]
+			cell_str  = "  Terrain:  %s" % cell.terrain_type
 			cell_str += "\n  Obstacle: %s" % str(cell.is_obstacle)
 			if cell.objects.is_empty():
 				cell_str += "\n  Objects:  (none)"

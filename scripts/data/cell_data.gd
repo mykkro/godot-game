@@ -1,26 +1,18 @@
 class_name CellData
 
-## Maximum number of objects that can occupy a single cell.
 const MAX_OBJECTS := 16
 
-## Terrain type (TerrainType.Type enum value).
-var terrain_type: int = TerrainType.Type.GRASS
-
-## Object types present in this cell (holds MapObject.Type int values).
+var terrain_type: String = "grass.png"
 var objects: Array = []
-
-## True when actors cannot enter this cell at all (e.g. water).
-## Derived from terrain on construction; can be overridden.
 var is_obstacle: bool = false
 
 
-func _init(p_terrain: int = TerrainType.Type.GRASS) -> void:
+func _init(p_terrain: String = "grass.png") -> void:
 	terrain_type = p_terrain
-	is_obstacle  = not TerrainType.is_passable(terrain_type)
+	is_obstacle  = not TileRegistry.is_passable(terrain_type)
 	objects      = []
 
 
-## Adds an object to this cell. Returns false when the cell is full.
 func add_object(obj_type: int) -> bool:
 	if objects.size() >= MAX_OBJECTS:
 		return false
@@ -37,9 +29,30 @@ func to_dict() -> Dictionary:
 
 
 static func from_dict(data: Dictionary) -> CellData:
-	var cell := CellData.new(data.get("terrain_type", TerrainType.Type.GRASS))
-	cell.is_obstacle = data.get("is_obstacle", false)
-	cell.objects     = []
+	var raw: Variant = data.get("terrain_type", "grass.png")
+	var terrain: String
+	if raw is int:
+		terrain = _migrate_terrain(int(raw))
+	else:
+		terrain = str(raw)
+	var cell := CellData.new(terrain)
+	cell.is_obstacle = data.get("is_obstacle", not TileRegistry.is_passable(terrain))
+	cell.objects = []
 	for item in data.get("objects", []):
 		cell.objects.append(int(item))
 	return cell
+
+
+static func _migrate_terrain(old_type: int) -> String:
+	match old_type:
+		0: return "grass.png"
+		1: return "mud.png"
+		2: return "granite floor.png"
+		3: return "water.png"
+		4: return "sand.png"
+		5: return "swamp grass sep.png"
+		6: return "snow.png"
+		7: return "gravel.png"
+		8: return "deepocean.png"
+		9: return "path.png"
+	return "grass.png"

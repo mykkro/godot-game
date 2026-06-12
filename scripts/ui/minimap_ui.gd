@@ -118,7 +118,7 @@ func _cell_color(gc: Vector2i) -> Color:
 		return Color.BLACK
 
 	var cell := chunk.get_cell(lx, ly)
-	var base := TerrainType.get_color(cell.terrain_type)
+	var base := _terrain_color(cell.terrain_type)
 
 	if not cell.objects.is_empty():
 		base = base.darkened(0.35)
@@ -130,6 +130,22 @@ func _cell_color(gc: Vector2i) -> Color:
 		_:               b = 1.0  # VISIBLE
 
 	return Color(base.r * b, base.g * b, base.b * b)
+
+
+static func _terrain_color(filename: String) -> Color:
+	var tile := TileRegistry.get_tile(filename)
+	var tags: Array = tile.get("tags", []) if tile else []
+	if tags.has("aquatic") or tags.has("water"):
+		return Color(0.20, 0.40, 0.75)
+	if tags.has("ice") or tags.has("snow"):
+		return Color(0.85, 0.90, 0.95)
+	if tags.has("sand") or tags.has("coastal"):
+		return Color(0.85, 0.78, 0.50)
+	if tags.has("cave") or tags.has("rock"):
+		return Color(0.38, 0.33, 0.28)
+	if tags.has("swamp") or tags.has("algae"):
+		return Color(0.28, 0.42, 0.18)
+	return Color(0.22, 0.55, 0.18)
 
 
 static func _world_to_cell(world_pos: Vector2) -> Vector2i:
