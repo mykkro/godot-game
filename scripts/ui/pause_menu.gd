@@ -74,9 +74,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var ke := event as InputEventKey
 	if ke.keycode == KEY_F10 and ke.pressed and not ke.echo:
-		_set_paused(not _panel.visible)
+		_set_paused(not _center.visible)
 		get_viewport().set_input_as_handled()
-	elif ke.keycode == KEY_ESCAPE and ke.pressed and not ke.echo and _panel.visible:
+	elif ke.keycode == KEY_ESCAPE and ke.pressed and not ke.echo and _center.visible:
 		_set_paused(false)
 		get_viewport().set_input_as_handled()
 
