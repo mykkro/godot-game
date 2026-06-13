@@ -91,7 +91,7 @@ func _refresh() -> void:
 	# Quest-giver dots: 3×3 yellow for each fog-revealed NpcMelee
 	var q_color := NpcMelee.QUEST_MARK_COLOR
 	for child in _world.get_children():
-		if not (child is NpcMelee):
+		if not (child is NpcMelee) or not (child as NpcMelee).is_quest_giver:
 			continue
 		var gc  := _world_to_cell((child as NpcMelee).position)
 		var px  := half + (gc.x - center.x)

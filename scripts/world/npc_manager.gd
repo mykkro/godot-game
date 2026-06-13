@@ -1,8 +1,9 @@
 class_name NpcManager
 extends Node
 
-const SPAWN_CHANCE       := 0.70   # NpcKnight probability per chunk
-const MELEE_SPAWN_CHANCE := 0.50   # NpcMelee probability per chunk (at most 1)
+const SPAWN_CHANCE        := 0.70        # NpcKnight probability per chunk
+const MELEE_SPAWN_CHANCE  := 0.50        # NpcMelee probability per chunk (at most 1)
+const QUEST_GIVER_CHANCE  := 1.0 / 3.0  # Fraction of melee NPCs that are quest givers
 
 var _world:         World      = null
 var _melee_spawned: Dictionary = {}   # Vector2i → true for chunks that have a melee NPC
@@ -68,6 +69,8 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 			_next_melee_id += 1
 			npc.position  = spawn
 			_world.add_child(npc)
+			if randf() < QUEST_GIVER_CHANCE:
+				npc.make_quest_giver(NpcMelee.NAMES[randi() % NpcMelee.NAMES.size()])
 			_melee_spawned[coord] = true
 
 

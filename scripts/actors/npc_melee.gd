@@ -6,13 +6,21 @@ extends StaticBody2D
 const COLL_RADIUS    := 18.75
 const DIR_CHANGE_MIN := 3.0
 const DIR_CHANGE_MAX := 8.0
-const MARK_BASE_Y    := -51.6
+const MARK_BASE_Y    := -54.8
 const BOB_AMP        := 3.0
 const BOB_PERIOD     := 1.2
 const QUEST_MARK_COLOR := Color(1.0, 0.85, 0.0)
+const NAMES := [
+	"Aldric", "Brennan", "Cedric", "Doran", "Edric", "Faolan", "Gareth",
+	"Hadwin", "Idris", "Jorin", "Kael", "Leofric", "Maewen", "Nolan",
+	"Oswin", "Perin", "Quinlan", "Rodric", "Serafin", "Torin", "Urien",
+	"Valdis", "Wren", "Xander", "Yoric", "Zephyr",
+]
 
-var npc_id:     String   = ""
-var heading:    float    = 0.0
+var npc_id:         String   = ""
+var heading:        float    = 0.0
+var is_quest_giver: bool     = false
+var npc_name:       String   = ""
 var _sprite:    MeleeSprite = null
 var _dir_timer: float    = 0.0
 var _mark:      Sprite2D = null
@@ -43,6 +51,7 @@ func _ready() -> void:
 	_mark.texture  = load("res://media/cursors/Outline/Default/mark_exclamation.png")
 	_mark.modulate = QUEST_MARK_COLOR
 	_mark.position = Vector2(0.0, MARK_BASE_Y)
+	_mark.visible  = false
 	add_child(_mark)
 
 
@@ -53,25 +62,39 @@ func _process(delta: float) -> void:
 		_dir_timer = randf_range(DIR_CHANGE_MIN, DIR_CHANGE_MAX)
 		_update_dir()
 
-	_mark_bob = fmod(_mark_bob + delta, BOB_PERIOD)
+	if is_quest_giver:
+		_mark_bob        = fmod(_mark_bob + delta, BOB_PERIOD)
+		if _mark != null:
+			_mark.position.y = MARK_BASE_Y + sin(_mark_bob * TAU / BOB_PERIOD) * BOB_AMP
+
+
+func make_quest_giver(name: String) -> void:
+	is_quest_giver = true
+	npc_name       = name
 	if _mark != null:
-		_mark.position.y = MARK_BASE_Y + sin(_mark_bob * TAU / BOB_PERIOD) * BOB_AMP
+		_mark.visible = true
 
 
 func to_dict() -> Dictionary:
 	return {
-		"type":    "melee",
-		"npc_id":  npc_id,
-		"x":       position.x,
-		"y":       position.y,
-		"heading": heading,
+		"type":           "melee",
+		"npc_id":         npc_id,
+		"x":              position.x,
+		"y":              position.y,
+		"heading":        heading,
+		"is_quest_giver": is_quest_giver,
+		"npc_name":       npc_name,
 	}
 
 
 func restore_from_dict(data: Dictionary) -> void:
-	npc_id   = str(data.get("npc_id", ""))
-	position = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
-	heading  = float(data.get("heading", 0.0))
+	npc_id         = str(data.get("npc_id", ""))
+	position       = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
+	heading        = float(data.get("heading", 0.0))
+	is_quest_giver = bool(data.get("is_quest_giver", false))
+	npc_name       = str(data.get("npc_name", ""))
+	if _mark != null:
+		_mark.visible = is_quest_giver
 	_update_dir()
 
 
