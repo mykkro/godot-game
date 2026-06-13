@@ -6,11 +6,16 @@ extends StaticBody2D
 const COLL_RADIUS    := 18.75
 const DIR_CHANGE_MIN := 3.0
 const DIR_CHANGE_MAX := 8.0
+const MARK_BASE_Y    := -90.0
+const BOB_AMP        := 3.0
+const BOB_PERIOD     := 1.2
 
-var npc_id:     String = ""
-var heading:    float  = 0.0
+var npc_id:     String   = ""
+var heading:    float    = 0.0
 var _sprite:    MeleeSprite = null
-var _dir_timer: float = 0.0
+var _dir_timer: float    = 0.0
+var _mark:      Sprite2D = null
+var _mark_bob:  float    = 0.0
 
 
 func _ready() -> void:
@@ -33,6 +38,12 @@ func _ready() -> void:
 	_dir_timer = randf_range(DIR_CHANGE_MIN, DIR_CHANGE_MAX)
 	_update_dir()
 
+	_mark          = Sprite2D.new()
+	_mark.texture  = load("res://media/cursors/Outline/Default/mark_exclamation.png")
+	_mark.modulate = Color(1.0, 0.85, 0.0)
+	_mark.position = Vector2(0.0, MARK_BASE_Y)
+	add_child(_mark)
+
 
 func _process(delta: float) -> void:
 	_dir_timer -= delta
@@ -40,6 +51,10 @@ func _process(delta: float) -> void:
 		heading    = randf() * TAU
 		_dir_timer = randf_range(DIR_CHANGE_MIN, DIR_CHANGE_MAX)
 		_update_dir()
+
+	_mark_bob = fmod(_mark_bob + delta, BOB_PERIOD)
+	if _mark != null:
+		_mark.position.y = MARK_BASE_Y + sin(_mark_bob * TAU / BOB_PERIOD) * BOB_AMP
 
 
 func to_dict() -> Dictionary:
