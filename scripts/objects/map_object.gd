@@ -193,7 +193,7 @@ enum Type {
 ## Returns false when an actor cannot pass through this object type.
 static func is_type_passable(obj_type: int) -> bool:
 	match obj_type:
-		Type.ROCK, Type.CHEST_SMALL: return false
+		Type.ROCK, Type.CHEST_SMALL, Type.FORGE: return false
 	return true
 
 ## Placeholder fill color used during debug rendering of non-pickable objects.

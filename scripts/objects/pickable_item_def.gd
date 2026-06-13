@@ -81,7 +81,9 @@ static func max_stack_size(obj_type: int) -> int:
 ## Returns true when this object type can be picked up by the avatar.
 ## Everything except map obstacles (ROCK, CHEST_SMALL) is pickable.
 static func is_pickable(obj_type: int) -> bool:
-	return obj_type != MapObject.Type.ROCK and obj_type != MapObject.Type.CHEST_SMALL
+	return obj_type != MapObject.Type.ROCK \
+		and obj_type != MapObject.Type.CHEST_SMALL \
+		and obj_type != MapObject.Type.FORGE
 
 
 ## Human-readable name shown in the inventory.
