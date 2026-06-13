@@ -51,6 +51,31 @@ func _build_palette(filter: String) -> void:
 		child.queue_free()
 	_selected_overlay = null   # children freed above
 
+	# "No terrain" button — objects are placed but terrain stays unchanged.
+	var none_btn := Button.new()
+	none_btn.custom_minimum_size = Vector2(TILE_SIZE + 4, TILE_SIZE + 4)
+	none_btn.clip_contents = true
+	none_btn.tooltip_text = "No terrain — only objects will be placed"
+	var none_lbl := Label.new()
+	none_lbl.text = "✕"
+	none_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	none_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	none_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	none_lbl.add_theme_font_size_override("font_size", 22)
+	none_lbl.add_theme_color_override("font_color", Color(0.8, 0.4, 0.4))
+	none_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	none_btn.add_child(none_lbl)
+	var none_overlay := Panel.new()
+	none_overlay.add_theme_stylebox_override("panel", _style_overlay)
+	none_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	none_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	none_overlay.visible = (_selected == "")
+	if _selected == "":
+		_selected_overlay = none_overlay
+	none_btn.add_child(none_overlay)
+	none_btn.pressed.connect(_on_tile_pressed.bind("", none_overlay))
+	_content.add_child(none_btn)
+
 	var all_tiles := TileRegistry.get_all_tiles()
 	var terrain_tiles: Array[Dictionary] = []
 	for tile in all_tiles:
@@ -98,12 +123,14 @@ func _add_group(title: String, tiles: Array) -> void:
 		var fname: String = (tile as Dictionary).get("filename", "")
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(TILE_SIZE + 4, TILE_SIZE + 4)
+		btn.clip_contents = true
 		btn.tooltip_text = fname
 		grid.add_child(btn)
 
 		var tex_rect := TextureRect.new()
 		tex_rect.texture = TextureCache.get_texture(fname)
 		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_rect.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 		tex_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		tex_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		tex_rect.mouse_filter   = Control.MOUSE_FILTER_IGNORE

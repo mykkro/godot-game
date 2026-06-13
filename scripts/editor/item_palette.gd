@@ -47,6 +47,7 @@ func get_selected() -> int:
 func _make_button(obj_type: int, tex: Texture2D, tip: String) -> Button:
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(TILE_SIZE + 4, TILE_SIZE + 4)
+	btn.clip_contents = true
 	btn.tooltip_text = tip
 
 	var container := CenterContainer.new()
@@ -58,6 +59,7 @@ func _make_button(obj_type: int, tex: Texture2D, tip: String) -> Button:
 		var tr := TextureRect.new()
 		tr.texture = tex
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 		tr.custom_minimum_size = Vector2(TILE_SIZE, TILE_SIZE)
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		tr.mouse_filter   = Control.MOUSE_FILTER_IGNORE
