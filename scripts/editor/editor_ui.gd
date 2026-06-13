@@ -16,6 +16,7 @@ var _lbl_status:    Label            = null
 var _chk_autosave:  CheckButton      = null
 var _terrain_pal:   TerrainPalette   = null
 var _item_pal:      ItemPalette      = null
+var _palette_scroll: ScrollContainer = null
 var _confirm_dialog: ConfirmationDialog = null
 
 # Unsaved exit guard callback — set by map_editor.gd.
@@ -34,6 +35,10 @@ func _ready() -> void:
 
 func get_terrain_palette() -> TerrainPalette:
 	return _terrain_pal
+
+
+func get_palette_scroll() -> ScrollContainer:
+	return _palette_scroll
 
 
 func get_item_palette() -> ItemPalette:
@@ -144,6 +149,7 @@ func _build_right_panel() -> void:
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	panel.add_child(scroll)
+	_palette_scroll = scroll
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

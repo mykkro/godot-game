@@ -21,6 +21,23 @@ func _ready() -> void:
 	_connect_signals()
 
 
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mb := event as InputEventMouseButton
+	if mb.button_index != MOUSE_BUTTON_WHEEL_UP and mb.button_index != MOUSE_BUTTON_WHEEL_DOWN:
+		return
+	var vp_w := get_viewport().get_visible_rect().size.x
+	if mb.position.x < vp_w - EditorUI.PANEL_WIDTH:
+		return
+	# Wheel over right panel: scroll the palette, never zoom the map.
+	var scroll := _ui.get_palette_scroll()
+	if scroll != null and mb.pressed:
+		var delta := 64 * (1 if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1)
+		scroll.scroll_vertical += delta
+	get_viewport().set_input_as_handled()
+
+
 # ── Scene tree ────────────────────────────────────────────────────────────────
 
 func _build_scene_tree() -> void:
