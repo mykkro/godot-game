@@ -122,6 +122,8 @@ func _rebuild_collision() -> void:
 					if not MapObject.is_type_passable(obj_type):
 						if obj_type == MapObject.Type.CHEST_SMALL:
 							continue  # ChestNode owns its own collision
+						if obj_type == MapObject.Type.FORGE:
+							continue  # ForgeNode owns its own collision
 						_add_circle_collision(cx_px, cy_px, CELL_SIZE * 0.28)
 
 
