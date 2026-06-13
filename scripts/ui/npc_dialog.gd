@@ -152,13 +152,17 @@ func _on_wisdom() -> void:
 
 func _add_menu_btn(label: String, cb: Callable) -> void:
 	var btn := _make_button(label)
-	btn.pressed.connect(cb)
+	btn.pressed.connect(func():
+		btn.add_theme_color_override("font_color", Color(0.45, 0.45, 0.50))
+		cb.call()
+	)
 	_menu_box.add_child(btn)
 
 
 func _make_button(label: String) -> Button:
 	var btn := Button.new()
 	btn.text                = label
+	btn.alignment           = HORIZONTAL_ALIGNMENT_LEFT
 	btn.custom_minimum_size = Vector2(352, 44)
 	btn.add_theme_font_size_override("font_size", 16)
 	btn.process_mode        = Node.PROCESS_MODE_ALWAYS
