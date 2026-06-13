@@ -99,6 +99,14 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 			var oy := py + (CELL_SIZE - s) * 0.5
 			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
 			return
+	if obj_type == MapObject.Type.FORGE:
+		var tex := PickableItemDef.get_texture(MapObject.Type.FORGE)
+		if tex != null:
+			var s  := float(CELL_SIZE) * 0.65
+			var ox := px + (CELL_SIZE - s) * 0.5
+			var oy := py + (CELL_SIZE - s) * 0.5
+			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
+			return
 	# Fallback: coloured square for ROCK / unknown.
 	var col: Color = OBJ_COLORS.get(obj_type, Color(0.7, 0.7, 0.7))
 	var m := CELL_SIZE * 0.2

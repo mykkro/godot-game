@@ -297,6 +297,8 @@ func _build_recipe_row(recipe: Dictionary) -> PanelContainer:
 			var mb := event as InputEventMouseButton
 			if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
 				_select_recipe(recipe)
+				if mb.double_click:
+					_auto_fill_inputs(recipe)
 				row.accept_event()
 	)
 
@@ -368,6 +370,49 @@ func _select_recipe(recipe: Dictionary) -> void:
 		var r: Dictionary = pc.get_meta("recipe")
 		pc.add_theme_stylebox_override("panel", _recipe_row_style(r["name"] == recipe["name"]))
 	_refresh_craft_btn()
+
+
+## Double-click a recipe: pull each ingredient from player inventory into forge input.
+func _auto_fill_inputs(recipe: Dictionary) -> void:
+	if _forge == null or _inventory == null:
+		return
+	for entry in recipe["inputs"]:
+		var need_type:  int = int(entry["type"])
+		var need_count: int = int(entry["count"])
+		var have := 0
+		for slot in _forge.input_contents:
+			if int(slot["type"]) == need_type:
+				have += int(slot["count"])
+		var remaining := need_count - have
+		if remaining <= 0:
+			continue
+		var inv_i := 0
+		while inv_i < _inventory.count() and remaining > 0:
+			if _inventory.get_type(inv_i) != need_type:
+				inv_i += 1
+				continue
+			var count_here := _inventory.get_count(inv_i)
+			var take       := mini(count_here, remaining)
+			var placed     := 0
+			for slot in _forge.input_contents:
+				if int(slot["type"]) == need_type:
+					var max_st := PickableItemDef.max_stack_size(need_type)
+					var space  := max_st - int(slot["count"])
+					var fill   := mini(take - placed, space)
+					slot["count"] = int(slot["count"]) + fill
+					placed += fill
+					if placed >= take:
+						break
+			if placed < take and _forge.input_contents.size() < ForgeNode.INPUT_SLOTS:
+				_forge.input_contents.append({"type": need_type, "count": take - placed})
+				placed = take
+			if placed == 0:
+				break
+			_inventory.remove_from_slot(inv_i, placed)
+			remaining -= placed
+			if placed < count_here:
+				inv_i += 1
+	_refresh()
 
 
 # ── Slot drag-and-drop ───────────────────────────────────────────────────────

@@ -78,6 +78,7 @@ func _ready() -> void:
 
 	# Now load the initial chunks; signals will reach FogManager correctly.
 	_world.start()
+	_ensure_test_forge()
 	_actor_refs.setup(_avatar, _world)
 
 	# Restore saved position, or find a spawn point for a fresh game.
@@ -164,6 +165,29 @@ func _on_music_finished() -> void:
 		_music_tracks.shuffle()
 		next = 0
 	_play_track(next)
+
+
+func _ensure_test_forge() -> void:
+	var chunk_data := _world.get_chunk(Vector2i(0, 0))
+	var chunk_node := _world.get_chunk_node(Vector2i(0, 0))
+	if chunk_data == null or chunk_node == null:
+		return
+	for y in range(ChunkData.CHUNK_SIZE):
+		for x in range(ChunkData.CHUNK_SIZE):
+			var cell := chunk_data.get_cell(x, y)
+			if cell != null and cell.objects.has(MapObject.Type.FORGE):
+				return  # already has a forge somewhere in chunk 0,0
+	const CX := 0
+	const CY := 0
+	var target_cell := chunk_data.get_cell(CX, CY)
+	if target_cell == null:
+		return
+	target_cell.objects.append(MapObject.Type.FORGE)
+	var forge := ForgeNode.new()
+	forge.position = Vector2((CX + 0.5) * ChunkData.CELL_SIZE, (CY + 0.5) * ChunkData.CELL_SIZE)
+	chunk_node.add_child(forge)
+	forge.initialize(CX, CY, 0, 0)
+	forge._chunk_data = chunk_data
 
 
 static func _is_cell_clear(cell: CellData) -> bool:

@@ -5,7 +5,7 @@ extends StaticBody2D
 ## input_contents:  up to 9 item stacks [{type, count}, ...]
 ## output_contents: up to 5 item stacks [{type, count}, ...]
 
-const SPRITE_SCALE   := 1.5
+const SPRITE_SCALE   := 0.75   # 64-px source → 48-px on screen (matches chest)
 const COLL_HALF      := 20.0
 const INPUT_SLOTS    := 9
 const OUTPUT_SLOTS   := 5
