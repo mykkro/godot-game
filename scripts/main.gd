@@ -17,6 +17,7 @@ var _music_index:  int               = 0
 var _actor_refs:    ActorRefOverlay = null
 var _npc_dialog:    NpcDialog       = null
 var _chest_loot_ui: ChestLootUI     = null
+var _forge_ui:      ForgeUI         = null
 
 
 func _ready() -> void:
@@ -34,6 +35,10 @@ func _ready() -> void:
 	_chest_loot_ui = ChestLootUI.new()
 	add_child(_chest_loot_ui)
 
+	ForgeRecipeDef.load_recipes()
+	_forge_ui = ForgeUI.new()
+	add_child(_forge_ui)
+
 	AudioManager.apply_saved_settings()
 	_start_music()
 
@@ -50,6 +55,10 @@ func _ready() -> void:
 	_avatar.chest_interact_requested.connect(
 		func(chest: ChestNode) -> void:
 			_chest_loot_ui.open(_avatar.inventory, chest)
+	)
+	_avatar.forge_interact_requested.connect(
+		func(forge: ForgeNode) -> void:
+			_forge_ui.open(_avatar.inventory, forge)
 	)
 	_inventory_ui.drop_requested.connect(_avatar.drop_item)
 	_debug.setup(_world, _fog_manager, _avatar)

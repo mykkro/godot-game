@@ -19,6 +19,7 @@ const SHOOT_COOLDOWN      := 0.5
 
 signal npc_interact_requested(npc: Node2D)
 signal chest_interact_requested(chest: ChestNode)
+signal forge_interact_requested(forge: ForgeNode)
 
 var _world:        World        = null
 var _fog_manager:  FogManager   = null
@@ -126,10 +127,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		var npc := get_interactable_npc()
 		if npc != null:
 			npc_interact_requested.emit(npc)
-		elif get_interactable_chest() != null:
-			chest_interact_requested.emit(get_interactable_chest())
 		else:
-			_try_pickup()
+			var forge := get_interactable_forge()
+			if forge != null:
+				forge_interact_requested.emit(forge)
+			elif get_interactable_chest() != null:
+				chest_interact_requested.emit(get_interactable_chest())
+			else:
+				_try_pickup()
 		get_viewport().set_input_as_handled()
 	elif ke.keycode == KEY_CTRL and ke.pressed and not ke.echo:
 		_try_shoot()
@@ -335,6 +340,27 @@ func get_interactable_chest() -> ChestNode:
 		if d < best_dist:
 			best_dist = d
 			best      = chest
+	return best
+
+
+## Returns the nearest ForgeNode within INTERACT_DIST and roughly in front.
+func get_interactable_forge() -> ForgeNode:
+	var best:      ForgeNode = null
+	var best_dist: float     = INF
+	for node in get_tree().get_nodes_in_group("forges"):
+		var forge := node as ForgeNode
+		if forge == null:
+			continue
+		var d := global_position.distance_to(forge.global_position)
+		if d > INTERACT_DIST:
+			continue
+		var to_forge := (forge.global_position - global_position).angle()
+		var diff     := absf(wrapf(to_forge - heading, -PI, PI))
+		if diff > PI * 0.75:
+			continue
+		if d < best_dist:
+			best_dist = d
+			best      = forge
 	return best
 
 
