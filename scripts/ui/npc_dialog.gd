@@ -123,7 +123,8 @@ func _build_menu(npc: Node2D) -> void:
 	for child in _menu_box.get_children():
 		child.queue_free()
 
-	var key := str(npc.get("npc_id", ""))
+	var _id: Variant = npc.get("npc_id")
+	var key := str(_id) if _id != null else ""
 	if key.is_empty():
 		key = "%d,%d" % [roundi(npc.position.x), roundi(npc.position.y)]
 	if not _visited.has(key):
