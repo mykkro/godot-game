@@ -7,6 +7,7 @@ const CHUNK_SIZE := ChunkData.CHUNK_SIZE
 # Fallback colours for objects without a sprite (keyed by MapObject.Type).
 const OBJ_COLORS := {
 	0: Color(0.55, 0.50, 0.45),  # ROCK
+	6: Color(0.75, 0.55, 0.20),  # CHEST_SMALL
 }
 
 var _data:        ChunkData = null
@@ -81,6 +82,17 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 		var tex := TextureCache.get_object_texture(PickableItemDef.get_sprite(obj_type))
 		if tex != null:
 			var s  := float(CELL_SIZE) * 0.50
+			var ox := px + (CELL_SIZE - s) * 0.5
+			var oy := py + (CELL_SIZE - s) * 0.5
+			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
+			return
+	if obj_type == MapObject.Type.CHEST_SMALL:
+		var cx      := px / CELL_SIZE
+		var cy      := py / CELL_SIZE
+		var variant := ((cx * 7 + cy * 13) % ChestNode.CHEST_VARIANTS) + 1
+		var tex     := TextureCache.get_chest_texture(variant)
+		if tex != null:
+			var s  := float(CELL_SIZE) * 0.65
 			var ox := px + (CELL_SIZE - s) * 0.5
 			var oy := py + (CELL_SIZE - s) * 0.5
 			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)

@@ -26,6 +26,11 @@ static func get_object_texture(filename: String) -> Texture2D:
 	return _load_texture(OBJECTS_PATH + filename)
 
 
+## Chest sprite by 1-based variant number (chest_01.png … chest_12.png).
+static func get_chest_texture(variant: int) -> Texture2D:
+	return _load_texture("res://media/chests/chest_%02d.png" % variant)
+
+
 ## Discard cached textures (useful for hot-reload in editor).
 static func clear() -> void:
 	_cache.clear()

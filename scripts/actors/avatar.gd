@@ -125,6 +125,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		var npc := get_interactable_npc()
 		if npc != null:
 			npc_interact_requested.emit(npc)
+		elif get_interactable_chest() != null:
+			pass   # chest opening — to be implemented
 		else:
 			_try_pickup()
 		get_viewport().set_input_as_handled()
@@ -312,6 +314,27 @@ func _is_cell_visible(gc: Vector2i) -> bool:
 	if fog == null:
 		return false
 	return fog.get_level(lx, ly) >= FogData.PARTIAL
+
+
+## Returns the nearest chest within INTERACT_DIST and roughly in front.
+func get_interactable_chest() -> ChestNode:
+	var best:      ChestNode = null
+	var best_dist: float     = INF
+	for node in get_tree().get_nodes_in_group("chests"):
+		var chest := node as ChestNode
+		if chest == null:
+			continue
+		var d := global_position.distance_to(chest.global_position)
+		if d > INTERACT_DIST:
+			continue
+		var to_chest := (chest.global_position - global_position).angle()
+		var diff     := absf(wrapf(to_chest - heading, -PI, PI))
+		if diff > PI * 0.75:
+			continue
+		if d < best_dist:
+			best_dist = d
+			best      = chest
+	return best
 
 
 ## Returns the nearest NPC that is within INTERACT_DIST and roughly in front.

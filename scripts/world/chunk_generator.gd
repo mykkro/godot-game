@@ -86,6 +86,8 @@ static func _place_objects(rng: RandomNumberGenerator, cell: CellData,
 		cell.add_object(MapObject.Type.FEATHER)
 	elif roll < rock_density + 0.082:
 		cell.add_object(MapObject.Type.POTION)
+	elif roll < rock_density + 0.092:
+		cell.add_object(MapObject.Type.CHEST_SMALL)
 
 
 ## Returns a fresh mutable copy of a weights array (so blending doesn't mutate the source).

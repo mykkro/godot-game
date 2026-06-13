@@ -37,6 +37,8 @@ func _ready() -> void:
 		var tex: Texture2D = null
 		if PickableItemDef.is_pickable(obj_type):
 			tex = TextureCache.get_object_texture(PickableItemDef.get_sprite(obj_type))
+		elif obj_type == MapObject.Type.CHEST_SMALL:
+			tex = TextureCache.get_chest_texture(1)
 		grid.add_child(_make_button(obj_type, tex, MapObject.get_display_name(obj_type)))
 
 

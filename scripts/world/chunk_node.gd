@@ -19,7 +19,26 @@ func initialize(data: ChunkData) -> void:
 	_data = data
 	_rebuild_collision()
 	_spawn_pickables()
+	_spawn_chests()
 	queue_redraw()
+
+
+## Spawn ChestNodes for every CHEST_SMALL object in the chunk.
+func _spawn_chests() -> void:
+	for y in range(CHUNK_SIZE):
+		for x in range(CHUNK_SIZE):
+			var cell := _data.get_cell(x, y)
+			if cell == null:
+				continue
+			for obj_type in cell.objects:
+				if obj_type == MapObject.Type.CHEST_SMALL:
+					var node := ChestNode.new()
+					node.position = Vector2(
+						(x + 0.5) * CELL_SIZE,
+						(y + 0.5) * CELL_SIZE
+					)
+					add_child(node)
+					node.initialize(x, y, _data.chunk_x, _data.chunk_y)
 
 
 ## Spawn Area2D PickableNodes for every pickable object in the chunk.
@@ -74,6 +93,8 @@ func _rebuild_collision() -> void:
 				# Individual objects may block movement.
 				for obj_type in cell.objects:
 					if not MapObject.is_type_passable(obj_type):
+						if obj_type == MapObject.Type.CHEST_SMALL:
+							continue  # ChestNode owns its own collision
 						_add_circle_collision(cx_px, cy_px, CELL_SIZE * 0.28)
 
 
@@ -127,9 +148,11 @@ func _draw() -> void:
 
 
 func _draw_object(obj_type: int, px: int, py: int) -> void:
-	# Pickable objects are rendered via their own PickableNode sprites.
+	# Objects rendered by dedicated child nodes skip draw here.
 	if PickableItemDef.is_pickable(obj_type):
 		return
+	if obj_type == MapObject.Type.CHEST_SMALL:
+		return  # rendered by ChestNode sprite
 	var center := Vector2(px + CELL_SIZE * 0.5, py + CELL_SIZE * 0.5)
 	match obj_type:
 		MapObject.Type.ROCK:
