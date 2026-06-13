@@ -24,6 +24,10 @@ var chest_variants: Dictionary = {}
 ## Stored only when the editor has explicitly set contents (even empty).
 ## Generated randomly on game spawn when absent.
 var chest_contents: Dictionary = {}
+## Forge input slot contents per cell.  key = lx + ly*CHUNK_SIZE → Array or absent.
+var forge_input:  Dictionary = {}
+## Forge output slot contents per cell. key = lx + ly*CHUNK_SIZE → Array or absent.
+var forge_output: Dictionary = {}
 
 
 func _init(p_cx: int = 0, p_cy: int = 0) -> void:
@@ -89,6 +93,24 @@ func set_chest_contents(lx: int, ly: int, arr: Array) -> void:
 	chest_contents[lx + ly * CHUNK_SIZE] = arr
 
 
+func get_forge_input(lx: int, ly: int) -> Variant:
+	var key := lx + ly * CHUNK_SIZE
+	return forge_input[key] if forge_input.has(key) else null
+
+
+func set_forge_input(lx: int, ly: int, arr: Array) -> void:
+	forge_input[lx + ly * CHUNK_SIZE] = arr
+
+
+func get_forge_output(lx: int, ly: int) -> Variant:
+	var key := lx + ly * CHUNK_SIZE
+	return forge_output[key] if forge_output.has(key) else null
+
+
+func set_forge_output(lx: int, ly: int, arr: Array) -> void:
+	forge_output[lx + ly * CHUNK_SIZE] = arr
+
+
 ## Unique string key for this chunk (used for file naming).
 func get_key() -> String:
 	return "%d_%d" % [chunk_x, chunk_y]
@@ -112,6 +134,12 @@ func to_dict() -> Dictionary:
 	var cc_pairs: Array = []
 	for k in chest_contents:
 		cc_pairs.append([int(k), (chest_contents[k] as Array).duplicate(true)])
+	var fi_pairs: Array = []
+	for k in forge_input:
+		fi_pairs.append([int(k), (forge_input[k] as Array).duplicate(true)])
+	var fo_pairs: Array = []
+	for k in forge_output:
+		fo_pairs.append([int(k), (forge_output[k] as Array).duplicate(true)])
 	return {
 		"chunk_x":         chunk_x,
 		"chunk_y":         chunk_y,
@@ -120,6 +148,8 @@ func to_dict() -> Dictionary:
 		"pickable_counts": pc_pairs,
 		"chest_variants":  cv_pairs,
 		"chest_contents":  cc_pairs,
+		"forge_input":     fi_pairs,
+		"forge_output":    fo_pairs,
 	}
 
 
@@ -142,4 +172,18 @@ static func from_dict(data: Dictionary) -> ChunkData:
 		for entry in raw_arr:
 			arr.append({"type": int(entry["type"]), "count": int(entry["count"])})
 		chunk.chest_contents[key] = arr
+	for pair in data.get("forge_input", []):
+		var key := int((pair as Array)[0])
+		var raw_arr: Array = (pair as Array)[1]
+		var arr: Array = []
+		for entry in raw_arr:
+			arr.append({"type": int(entry["type"]), "count": int(entry["count"])})
+		chunk.forge_input[key] = arr
+	for pair in data.get("forge_output", []):
+		var key := int((pair as Array)[0])
+		var raw_arr: Array = (pair as Array)[1]
+		var arr: Array = []
+		for entry in raw_arr:
+			arr.append({"type": int(entry["type"]), "count": int(entry["count"])})
+		chunk.forge_output[key] = arr
 	return chunk
