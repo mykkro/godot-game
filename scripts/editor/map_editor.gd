@@ -130,6 +130,7 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 	var terrain_sel:    String = _ui.get_terrain_palette().get_selected()
 	var item_sel:       int    = _ui.get_item_palette().get_selected()
 	var chest_variant:  int    = _ui.get_item_palette().get_selected_chest_variant()
+	var rock_variant:   int    = _ui.get_item_palette().get_selected_rock_variant()
 
 	if terrain_sel == "" and item_sel == ItemPalette.NONE_TYPE:
 		return
@@ -144,21 +145,25 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 		cell.terrain_type = terrain_sel
 		cell.is_obstacle  = not TileRegistry.is_passable(terrain_sel)
 		cell.objects.clear()
-		# Clear chest-specific data when terrain is replaced.
 		data.set_chest_variant(lc.x, lc.y, 0)
 		data.set_chest_contents(lc.x, lc.y, [])
+		data.set_rock_variant(lc.x, lc.y, 0)
 
 	if item_sel != ItemPalette.NONE_TYPE:
 		cell.objects.clear()   # one object per cell
 		cell.add_object(item_sel)
 		if item_sel == MapObject.Type.CHEST_SMALL:
 			data.set_chest_variant(lc.x, lc.y, chest_variant)
-			# Start with empty contents (designer fills via chest editor).
 			data.set_chest_contents(lc.x, lc.y, [])
-		else:
-			# Clear any stale chest data if replacing a chest cell.
+			data.set_rock_variant(lc.x, lc.y, 0)
+		elif item_sel == MapObject.Type.ROCK:
+			data.set_rock_variant(lc.x, lc.y, rock_variant)
 			data.set_chest_variant(lc.x, lc.y, 0)
 			data.set_chest_contents(lc.x, lc.y, [])
+		else:
+			data.set_chest_variant(lc.x, lc.y, 0)
+			data.set_chest_contents(lc.x, lc.y, [])
+			data.set_rock_variant(lc.x, lc.y, 0)
 
 	chunk_node.set_cell(lc.x, lc.y, cell)
 	_mark_dirty()
@@ -187,6 +192,7 @@ func _on_right_click_cell(cc: Vector2i, lc: Vector2i) -> void:
 		cell.objects.clear()
 		data.set_chest_variant(lc.x, lc.y, 0)
 		data.set_chest_contents(lc.x, lc.y, [])
+		data.set_rock_variant(lc.x, lc.y, 0)
 		chunk_node.set_cell(lc.x, lc.y, cell)
 		_mark_dirty()
 

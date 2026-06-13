@@ -28,6 +28,9 @@ var chest_contents: Dictionary = {}
 var forge_input:  Dictionary = {}
 ## Forge output slot contents per cell. key = lx + ly*CHUNK_SIZE → Array or absent.
 var forge_output: Dictionary = {}
+## Editor-chosen rock sprite variant (1-40) per cell, keyed by lx + ly*CHUNK_SIZE.
+## 0 means "position-hashed" (no override).
+var rock_variants: Dictionary = {}
 
 
 func _init(p_cx: int = 0, p_cy: int = 0) -> void:
@@ -111,6 +114,18 @@ func set_forge_output(lx: int, ly: int, arr: Array) -> void:
 	forge_output[lx + ly * CHUNK_SIZE] = arr
 
 
+## Returns stored rock variant (1-40), or 0 if not set (use position hash).
+func get_rock_variant(lx: int, ly: int) -> int:
+	return int(rock_variants.get(lx + ly * CHUNK_SIZE, 0))
+
+
+func set_rock_variant(lx: int, ly: int, variant: int) -> void:
+	if variant == 0:
+		rock_variants.erase(lx + ly * CHUNK_SIZE)
+	else:
+		rock_variants[lx + ly * CHUNK_SIZE] = variant
+
+
 ## Unique string key for this chunk (used for file naming).
 func get_key() -> String:
 	return "%d_%d" % [chunk_x, chunk_y]
@@ -140,6 +155,9 @@ func to_dict() -> Dictionary:
 	var fo_pairs: Array = []
 	for k in forge_output:
 		fo_pairs.append([int(k), (forge_output[k] as Array).duplicate(true)])
+	var rv_pairs: Array = []
+	for k in rock_variants:
+		rv_pairs.append([int(k), int(rock_variants[k])])
 	return {
 		"chunk_x":         chunk_x,
 		"chunk_y":         chunk_y,
@@ -150,6 +168,7 @@ func to_dict() -> Dictionary:
 		"chest_contents":  cc_pairs,
 		"forge_input":     fi_pairs,
 		"forge_output":    fo_pairs,
+		"rock_variants":   rv_pairs,
 	}
 
 
@@ -186,4 +205,6 @@ static func from_dict(data: Dictionary) -> ChunkData:
 		for entry in raw_arr:
 			arr.append({"type": int(entry["type"]), "count": int(entry["count"])})
 		chunk.forge_output[key] = arr
+	for pair in data.get("rock_variants", []):
+		chunk.rock_variants[int((pair as Array)[0])] = int((pair as Array)[1])
 	return chunk

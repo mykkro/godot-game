@@ -7,7 +7,8 @@ const TILE_SIZE := 38
 const NONE_TYPE := -1
 
 var _selected:               int   = NONE_TYPE
-var _selected_chest_variant: int   = 0       # 0 = no chest selected, 1-12 specific
+var _selected_chest_variant: int   = 0   # 0 = none, 1-12 specific
+var _selected_rock_variant:  int   = 0   # 0 = position-hash, 1-40 specific
 var _selected_overlay:       Panel = null
 
 var _style_overlay: StyleBoxFlat = null
@@ -45,10 +46,8 @@ func _ready() -> void:
 	add_child(_section_label("Rocks"))
 	var grid_rocks := _make_grid()
 	add_child(grid_rocks)
-	grid_rocks.add_child(_make_obj_button(
-		MapObject.Type.ROCK,
-		TextureCache.get_rock_texture(0),
-		"Rock (sprite varies by position)"))
+	for v in range(40):
+		grid_rocks.add_child(_make_rock_button(v + 1, TextureCache.get_rock_texture(v)))
 
 	# ── Crafting ──────────────────────────────────────────────────────────────
 	add_child(_section_sep())
@@ -78,6 +77,11 @@ func get_selected_chest_variant() -> int:
 	return _selected_chest_variant
 
 
+## Returns the selected rock variant (1-40), or 0 for position-hashed random.
+func get_selected_rock_variant() -> int:
+	return _selected_rock_variant
+
+
 # ── Private ───────────────────────────────────────────────────────────────────
 
 func _make_grid() -> GridContainer:
@@ -104,6 +108,14 @@ func _make_obj_button(obj_type: int, tex: Texture2D, tip: String) -> Button:
 	var btn     := Button.new()
 	var overlay := _build_button_body(btn, obj_type, tex, tip)
 	btn.pressed.connect(_on_obj_pressed.bind(obj_type, overlay))
+	return btn
+
+
+func _make_rock_button(stored_variant: int, tex: Texture2D) -> Button:
+	var btn     := Button.new()
+	var overlay := _build_button_body(
+			btn, MapObject.Type.ROCK, tex, "Rock variant %d" % stored_variant)
+	btn.pressed.connect(_on_rock_pressed.bind(stored_variant, overlay))
 	return btn
 
 
@@ -164,13 +176,23 @@ func _build_button_body(btn: Button, obj_type: int,
 func _on_obj_pressed(obj_type: int, overlay: Panel) -> void:
 	_selected               = obj_type
 	_selected_chest_variant  = 0
+	_selected_rock_variant   = 0
 	_swap_overlay(overlay)
 	item_selected.emit(obj_type)
+
+
+func _on_rock_pressed(stored_variant: int, overlay: Panel) -> void:
+	_selected              = MapObject.Type.ROCK
+	_selected_rock_variant  = stored_variant
+	_selected_chest_variant = 0
+	_swap_overlay(overlay)
+	item_selected.emit(MapObject.Type.ROCK)
 
 
 func _on_chest_pressed(variant: int, overlay: Panel) -> void:
 	_selected               = MapObject.Type.CHEST_SMALL
 	_selected_chest_variant  = variant
+	_selected_rock_variant   = 0
 	_swap_overlay(overlay)
 	item_selected.emit(MapObject.Type.CHEST_SMALL)
 

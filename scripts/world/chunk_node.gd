@@ -187,7 +187,9 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 	if obj_type == MapObject.Type.ROCK:
 		var lx      := px / CELL_SIZE
 		var ly      := py / CELL_SIZE
-		var variant := absi(lx * 7 + ly * 13 + _data.chunk_x * 31 + _data.chunk_y * 97) % 40
+		var stored  := _data.get_rock_variant(lx, ly)
+		var variant := (stored - 1) if stored > 0 \
+				else absi(lx * 7 + ly * 13 + _data.chunk_x * 31 + _data.chunk_y * 97) % 40
 		var tex     := TextureCache.get_rock_texture(variant)
 		if tex != null:
 			var s  := float(CELL_SIZE) * 0.92
