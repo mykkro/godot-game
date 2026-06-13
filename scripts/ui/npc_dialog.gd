@@ -68,6 +68,12 @@ func _ready() -> void:
 
 	var continue_btn := _make_button("Continue...")
 	continue_btn.pressed.connect(_show_menu)
+	var italic_font := SystemFont.new()
+	italic_font.font_italic = true
+	continue_btn.add_theme_font_override("font", italic_font)
+	continue_btn.add_theme_color_override("font_color",         Color(0.42, 0.58, 0.82))
+	continue_btn.add_theme_color_override("font_hover_color",   Color(0.58, 0.72, 0.95))
+	continue_btn.add_theme_color_override("font_pressed_color", Color(0.32, 0.46, 0.68))
 	_speech_box.add_child(continue_btn)
 
 	dim.visible = false
