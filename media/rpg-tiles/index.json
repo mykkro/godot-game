@@ -129,6 +129,46 @@
       "passable":       true,
       "speed_modifier": 1.05,
       "tags":           ["constructed", "rock"]
+    },
+    {
+      "file":           "media/hyptosis/hyptosis_tile-art-batch-1.png",
+      "prefix":         "hyptosis_1",
+      "tile_width":     32,
+      "tile_height":    32,
+      "category":       "terrain",
+      "passable":       true,
+      "speed_modifier": 1.0,
+      "tags":           ["hyptosis"]
+    },
+    {
+      "file":           "media/hyptosis/hyptosis_tile-art-batch-3.png",
+      "prefix":         "hyptosis_3",
+      "tile_width":     32,
+      "tile_height":    32,
+      "category":       "terrain",
+      "passable":       true,
+      "speed_modifier": 1.0,
+      "tags":           ["hyptosis"]
+    },
+    {
+      "file":           "media/hyptosis/hyptosis_tile-art-batch-4.png",
+      "prefix":         "hyptosis_4",
+      "tile_width":     32,
+      "tile_height":    32,
+      "category":       "terrain",
+      "passable":       true,
+      "speed_modifier": 1.0,
+      "tags":           ["hyptosis"]
+    },
+    {
+      "file":           "media/hyptosis/hyptosis_tile-art-batch-5.png",
+      "prefix":         "hyptosis_5",
+      "tile_width":     32,
+      "tile_height":    32,
+      "category":       "terrain",
+      "passable":       true,
+      "speed_modifier": 1.0,
+      "tags":           ["hyptosis"]
     }
   ]
 }
