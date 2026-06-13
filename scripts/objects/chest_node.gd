@@ -77,3 +77,33 @@ func _fill_contents(cx: int, cy: int, lx: int, ly: int) -> void:
 	for _i in range(extras):
 		var pick: int = item_pool[rng.randi() % item_pool.size()]
 		contents.append({"type": pick, "count": 1})
+
+	# 1–3 common crafting materials (stack 1–12)
+	var common_mats := [
+		MapObject.Type.NAILS,      MapObject.Type.WOOD_PLANK,
+		MapObject.Type.WOODEN_ROD, MapObject.Type.CLOTH,
+		MapObject.Type.COPPER_ORE, MapObject.Type.IRON_ORE,
+		MapObject.Type.FEATHER,    MapObject.Type.LEATHER,
+	]
+	var common_count := rng.randi_range(1, 3)
+	for _i in range(common_count):
+		var pick: int = common_mats[rng.randi() % common_mats.size()]
+		contents.append({"type": pick, "count": rng.randi_range(1, 12)})
+
+	# 50 % chance: one uncommon ore or bar (stack 1–6)
+	if rng.randi() % 2 == 0:
+		var uncommon := [
+			MapObject.Type.SILVER_NUGGET, MapObject.Type.GOLD_NUGGET,
+			MapObject.Type.COPPER_BAR,    MapObject.Type.IRON_BAR,
+		]
+		var pick: int = uncommon[rng.randi() % uncommon.size()]
+		contents.append({"type": pick, "count": rng.randi_range(1, 6)})
+
+	# 25 % chance: one rare material (stack 1–3)
+	if rng.randi() % 4 == 0:
+		var rare := [
+			MapObject.Type.SILVER_BAR,  MapObject.Type.GOLD_BAR,
+			MapObject.Type.DRAGONSCALE, MapObject.Type.GEM,
+		]
+		var pick: int = rare[rng.randi() % rare.size()]
+		contents.append({"type": pick, "count": rng.randi_range(1, 3)})

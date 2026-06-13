@@ -40,7 +40,7 @@ func _ready() -> void:
 			continue  # shown separately in Chests section
 		var tex: Texture2D = null
 		if PickableItemDef.is_pickable(obj_type):
-			tex = TextureCache.get_object_texture(PickableItemDef.get_sprite(obj_type))
+			tex = PickableItemDef.get_texture(obj_type)
 		var btn := _make_obj_button(obj_type, tex, MapObject.get_display_name(obj_type))
 		# Enable drag-and-drop for pickable items (used by chest inventory editor).
 		if PickableItemDef.is_pickable(obj_type) and tex != null:

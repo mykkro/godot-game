@@ -204,8 +204,7 @@ func _setup_slot_dnd(slot: PanelContainer, idx: int) -> void:
 			if idx >= _contents.size():
 				return null
 			var entry: Dictionary = _contents[idx]
-			var tex := TextureCache.get_object_texture(
-					PickableItemDef.get_sprite(entry["type"]))
+			var tex := PickableItemDef.get_texture(entry["type"])
 			var preview                 := TextureRect.new()
 			preview.texture              = tex
 			preview.custom_minimum_size  = Vector2(40, 40)
@@ -303,8 +302,7 @@ func _refresh() -> void:
 			var entry: Dictionary = _contents[idx]
 			var obj_type: int     = entry["type"]
 			var count: int        = entry["count"]
-			icon.texture  = TextureCache.get_object_texture(
-					PickableItemDef.get_sprite(obj_type))
+			icon.texture  = PickableItemDef.get_texture(obj_type)
 			var name_str := PickableItemDef.get_display_name(obj_type)
 			if PickableItemDef.max_stack_size(obj_type) > 1:
 				lbl.text = "%s x%d" % [name_str, count]

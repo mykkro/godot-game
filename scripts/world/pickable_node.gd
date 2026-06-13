@@ -33,10 +33,10 @@ func initialize(p_item_type: int, p_cx: int, p_cy: int,
 
 	# Sprite using the item's sprite sheet entry.
 	var sprite           := Sprite2D.new()
-	sprite.texture        = TextureCache.get_object_texture(
-			PickableItemDef.get_sprite(item_type))
+	sprite.texture        = PickableItemDef.get_texture(item_type)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	sprite.scale          = Vector2(SPRITE_SCALE, SPRITE_SCALE)
+	var ws := PickableItemDef.get_world_scale(item_type)
+	sprite.scale          = Vector2(SPRITE_SCALE * ws, SPRITE_SCALE * ws)
 	add_child(sprite)
 
 	# Detection area.

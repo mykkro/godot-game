@@ -214,8 +214,7 @@ func _refresh() -> void:
 		if i < _inventory.count():
 			var item_type: int = _inventory.get_type(i)
 			var item_count: int = _inventory.get_count(i)
-			icon.texture = TextureCache.get_object_texture(
-					PickableItemDef.get_sprite(item_type))
+			icon.texture = PickableItemDef.get_texture(item_type)
 			label.text   = PickableItemDef.get_display_name(item_type)
 			if item_count > 1:
 				badge.text    = str(item_count)
@@ -407,8 +406,7 @@ func _setup_slot_drag(slot: PanelContainer, slot_index: int) -> void:
 			if _inventory == null or slot_index >= _inventory.count():
 				return null
 			var item_type := _inventory.get_type(slot_index)
-			var tex := TextureCache.get_object_texture(
-					PickableItemDef.get_sprite(item_type))
+			var tex := PickableItemDef.get_texture(item_type)
 			var preview                  := TextureRect.new()
 			preview.texture               = tex
 			preview.custom_minimum_size   = Vector2(44, 44)

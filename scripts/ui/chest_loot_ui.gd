@@ -264,8 +264,7 @@ func _refresh_inv() -> void:
 		if i < _inventory.count():
 			var item_type:  int = _inventory.get_type(i)
 			var item_count: int = _inventory.get_count(i)
-			icon.texture = TextureCache.get_object_texture(
-					PickableItemDef.get_sprite(item_type))
+			icon.texture = PickableItemDef.get_texture(item_type)
 			label.text   = PickableItemDef.get_display_name(item_type)
 			if item_count > 1:
 				badge.text    = str(item_count)
@@ -290,8 +289,7 @@ func _refresh_chest() -> void:
 			var entry: Dictionary = _chest.contents[i]
 			var obj_type:  int    = int(entry["type"])
 			var obj_count: int    = int(entry["count"])
-			icon.texture = TextureCache.get_object_texture(
-					PickableItemDef.get_sprite(obj_type))
+			icon.texture = PickableItemDef.get_texture(obj_type)
 			label.text   = PickableItemDef.get_display_name(obj_type)
 			if obj_count > 1:
 				badge.text    = str(obj_count)
@@ -523,8 +521,7 @@ func _make_button(text: String, callback: Callable) -> Button:
 
 func _make_drag_preview(obj_type: int) -> TextureRect:
 	var preview             := TextureRect.new()
-	preview.texture          = TextureCache.get_object_texture(
-			PickableItemDef.get_sprite(obj_type))
+	preview.texture          = PickableItemDef.get_texture(obj_type)
 	preview.custom_minimum_size = Vector2(44, 44)
 	preview.expand_mode      = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	preview.stretch_mode     = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
