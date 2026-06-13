@@ -20,6 +20,7 @@ func initialize(data: ChunkData) -> void:
 	_rebuild_collision()
 	_spawn_pickables()
 	_spawn_chests()
+	_spawn_forges()
 	queue_redraw()
 
 
@@ -42,6 +43,28 @@ func _spawn_chests() -> void:
 					var contents: Variant = _data.get_chest_contents(x, y)
 					node.initialize(x, y, _data.chunk_x, _data.chunk_y,
 							variant, contents)
+					node._chunk_data = _data
+
+
+## Spawn ForgeNodes for every FORGE object in the chunk.
+func _spawn_forges() -> void:
+	for y in range(CHUNK_SIZE):
+		for x in range(CHUNK_SIZE):
+			var cell := _data.get_cell(x, y)
+			if cell == null:
+				continue
+			for obj_type in cell.objects:
+				if obj_type == MapObject.Type.FORGE:
+					var node := ForgeNode.new()
+					node.position = Vector2(
+						(x + 0.5) * CELL_SIZE,
+						(y + 0.5) * CELL_SIZE
+					)
+					add_child(node)
+					var stored_input:  Variant = _data.get_forge_input(x, y)
+					var stored_output: Variant = _data.get_forge_output(x, y)
+					node.initialize(x, y, _data.chunk_x, _data.chunk_y,
+							stored_input, stored_output)
 					node._chunk_data = _data
 
 
