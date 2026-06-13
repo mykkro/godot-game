@@ -71,7 +71,7 @@ func _ready() -> void:
 	)
 	_inventory_ui.drop_requested.connect(_avatar.drop_item)
 	_debug.setup(_world, _fog_manager, _avatar)
-	_pause_menu.setup(_fog_manager, _avatar, _npc_manager)
+	_pause_menu.setup(_fog_manager, _avatar, _npc_manager, _npc_dialog)
 	_inventory_ui.setup(_avatar.inventory)
 	_pickup_hint.setup(_avatar)
 	_minimap.setup(_world, _fog_manager, _avatar)
@@ -90,6 +90,7 @@ func _ready() -> void:
 	_world.update_avatar_position(spawn)
 	_fog_manager.update_avatar_position(spawn)
 	_npc_manager.load_and_spawn()
+	_npc_dialog.set_visited_data(SaveManager.load_dialog_visited())
 
 
 func _input(event: InputEvent) -> void:

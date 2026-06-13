@@ -7,7 +7,8 @@ const COLL_RADIUS    := 18.75
 const DIR_CHANGE_MIN := 3.0
 const DIR_CHANGE_MAX := 8.0
 
-var heading:    float = 0.0
+var npc_id:     String = ""
+var heading:    float  = 0.0
 var _sprite:    MeleeSprite = null
 var _dir_timer: float = 0.0
 
@@ -44,6 +45,7 @@ func _process(delta: float) -> void:
 func to_dict() -> Dictionary:
 	return {
 		"type":    "melee",
+		"npc_id":  npc_id,
 		"x":       position.x,
 		"y":       position.y,
 		"heading": heading,
@@ -51,6 +53,7 @@ func to_dict() -> Dictionary:
 
 
 func restore_from_dict(data: Dictionary) -> void:
+	npc_id   = str(data.get("npc_id", ""))
 	position = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
 	heading  = float(data.get("heading", 0.0))
 	_update_dir()

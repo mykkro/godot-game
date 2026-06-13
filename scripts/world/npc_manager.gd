@@ -6,6 +6,8 @@ const MELEE_SPAWN_CHANCE := 0.50   # NpcMelee probability per chunk (at most 1)
 
 var _world:         World      = null
 var _melee_spawned: Dictionary = {}   # Vector2i → true for chunks that have a melee NPC
+var _next_melee_id: int        = 1
+var _next_knight_id: int       = 1
 
 
 ## Wire to World BEFORE world.start() so startup chunks are covered.
@@ -35,6 +37,7 @@ func load_and_spawn() -> void:
 				var npc := NpcMelee.new()
 				_world.add_child(npc)
 				npc.restore_from_dict(d)
+				_bump_counter(npc.npc_id, "melee_", _next_melee_id)
 				# Mark chunk so we don't double-spawn on chunk-load signal.
 				var cc := _chunk_of(npc.position)
 				_melee_spawned[cc] = true
@@ -42,6 +45,7 @@ func load_and_spawn() -> void:
 				var npc := NpcKnight.new()
 				_world.add_child(npc)
 				npc.restore_from_dict(d)
+				_bump_counter(npc.npc_id, "knight_", _next_knight_id)
 
 
 func _on_chunk_loaded(coord: Vector2i) -> void:
@@ -49,8 +53,10 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 	if randf() < SPAWN_CHANCE:
 		var spawn := _find_spawn_pos(coord)
 		if is_finite(spawn.x):
-			var npc      := NpcKnight.new()
-			npc.position  = spawn
+			var npc       := NpcKnight.new()
+			npc.npc_id     = "knight_%03d" % _next_knight_id
+			_next_knight_id += 1
+			npc.position   = spawn
 			_world.add_child(npc)
 
 	# Idle melee NPC (permanent, at most 1 per chunk).
@@ -58,6 +64,8 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 		var spawn := _find_spawn_pos(coord)
 		if is_finite(spawn.x):
 			var npc      := NpcMelee.new()
+			npc.npc_id    = "melee_%03d" % _next_melee_id
+			_next_melee_id += 1
 			npc.position  = spawn
 			_world.add_child(npc)
 			_melee_spawned[coord] = true
@@ -84,6 +92,17 @@ func _find_spawn_pos(chunk_coord: Vector2i) -> Vector2:
 		)
 
 	return Vector2(INF, INF)
+
+
+## Advance the given counter ref past the numeric suffix of a loaded NPC id.
+func _bump_counter(id: String, prefix: String, counter: int) -> void:
+	if id.begins_with(prefix):
+		var n := int(id.substr(prefix.length()))
+		if n >= counter:
+			if prefix == "melee_":
+				_next_melee_id = n + 1
+			else:
+				_next_knight_id = n + 1
 
 
 static func _chunk_of(world_pos: Vector2) -> Vector2i:

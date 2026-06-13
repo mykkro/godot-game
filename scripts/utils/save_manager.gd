@@ -8,6 +8,7 @@ const PLAYER_FILE    := "user://player.json"
 const INVENTORY_FILE := "user://inventory.json"
 const SETTINGS_FILE  := "user://settings.json"
 const NPCS_FILE      := "user://npcs.json"
+const DIALOG_FILE    := "user://dialog_visited.json"
 
 
 ## Returns true when a previous game session exists (any saved chunk).
@@ -61,7 +62,7 @@ static func load_player() -> Dictionary:
 static func wipe() -> void:
 	_wipe_dir(CHUNKS_DIR)
 	_wipe_dir(FOG_DIR)
-	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE]:
+	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 
@@ -123,6 +124,32 @@ static func load_settings() -> Dictionary:
 	if json.parse(text) != OK:
 		return {}
 	return json.data as Dictionary
+
+
+## Persist NPC dialog visited options. Data: {npc_id: {label: true}}.
+static func save_dialog_visited(data: Dictionary) -> void:
+	var file := FileAccess.open(DIALOG_FILE, FileAccess.WRITE)
+	if file == null:
+		push_error("SaveManager: cannot write dialog visited (error %d)" \
+				% FileAccess.get_open_error())
+		return
+	file.store_string(JSON.stringify(data))
+	file.close()
+
+
+## Load NPC dialog visited options. Returns empty dict when no save exists.
+static func load_dialog_visited() -> Dictionary:
+	if not FileAccess.file_exists(DIALOG_FILE):
+		return {}
+	var file := FileAccess.open(DIALOG_FILE, FileAccess.READ)
+	if file == null:
+		return {}
+	var text := file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(text)
+	if parsed is Dictionary:
+		return parsed as Dictionary
+	return {}
 
 
 static func save_npcs(data: Array) -> void:

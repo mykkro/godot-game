@@ -8,7 +8,7 @@ var _speech_box:   VBoxContainer = null
 var _speech_label: Label         = null
 var _open:         bool          = false
 var _npc:          Node2D        = null
-## Visited options per NPC: instance_id → {label: true}
+## Visited options per NPC: "x,y" position key → {label: true}
 var _visited:      Dictionary    = {}
 
 
@@ -111,21 +111,31 @@ func close() -> void:
 
 # ── Private ───────────────────────────────────────────────────────────────────
 
+func get_visited_data() -> Dictionary:
+	return _visited
+
+
+func set_visited_data(data: Dictionary) -> void:
+	_visited = data
+
+
 func _build_menu(npc: Node2D) -> void:
 	for child in _menu_box.get_children():
 		child.queue_free()
 
-	var nid := npc.get_instance_id()
-	if not _visited.has(nid):
-		_visited[nid] = {}
+	var key := str(npc.get("npc_id", ""))
+	if key.is_empty():
+		key = "%d,%d" % [roundi(npc.position.x), roundi(npc.position.y)]
+	if not _visited.has(key):
+		_visited[key] = {}
 
-	_add_menu_btn("1.  Hello", _on_hello, nid)
+	_add_menu_btn("1.  Hello", _on_hello, key)
 
 	if npc is NpcMelee:
-		_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom, nid)
-		_add_menu_btn("3.  Goodbye", close, nid)
+		_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom, key)
+		_add_menu_btn("3.  Goodbye", close, key)
 	else:
-		_add_menu_btn("2.  Goodbye", close, nid)
+		_add_menu_btn("2.  Goodbye", close, key)
 
 
 func _show_menu() -> void:
@@ -162,12 +172,12 @@ func _on_wisdom() -> void:
 	_show_speech(FortuneLoader.get_random())
 
 
-func _add_menu_btn(label: String, cb: Callable, npc_id: int) -> void:
+func _add_menu_btn(label: String, cb: Callable, npc_key: String) -> void:
 	var btn := _make_button(label)
-	if (_visited.get(npc_id, {}) as Dictionary).has(label):
+	if (_visited.get(npc_key, {}) as Dictionary).has(label):
 		btn.add_theme_color_override("font_color", Color(0.45, 0.45, 0.50))
 	btn.pressed.connect(func():
-		(_visited[npc_id] as Dictionary)[label] = true
+		(_visited[npc_key] as Dictionary)[label] = true
 		btn.add_theme_color_override("font_color", Color(0.45, 0.45, 0.50))
 		cb.call()
 	)

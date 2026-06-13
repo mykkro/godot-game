@@ -6,6 +6,7 @@ const MENU_SCENE := "res://scenes/menu.tscn"
 var _fog_manager: FogManager = null
 var _avatar:      Avatar     = null
 var _npc_manager: NpcManager = null
+var _npc_dialog:  NpcDialog  = null
 
 var _center:          CenterContainer = null
 var _panel:           PanelContainer  = null
@@ -19,10 +20,12 @@ var _pending_action: Callable = Callable()
 
 
 ## Call from main._ready() after all other nodes are set up.
-func setup(fog_manager: FogManager, avatar: Avatar, npc_manager: NpcManager) -> void:
+func setup(fog_manager: FogManager, avatar: Avatar,
+		npc_manager: NpcManager, npc_dialog: NpcDialog) -> void:
 	_fog_manager = fog_manager
 	_avatar      = avatar
 	_npc_manager = npc_manager
+	_npc_dialog  = npc_dialog
 
 
 func _ready() -> void:
@@ -166,6 +169,8 @@ func _save_all() -> void:
 		SaveManager.save_inventory(_avatar.inventory)
 	if _npc_manager != null:
 		_npc_manager.save()
+	if _npc_dialog != null:
+		SaveManager.save_dialog_visited(_npc_dialog.get_visited_data())
 
 
 func _build_confirm_overlay() -> void:

@@ -18,6 +18,7 @@ const COLL_OFFSET_Y := -29.4
 
 enum State { IDLE, WALKING }
 
+var npc_id:       String  = ""
 var _state:       int     = State.IDLE
 var _idle_timer:  float   = 0.0
 var _walk_timer:  float   = 0.0
@@ -108,6 +109,7 @@ func _go_idle() -> void:
 func to_dict() -> Dictionary:
 	return {
 		"type":    "knight",
+		"npc_id":  npc_id,
 		"x":       position.x,
 		"y":       position.y,
 		"heading": heading,
@@ -116,6 +118,7 @@ func to_dict() -> Dictionary:
 
 
 func restore_from_dict(data: Dictionary) -> void:
+	npc_id   = str(data.get("npc_id", ""))
 	position = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
 	heading  = float(data.get("heading", 0.0))
 	_elapsed = float(data.get("elapsed", 0.0))
