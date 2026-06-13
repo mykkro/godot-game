@@ -22,51 +22,51 @@ func _ready() -> void:
 	for corner in range(4):
 		_style_overlay.set_corner_radius(corner, 4)
 
-	# ── Objects section ───────────────────────────────────────────────────────
-	var lbl_obj := Label.new()
-	lbl_obj.text = "Objects"
-	lbl_obj.add_theme_font_size_override("font_size", 13)
-	lbl_obj.add_theme_color_override("font_color", Color(0.75, 0.75, 0.9))
-	add_child(lbl_obj)
-
-	var grid_obj := GridContainer.new()
-	grid_obj.columns = 3
+	# ── Objects ───────────────────────────────────────────────────────────────
+	add_child(_section_label("Objects"))
+	var grid_obj := _make_grid()
 	add_child(grid_obj)
-
 	grid_obj.add_child(_make_obj_button(NONE_TYPE, null, "None (erase)"))
-
 	for obj_type in MapObject.Type.values():
-		if obj_type == MapObject.Type.CHEST_SMALL:
-			continue  # shown separately in Chests section
+		# Rocks, Forge, and Chests get their own dedicated sections below.
+		if obj_type in [MapObject.Type.CHEST_SMALL,
+				MapObject.Type.ROCK, MapObject.Type.FORGE]:
+			continue
 		var tex: Texture2D = null
-		if PickableItemDef.is_pickable(obj_type) or obj_type == MapObject.Type.FORGE:
+		if PickableItemDef.is_pickable(obj_type):
 			tex = PickableItemDef.get_texture(obj_type)
-		elif obj_type == MapObject.Type.ROCK:
-			tex = TextureCache.get_rock_texture(0)
 		var btn := _make_obj_button(obj_type, tex, MapObject.get_display_name(obj_type))
-		# Enable drag-and-drop for pickable items (used by chest inventory editor).
 		if PickableItemDef.is_pickable(obj_type) and tex != null:
 			_setup_palette_drag(btn, obj_type, tex)
 		grid_obj.add_child(btn)
 
-	# ── Chests section ────────────────────────────────────────────────────────
-	var sep := HSeparator.new()
-	sep.add_theme_color_override("color", Color(0.3, 0.3, 0.4))
-	add_child(sep)
+	# ── Rocks ─────────────────────────────────────────────────────────────────
+	add_child(_section_sep())
+	add_child(_section_label("Rocks"))
+	var grid_rocks := _make_grid()
+	add_child(grid_rocks)
+	grid_rocks.add_child(_make_obj_button(
+		MapObject.Type.ROCK,
+		TextureCache.get_rock_texture(0),
+		"Rock (sprite varies by position)"))
 
-	var lbl_chests := Label.new()
-	lbl_chests.text = "Chests"
-	lbl_chests.add_theme_font_size_override("font_size", 13)
-	lbl_chests.add_theme_color_override("font_color", Color(0.75, 0.75, 0.9))
-	add_child(lbl_chests)
+	# ── Crafting ──────────────────────────────────────────────────────────────
+	add_child(_section_sep())
+	add_child(_section_label("Crafting"))
+	var grid_craft := _make_grid()
+	add_child(grid_craft)
+	grid_craft.add_child(_make_obj_button(
+		MapObject.Type.FORGE,
+		PickableItemDef.get_texture(MapObject.Type.FORGE),
+		"Forge"))
 
-	var grid_chests := GridContainer.new()
-	grid_chests.columns = 3
+	# ── Chests ────────────────────────────────────────────────────────────────
+	add_child(_section_sep())
+	add_child(_section_label("Chests"))
+	var grid_chests := _make_grid()
 	add_child(grid_chests)
-
 	for v in range(1, ChestNode.CHEST_VARIANTS + 1):
-		grid_chests.add_child(
-			_make_chest_button(v, TextureCache.get_chest_texture(v)))
+		grid_chests.add_child(_make_chest_button(v, TextureCache.get_chest_texture(v)))
 
 
 func get_selected() -> int:
@@ -79,6 +79,26 @@ func get_selected_chest_variant() -> int:
 
 
 # ── Private ───────────────────────────────────────────────────────────────────
+
+func _make_grid() -> GridContainer:
+	var g := GridContainer.new()
+	g.columns = 3
+	return g
+
+
+func _section_label(text: String) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.9))
+	return lbl
+
+
+func _section_sep() -> HSeparator:
+	var sep := HSeparator.new()
+	sep.add_theme_color_override("color", Color(0.3, 0.3, 0.4))
+	return sep
+
 
 func _make_obj_button(obj_type: int, tex: Texture2D, tip: String) -> Button:
 	var btn     := Button.new()
