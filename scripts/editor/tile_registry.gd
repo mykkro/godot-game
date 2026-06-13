@@ -20,6 +20,47 @@ func _ready() -> void:
 		push_error("TileRegistry: unexpected JSON root type")
 		return
 	_tiles = (json.data as Dictionary).get("textures", {})
+	for atlas_def in ((json.data as Dictionary).get("atlases", []) as Array):
+		_expand_atlas(atlas_def as Dictionary)
+
+
+func _expand_atlas(def: Dictionary) -> void:
+	var file:   String = def.get("file", "")
+	var prefix: String = def.get("prefix", "tile")
+	var tw:     int    = int(def.get("tile_width", 64))
+	var th:     int    = int(def.get("tile_height", 64))
+	var cols:   int    = int(def.get("cols", 1))
+	var rows:   int    = int(def.get("rows", 1))
+
+	if file == "":
+		push_error("TileRegistry: atlas entry missing 'file'")
+		return
+
+	var base_tex := load("res://" + file) as Texture2D
+	if base_tex == null:
+		push_error("TileRegistry: atlas source not found: res://%s" % file)
+		return
+
+	var meta := {
+		"category":       def.get("category", "terrain"),
+		"passable":       bool(def.get("passable", true)),
+		"speed_modifier": float(def.get("speed_modifier", 1.0)),
+		"tags":           def.get("tags", []),
+	}
+
+	const ROW_LETTERS := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	for row in range(rows):
+		for col in range(cols):
+			var name := "%s_%s%d" % [prefix, ROW_LETTERS[row], col + 1]
+			var atlas := AtlasTexture.new()
+			atlas.atlas  = base_tex
+			atlas.region = Rect2(col * tw, row * th, tw, th)
+			TextureCache.register_named(name, atlas)
+			var entry := meta.duplicate()
+			entry["atlas_source"] = file
+			entry["atlas_row"]    = row
+			entry["atlas_col"]    = col
+			_tiles[name] = entry
 
 
 func get_all_tiles() -> Array[Dictionary]:

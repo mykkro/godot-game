@@ -116,5 +116,19 @@
     "woodpath.png":                  { "category": "terrain",  "passable": true,  "speed_modifier": 1.15, "tags": ["outdoor","path","constructed","wood"] },
     "woodpath2.png":                 { "category": "terrain",  "passable": true,  "speed_modifier": 1.15, "tags": ["outdoor","path","constructed","wood"] },
     "yellow grass.png":              { "category": "terrain",  "passable": true,  "speed_modifier": 1.00, "tags": ["outdoor","grass","desert"] }
-  }
+  },
+  "atlases": [
+    {
+      "file":           "media/cobbleset/cobbleset-64.png",
+      "prefix":         "cobble",
+      "tile_width":     64,
+      "tile_height":    64,
+      "cols":           8,
+      "rows":           8,
+      "category":       "terrain",
+      "passable":       true,
+      "speed_modifier": 1.05,
+      "tags":           ["constructed", "rock"]
+    }
+  ]
 }
