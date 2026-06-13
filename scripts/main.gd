@@ -16,6 +16,10 @@ var _music_index:  int               = 0
 
 
 func _ready() -> void:
+	var cursor := load("res://media/cursors/Outline/Default/cursor_none.png") as Texture2D
+	if cursor != null:
+		Input.set_custom_mouse_cursor(cursor, Input.CURSOR_ARROW, Vector2.ZERO)
+
 	AudioManager.apply_saved_settings()
 	_start_music()
 

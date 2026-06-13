@@ -3,6 +3,7 @@ extends Actor
 
 const MOVE_SPEED     := 200.0  # pixels / second
 const PICKUP_RADIUS  := 52.0   # pixels; pickup detection zone radius
+const WAYPOINT_REACH := 24.0   # pixels; distance to consider a path waypoint reached
 ## Collision layer mask for PickableNode (must match PickableNode.LAYER_PICKABLE).
 const PICKUP_MASK    := 2
 
@@ -21,7 +22,8 @@ var _inventory_ui: InventoryUI  = null
 var inventory: Inventory = Inventory.new()
 
 ## Nearby pickable items tracked via Area2D overlap signals.
-var _nearby_pickables: Dictionary = {}   # PickableNode → true
+var _path:             Array[Vector2]    = []   # queued waypoints from click-to-move
+var _nearby_pickables: Dictionary        = {}   # PickableNode → true
 var _pickup_area:  Area2D            = null
 var _sprite:       KnightSprite      = null
 var _pickup_sound: AudioStreamPlayer = null
@@ -73,9 +75,19 @@ func _physics_process(delta: float) -> void:
 	var dir := _read_input()
 
 	if dir != Vector2.ZERO:
+		_path.clear()           # keyboard cancels click-to-move
 		dir      = dir.normalized()
 		heading  = dir.angle()
 		velocity = dir * MOVE_SPEED
+	elif not _path.is_empty():
+		if position.distance_to(_path[0]) < WAYPOINT_REACH:
+			_path.pop_front()
+		if not _path.is_empty():
+			dir      = (_path[0] - position).normalized()
+			heading  = dir.angle()
+			velocity = dir * MOVE_SPEED
+		else:
+			velocity = Vector2.ZERO
 	else:
 		velocity = Vector2.ZERO
 
@@ -94,6 +106,14 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+			var world_pos := get_viewport().get_canvas_transform().affine_inverse() * mb.position
+			_on_click(world_pos)
+			get_viewport().set_input_as_handled()
+		return
+
 	if not (event is InputEventKey):
 		return
 	var ke := event as InputEventKey
@@ -260,6 +280,32 @@ func drop_item(slot_index: int, count: int) -> void:
 		_drop_sound.play()
 	if _inventory_ui != null:
 		_inventory_ui.notify_changed()
+
+
+func _on_click(world_pos: Vector2) -> void:
+	if _world == null:
+		return
+	var gc := _world.world_to_cell_coords(world_pos)
+	if not _is_cell_visible(gc):
+		return
+	var path := Pathfinder.find_path(_world, position, world_pos)
+	if not path.is_empty():
+		_path = path
+
+
+func _is_cell_visible(gc: Vector2i) -> bool:
+	if _fog_manager == null:
+		return true
+	var cc := Vector2i(
+		int(floor(float(gc.x) / ChunkData.CHUNK_SIZE)),
+		int(floor(float(gc.y) / ChunkData.CHUNK_SIZE))
+	)
+	var lx  := gc.x - cc.x * ChunkData.CHUNK_SIZE
+	var ly  := gc.y - cc.y * ChunkData.CHUNK_SIZE
+	var fog := _fog_manager.get_fog_data(cc)
+	if fog == null:
+		return false
+	return fog.get_level(lx, ly) >= FogData.PARTIAL
 
 
 static func _read_input() -> Vector2:
