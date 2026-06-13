@@ -8,6 +8,8 @@ var _speech_box:   VBoxContainer = null
 var _speech_label: Label         = null
 var _open:         bool          = false
 var _npc:          Node2D        = null
+## Visited options per NPC: instance_id → {label: true}
+var _visited:      Dictionary    = {}
 
 
 func _ready() -> void:
@@ -107,13 +109,17 @@ func _build_menu(npc: Node2D) -> void:
 	for child in _menu_box.get_children():
 		child.queue_free()
 
-	_add_menu_btn("1.  Hello", _on_hello)
+	var nid := npc.get_instance_id()
+	if not _visited.has(nid):
+		_visited[nid] = {}
+
+	_add_menu_btn("1.  Hello", _on_hello, nid)
 
 	if npc is NpcMelee:
-		_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom)
-		_add_menu_btn("3.  Goodbye", close)
+		_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom, nid)
+		_add_menu_btn("3.  Goodbye", close, nid)
 	else:
-		_add_menu_btn("2.  Goodbye", close)
+		_add_menu_btn("2.  Goodbye", close, nid)
 
 
 func _show_menu() -> void:
@@ -150,9 +156,12 @@ func _on_wisdom() -> void:
 	_show_speech(FortuneLoader.get_random())
 
 
-func _add_menu_btn(label: String, cb: Callable) -> void:
+func _add_menu_btn(label: String, cb: Callable, npc_id: int) -> void:
 	var btn := _make_button(label)
+	if (_visited.get(npc_id, {}) as Dictionary).has(label):
+		btn.add_theme_color_override("font_color", Color(0.45, 0.45, 0.50))
 	btn.pressed.connect(func():
+		(_visited[npc_id] as Dictionary)[label] = true
 		btn.add_theme_color_override("font_color", Color(0.45, 0.45, 0.50))
 		cb.call()
 	)
