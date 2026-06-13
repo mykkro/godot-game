@@ -134,7 +134,8 @@ func _build_menu(npc: Node2D) -> void:
 
 	if npc is NpcMelee:
 		_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom, key)
-		_add_menu_btn("3.  Goodbye", close, key)
+		_add_menu_btn("3.  Quest", _on_quest, key)
+		_add_menu_btn("4.  Goodbye", close, key)
 	else:
 		_add_menu_btn("2.  Goodbye", close, key)
 
@@ -171,6 +172,10 @@ func _on_hello() -> void:
 
 func _on_wisdom() -> void:
 	_show_speech(FortuneLoader.get_random())
+
+
+func _on_quest() -> void:
+	_show_speech("I have no quests for you at this time, traveler.")
 
 
 func _add_menu_btn(label: String, cb: Callable, npc_key: String) -> void:
