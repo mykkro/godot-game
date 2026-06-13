@@ -93,10 +93,45 @@ func _refresh() -> void:
 		for dx in range(-1, 2):
 			_image.set_pixel(half + dx, half + dy, Color.WHITE)
 
+	# Quest-giver dots: 3×3 yellow for each fog-revealed NpcMelee
+	var q_color := Color(1.0, 0.85, 0.0)
+	for child in _world.get_children():
+		if not (child is NpcMelee):
+			continue
+		var gc  := _world_to_cell((child as NpcMelee).position)
+		var px  := half + (gc.x - center.x)
+		var py  := half + (gc.y - center.y)
+		if px < 0 or px >= CELLS or py < 0 or py >= CELLS:
+			continue
+		if _fog_level_at(gc) == FogData.UNEXPLORED:
+			continue
+		for dy in range(-1, 2):
+			for dx in range(-1, 2):
+				var ix := px + dx
+				var iy := py + dy
+				if ix >= 0 and ix < CELLS and iy >= 0 and iy < CELLS:
+					_image.set_pixel(ix, iy, q_color)
+
 	_texture.update(_image)
 
 
+func _fog_level_at(gc: Vector2i) -> int:
+	var cs := ChunkData.CHUNK_SIZE
+	var cc  := Vector2i(
+		int(floor(float(gc.x) / float(cs))),
+		int(floor(float(gc.y) / float(cs)))
+	)
+	var fog := _fog_manager.get_fog_data(cc)
+	if fog == null:
+		return FogData.UNEXPLORED
+	return fog.get_level(gc.x - cc.x * cs, gc.y - cc.y * cs)
+
+
 func _cell_color(gc: Vector2i) -> Color:
+	var level := _fog_level_at(gc)
+	if level == FogData.UNEXPLORED:
+		return Color.BLACK
+
 	var cs := ChunkData.CHUNK_SIZE
 	var cc  := Vector2i(
 		int(floor(float(gc.x) / float(cs))),
@@ -104,14 +139,6 @@ func _cell_color(gc: Vector2i) -> Color:
 	)
 	var lx := gc.x - cc.x * cs
 	var ly := gc.y - cc.y * cs
-
-	var fog := _fog_manager.get_fog_data(cc)
-	if fog == null:
-		return Color.BLACK
-
-	var level := fog.get_level(lx, ly)
-	if level == FogData.UNEXPLORED:
-		return Color.BLACK
 
 	var chunk := _world.get_chunk(cc)
 	if chunk == null:
