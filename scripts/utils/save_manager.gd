@@ -94,16 +94,19 @@ static func load_inventory() -> Inventory:
 
 
 static func save_settings(master_volume: float,
-		music_volume: float = 0.5, effects_volume: float = 1.0) -> void:
+		music_volume: float = 0.5, effects_volume: float = 1.0,
+		fullscreen: bool = false, resolution_index: int = 2) -> void:
 	var file := FileAccess.open(SETTINGS_FILE, FileAccess.WRITE)
 	if file == null:
 		push_error("SaveManager: cannot write settings (error %d)" \
 				% FileAccess.get_open_error())
 		return
 	file.store_string(JSON.stringify({
-		"master_volume":  master_volume,
-		"music_volume":   music_volume,
-		"effects_volume": effects_volume,
+		"master_volume":    master_volume,
+		"music_volume":     music_volume,
+		"effects_volume":   effects_volume,
+		"fullscreen":       fullscreen,
+		"resolution_index": resolution_index,
 	}))
 	file.close()
 

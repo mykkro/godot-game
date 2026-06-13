@@ -3,6 +3,13 @@ extends Control
 const MAIN_SCENE       := "res://scenes/main.tscn"
 const MAP_EDITOR_SCENE := "res://scenes/map_editor.tscn"
 
+const RESOLUTIONS := [
+	Vector2i(1280,  720),
+	Vector2i(1600,  900),
+	Vector2i(1920, 1080),
+	Vector2i(2560, 1440),
+]
+
 @onready var _vbox:           VBoxContainer = $VBox
 @onready var _btn_continue:   Button        = $VBox/BtnContinue
 @onready var _btn_new:        Button        = $VBox/BtnNew
@@ -17,11 +24,14 @@ var _music_slider:    HSlider        = null
 var _music_label:     Label          = null
 var _effects_slider:  HSlider        = null
 var _effects_label:   Label          = null
+var _fullscreen_btn:  CheckButton    = null
+var _resolution_opt:  OptionButton   = null
 
-# Current values kept in sync for SaveManager calls.
-var _master_vol:  float = AudioManager.DEFAULT_MASTER_VOLUME
-var _music_vol:   float = AudioManager.DEFAULT_MUSIC_VOLUME
-var _effects_vol: float = AudioManager.DEFAULT_EFFECTS_VOLUME
+var _master_vol:     float = AudioManager.DEFAULT_MASTER_VOLUME
+var _music_vol:      float = AudioManager.DEFAULT_MUSIC_VOLUME
+var _effects_vol:    float = AudioManager.DEFAULT_EFFECTS_VOLUME
+var _fullscreen:     bool  = false
+var _resolution_idx: int   = 2  # default 1920×1080
 
 
 func _ready() -> void:
@@ -45,6 +55,13 @@ func _ready() -> void:
 	_update_label(_master_label,  "Master Volume",  _master_vol  * 100.0)
 	_update_label(_music_label,   "Music Volume",   _music_vol   * 100.0)
 	_update_label(_effects_label, "Effects Volume", _effects_vol * 100.0)
+
+	_fullscreen     = bool(settings.get("fullscreen",      false))
+	_resolution_idx = int(settings.get("resolution_index", 2))
+	_fullscreen_btn.button_pressed = _fullscreen
+	_resolution_opt.select(_resolution_idx)
+	_resolution_opt.disabled = _fullscreen
+	_apply_video_settings()
 
 
 func _on_new_game() -> void:
@@ -78,21 +95,47 @@ func _on_master_changed(value: float) -> void:
 	_master_vol = value / 100.0
 	AudioManager.set_master_volume(_master_vol)
 	_update_label(_master_label, "Master Volume", value)
-	SaveManager.save_settings(_master_vol, _music_vol, _effects_vol)
+	_save_settings()
 
 
 func _on_music_changed(value: float) -> void:
 	_music_vol = value / 100.0
 	AudioManager.set_music_volume(_music_vol)
 	_update_label(_music_label, "Music Volume", value)
-	SaveManager.save_settings(_master_vol, _music_vol, _effects_vol)
+	_save_settings()
 
 
 func _on_effects_changed(value: float) -> void:
 	_effects_vol = value / 100.0
 	AudioManager.set_effects_volume(_effects_vol)
 	_update_label(_effects_label, "Effects Volume", value)
-	SaveManager.save_settings(_master_vol, _music_vol, _effects_vol)
+	_save_settings()
+
+
+func _on_fullscreen_toggled(pressed: bool) -> void:
+	_fullscreen = pressed
+	_resolution_opt.disabled = pressed
+	_apply_video_settings()
+	_save_settings()
+
+
+func _on_resolution_changed(index: int) -> void:
+	_resolution_idx = index
+	if not _fullscreen:
+		_apply_video_settings()
+	_save_settings()
+
+
+func _apply_video_settings() -> void:
+	if _fullscreen:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		DisplayServer.window_set_size(RESOLUTIONS[_resolution_idx])
+
+
+func _save_settings() -> void:
+	SaveManager.save_settings(_master_vol, _music_vol, _effects_vol, _fullscreen, _resolution_idx)
 
 
 func _update_label(lbl: Label, name: String, value: float) -> void:
@@ -123,11 +166,12 @@ func _build_options_panel() -> void:
 	title.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
 	vbox.add_child(title)
 
-	var section := Label.new()
-	section.text = "Audio"
-	section.add_theme_font_size_override("font_size", 22)
-	section.add_theme_color_override("font_color", Color(0.75, 0.75, 0.9))
-	vbox.add_child(section)
+	# ── Audio ──────────────────────────────────────────────────────────────────
+	var audio_section := Label.new()
+	audio_section.text = "Audio"
+	audio_section.add_theme_font_size_override("font_size", 22)
+	audio_section.add_theme_color_override("font_color", Color(0.75, 0.75, 0.9))
+	vbox.add_child(audio_section)
 
 	var sliders := [
 		["Master Volume",  _on_master_changed],
@@ -157,6 +201,46 @@ func _build_options_panel() -> void:
 			"Music Volume":   _music_label   = lbl; _music_slider   = slider
 			"Effects Volume": _effects_label = lbl; _effects_slider = slider
 
+	# ── Video ──────────────────────────────────────────────────────────────────
+	var video_section := Label.new()
+	video_section.text = "Video"
+	video_section.add_theme_font_size_override("font_size", 22)
+	video_section.add_theme_color_override("font_color", Color(0.75, 0.75, 0.9))
+	vbox.add_child(video_section)
+
+	var fs_row := HBoxContainer.new()
+	fs_row.add_theme_constant_override("separation", 16)
+	vbox.add_child(fs_row)
+
+	var fs_lbl := Label.new()
+	fs_lbl.text = "Fullscreen"
+	fs_lbl.custom_minimum_size = Vector2(240, 0)
+	fs_lbl.add_theme_font_size_override("font_size", 18)
+	fs_row.add_child(fs_lbl)
+
+	_fullscreen_btn = CheckButton.new()
+	_fullscreen_btn.toggled.connect(_on_fullscreen_toggled)
+	fs_row.add_child(_fullscreen_btn)
+
+	var res_row := HBoxContainer.new()
+	res_row.add_theme_constant_override("separation", 16)
+	vbox.add_child(res_row)
+
+	var res_lbl := Label.new()
+	res_lbl.text = "Resolution"
+	res_lbl.custom_minimum_size = Vector2(240, 0)
+	res_lbl.add_theme_font_size_override("font_size", 18)
+	res_row.add_child(res_lbl)
+
+	_resolution_opt = OptionButton.new()
+	_resolution_opt.custom_minimum_size = Vector2(160, 0)
+	_resolution_opt.add_theme_font_size_override("font_size", 17)
+	for res in RESOLUTIONS:
+		_resolution_opt.add_item("%d × %d" % [res.x, res.y])
+	_resolution_opt.item_selected.connect(_on_resolution_changed)
+	res_row.add_child(_resolution_opt)
+
+	# ── Back ───────────────────────────────────────────────────────────────────
 	var btn_back := Button.new()
 	btn_back.text = "Back"
 	btn_back.custom_minimum_size = Vector2(240, 52)
