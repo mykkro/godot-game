@@ -9,8 +9,9 @@ const COLL_HALF       := 20.0   # half-size of blocking rectangle in px
 const CHEST_VARIANTS  := 12     # number of chest_XX.png files
 const CAPACITY        := 20     # max item stacks
 
-var _cell_x: int = 0
-var _cell_y: int = 0
+var _cell_x:     int       = 0
+var _cell_y:     int       = 0
+var _chunk_data: ChunkData = null   # set by ChunkNode after initialize
 
 ## Item stacks stored in the chest; populated deterministically on spawn.
 var contents: Array[Dictionary] = []
@@ -51,6 +52,13 @@ func initialize(p_cx: int, p_cy: int,
 	else:
 		for entry in (p_stored_contents as Array):
 			contents.append({"type": int(entry["type"]), "count": int(entry["count"])})
+
+
+## Persist current contents back to the chunk save data.
+## Called by ChestLootUI when the player closes the loot screen.
+func flush_to_data() -> void:
+	if _chunk_data != null:
+		_chunk_data.set_chest_contents(_cell_x, _cell_y, contents.duplicate(true))
 
 
 func _fill_contents(cx: int, cy: int, lx: int, ly: int) -> void:

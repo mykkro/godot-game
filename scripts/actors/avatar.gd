@@ -18,6 +18,7 @@ const DROP_SOUND_VOLUME   := 0.9
 const SHOOT_COOLDOWN      := 0.5
 
 signal npc_interact_requested(npc: Node2D)
+signal chest_interact_requested(chest: ChestNode)
 
 var _world:        World        = null
 var _fog_manager:  FogManager   = null
@@ -126,7 +127,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if npc != null:
 			npc_interact_requested.emit(npc)
 		elif get_interactable_chest() != null:
-			pass   # chest opening — to be implemented
+			chest_interact_requested.emit(get_interactable_chest())
 		else:
 			_try_pickup()
 		get_viewport().set_input_as_handled()

@@ -30,7 +30,7 @@ var _style_slot_hover:    StyleBoxFlat = null
 
 
 func _ready() -> void:
-	layer   = 50
+	layer   = 9   # below EditorUI (10) so palette drag previews render above us
 	visible = false
 	_build_styles()
 	_build_ui()
@@ -46,7 +46,7 @@ func open(chunk_data: ChunkData, lx: int, ly: int) -> void:
 	_lx         = lx
 	_ly         = ly
 
-	var stored := chunk_data.get_chest_contents(lx, ly)
+	var stored: Variant = chunk_data.get_chest_contents(lx, ly)
 	if stored == null:
 		# Not yet set — start with an empty editor (designer fills it intentionally).
 		_contents = []
@@ -90,7 +90,8 @@ func _build_ui() -> void:
 	var backdrop := ColorRect.new()
 	backdrop.color        = Color(0, 0, 0, 0.45)
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	backdrop.gui_input.connect(_on_backdrop_input)
+	# IGNORE so mouse events fall through to the item palette in the layer below.
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 
 	var center := CenterContainer.new()
@@ -218,10 +219,9 @@ func _setup_slot_dnd(slot: PanelContainer, idx: int) -> void:
 		func(_pos: Vector2, data: Variant) -> bool:
 			if not (data is Dictionary):
 				return false
-			# Accept drop from palette (add new item) only into empty slot.
-			if data.has("palette_obj_type") and idx >= _contents.size() \
-					and _contents.size() < CAPACITY:
-				return true
+			# Accept palette drops on any slot as long as the item can be added.
+			if data.has("palette_obj_type"):
+				return _can_add_palette_item(int(data["palette_obj_type"]))
 			# Accept drop from another chest slot (move within grid).
 			if data.has("chest_src_slot") and data["chest_src_slot"] != idx:
 				return true
@@ -230,7 +230,7 @@ func _setup_slot_dnd(slot: PanelContainer, idx: int) -> void:
 		# drop_data
 		func(_pos: Vector2, data: Variant) -> void:
 			if data.has("palette_obj_type"):
-				_contents.append({"type": int(data["palette_obj_type"]), "count": 1})
+				_add_palette_item(int(data["palette_obj_type"]))
 			elif data.has("chest_src_slot"):
 				var src: int = data["chest_src_slot"]
 				if src < _contents.size():
@@ -254,14 +254,39 @@ func _on_slot_input(event: InputEvent, idx: int) -> void:
 			_refresh()
 
 
-func _on_backdrop_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
-		close()
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event is InputEventKey:
+		var ke := event as InputEventKey
+		if ke.keycode == KEY_ESCAPE and ke.pressed and not ke.echo:
+			close()
+			get_viewport().set_input_as_handled()
 
 
 func _on_remove_chest() -> void:
 	visible = false
 	chest_removed.emit()
+
+
+func _can_add_palette_item(obj_type: int) -> bool:
+	var max_stack := PickableItemDef.max_stack_size(obj_type)
+	if max_stack > 1:
+		for entry in _contents:
+			if entry["type"] == obj_type and entry["count"] < max_stack:
+				return true
+	return _contents.size() < CAPACITY
+
+
+func _add_palette_item(obj_type: int) -> void:
+	var max_stack := PickableItemDef.max_stack_size(obj_type)
+	if max_stack > 1:
+		for entry in _contents:
+			if entry["type"] == obj_type and entry["count"] < max_stack:
+				entry["count"] += 1
+				return
+	if _contents.size() < CAPACITY:
+		_contents.append({"type": obj_type, "count": 1})
 
 
 func _flush() -> void:
@@ -277,9 +302,14 @@ func _refresh() -> void:
 		if idx < _contents.size():
 			var entry: Dictionary = _contents[idx]
 			var obj_type: int     = entry["type"]
+			var count: int        = entry["count"]
 			icon.texture  = TextureCache.get_object_texture(
 					PickableItemDef.get_sprite(obj_type))
-			lbl.text = PickableItemDef.get_display_name(obj_type)
+			var name_str := PickableItemDef.get_display_name(obj_type)
+			if PickableItemDef.max_stack_size(obj_type) > 1:
+				lbl.text = "%s x%d" % [name_str, count]
+			else:
+				lbl.text = name_str
 			panel.add_theme_stylebox_override("panel", _style_slot_occupied)
 		else:
 			icon.texture = null

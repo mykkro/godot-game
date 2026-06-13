@@ -14,8 +14,9 @@ var _music_index:  int               = 0
 @onready var _minimap:      MinimapUI    = $MinimapUI
 @onready var _npc_manager:  NpcManager   = $NpcManager
 
-var _actor_refs: ActorRefOverlay = null
-var _npc_dialog: NpcDialog       = null
+var _actor_refs:    ActorRefOverlay = null
+var _npc_dialog:    NpcDialog       = null
+var _chest_loot_ui: ChestLootUI     = null
 
 
 func _ready() -> void:
@@ -30,6 +31,9 @@ func _ready() -> void:
 	_npc_dialog = NpcDialog.new()
 	add_child(_npc_dialog)
 
+	_chest_loot_ui = ChestLootUI.new()
+	add_child(_chest_loot_ui)
+
 	AudioManager.apply_saved_settings()
 	_start_music()
 
@@ -43,6 +47,10 @@ func _ready() -> void:
 
 	_avatar.setup(_world, _fog_manager, _inventory_ui)
 	_avatar.npc_interact_requested.connect(_npc_dialog.open)
+	_avatar.chest_interact_requested.connect(
+		func(chest: ChestNode) -> void:
+			_chest_loot_ui.open(_avatar.inventory, chest)
+	)
 	_inventory_ui.drop_requested.connect(_avatar.drop_item)
 	_debug.setup(_world, _fog_manager, _avatar)
 	_pause_menu.setup(_fog_manager, _avatar, _npc_manager)

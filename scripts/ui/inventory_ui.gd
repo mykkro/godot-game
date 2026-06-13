@@ -80,6 +80,13 @@ func _ready() -> void:
 	sort_btn.pressed.connect(_on_sort_pressed)
 	header.add_child(sort_btn)
 
+	var compact_btn := Button.new()
+	compact_btn.text = "Compact"
+	compact_btn.custom_minimum_size = Vector2(74, 0)
+	compact_btn.add_theme_font_size_override("font_size", 13)
+	compact_btn.pressed.connect(_on_compact_pressed)
+	header.add_child(compact_btn)
+
 	_count_label = Label.new()
 	_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_count_label.add_theme_font_size_override("font_size", 12)
@@ -303,6 +310,32 @@ func _on_sort_pressed() -> void:
 	_refresh()
 
 
+func _on_compact_pressed() -> void:
+	if _inventory == null:
+		return
+	var items := _inventory.items
+	var i := 0
+	while i < items.size():
+		var obj_type: int = int(items[i]["type"])
+		var max_st   := PickableItemDef.max_stack_size(obj_type)
+		if max_st > 1:
+			var j := i + 1
+			while j < items.size() and int(items[i]["count"]) < max_st:
+				if int(items[j]["type"]) == obj_type:
+					var space: int = max_st - int(items[i]["count"])
+					var take:  int = mini(int(items[j]["count"]), space)
+					items[i]["count"] = int(items[i]["count"]) + take
+					items[j]["count"] = int(items[j]["count"]) - take
+					if int(items[j]["count"]) <= 0:
+						items.remove_at(j)
+					else:
+						j += 1
+				else:
+					j += 1
+		i += 1
+	_refresh()
+
+
 ## Returns [TextureRect icon, Label name_label, PanelContainer slot, Label count_badge].
 func _make_slot() -> Array:
 	var slot := PanelContainer.new()
@@ -392,11 +425,25 @@ func _setup_slot_drag(slot: PanelContainer, slot_index: int) -> void:
 			var src: int = data["inv_src_slot"]
 			return src != slot_index,
 
-		# drop_data — perform the move/swap.
+		# drop_data — merge if same stackable type, otherwise move/swap.
 		func(_pos: Vector2, data: Variant) -> void:
 			if _inventory == null:
 				return
-			_inventory.move_slot(int(data["inv_src_slot"]), slot_index)
+			var src: int = int(data["inv_src_slot"])
+			var dst: int = slot_index
+			if src < _inventory.count() and dst < _inventory.count():
+				var src_type := _inventory.get_type(src)
+				if src_type == _inventory.get_type(dst):
+					var max_st := PickableItemDef.max_stack_size(src_type)
+					if max_st > 1:
+						var space := max_st - _inventory.get_count(dst)
+						if space > 0:
+							var move := mini(_inventory.get_count(src), space)
+							_inventory.items[dst]["count"] += move
+							_inventory.remove_from_slot(src, move)
+							_refresh()
+							return
+			_inventory.move_slot(src, dst)
 			_refresh()
 	)
 

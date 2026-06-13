@@ -38,10 +38,11 @@ func _spawn_chests() -> void:
 						(y + 0.5) * CELL_SIZE
 					)
 					add_child(node)
-					var variant  := _data.get_chest_variant(x, y)
-					var contents := _data.get_chest_contents(x, y)
+					var variant:  int     = _data.get_chest_variant(x, y)
+					var contents: Variant = _data.get_chest_contents(x, y)
 					node.initialize(x, y, _data.chunk_x, _data.chunk_y,
 							variant, contents)
+					node._chunk_data = _data
 
 
 ## Spawn Area2D PickableNodes for every pickable object in the chunk.
