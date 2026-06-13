@@ -111,9 +111,12 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 				CELL_SIZE * 0.6, CELL_SIZE * 0.6), Color(0.80, 0.45, 0.10))
 		return
 	if obj_type == MapObject.Type.ROCK:
-		var tex := TextureCache.get_items2_texture("granite.png")
+		var lx      := px / CELL_SIZE
+		var ly      := py / CELL_SIZE
+		var variant := absi(lx * 7 + ly * 13 + _data.chunk_x * 31 + _data.chunk_y * 97) % 40
+		var tex     := TextureCache.get_rock_texture(variant)
 		if tex != null:
-			var s  := float(CELL_SIZE) * 0.65
+			var s  := float(CELL_SIZE) * 0.92
 			var ox := px + (CELL_SIZE - s) * 0.5
 			var oy := py + (CELL_SIZE - s) * 0.5
 			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)

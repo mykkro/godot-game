@@ -41,6 +41,8 @@ func _ready() -> void:
 		var tex: Texture2D = null
 		if PickableItemDef.is_pickable(obj_type) or obj_type == MapObject.Type.FORGE:
 			tex = PickableItemDef.get_texture(obj_type)
+		elif obj_type == MapObject.Type.ROCK:
+			tex = TextureCache.get_rock_texture(0)
 		var btn := _make_obj_button(obj_type, tex, MapObject.get_display_name(obj_type))
 		# Enable drag-and-drop for pickable items (used by chest inventory editor).
 		if PickableItemDef.is_pickable(obj_type) and tex != null:

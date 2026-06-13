@@ -37,6 +37,35 @@ static func get_items2_texture(filename: String) -> Texture2D:
 	return _load_texture(ITEMS2_PATH + filename)
 
 
+## One rock sprite from the two 4×5 rockz spritesheets (rockz.png + rockz2.png).
+## variant 0-19 → rockz.png, variant 20-39 → rockz2.png  (wraps at 40).
+static func get_rock_texture(variant: int) -> Texture2D:
+	const COLS    := 4
+	const ROWS    := 5
+	const SHEETS  := ["res://media/rockz/rockz.png", "res://media/rockz/rockz2.png"]
+	const PER     := COLS * ROWS   # 20 per sheet
+	var total     := PER * SHEETS.size()
+	var v         := variant % total
+	var sheet_idx := v / PER
+	var within    := v % PER
+	var col       := within % COLS
+	var row       := within / COLS
+	var key       := "rockz:%d" % v
+	if _cache.has(key):
+		return _cache[key]
+	var base := _load_texture(SHEETS[sheet_idx])
+	if base == null:
+		_cache[key] = null
+		return null
+	var at      := AtlasTexture.new()
+	at.atlas     = base
+	var cw: float = 1024.0 / float(COLS)
+	var ch: float = 1024.0 / float(ROWS)
+	at.region    = Rect2(col * cw, row * ch, cw, ch)
+	_cache[key]  = at
+	return at
+
+
 ## One 32×32 region from the 4×4 materials atlas (media/materials/nails.png).
 static func get_material_texture(col: int, row: int) -> Texture2D:
 	const ATLAS := "res://media/materials/nails.png"
