@@ -55,6 +55,7 @@ func _build_palette(filter: String) -> void:
 	var none_btn := Button.new()
 	none_btn.custom_minimum_size = Vector2(TILE_SIZE + 4, TILE_SIZE + 4)
 	none_btn.clip_contents = true
+	none_btn.mouse_filter = Control.MOUSE_FILTER_PASS
 	none_btn.tooltip_text = "No terrain — only objects will be placed"
 	var none_lbl := Label.new()
 	none_lbl.text = "✕"
@@ -124,6 +125,7 @@ func _add_group(title: String, tiles: Array) -> void:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(TILE_SIZE + 4, TILE_SIZE + 4)
 		btn.clip_contents = true
+		btn.mouse_filter = Control.MOUSE_FILTER_PASS
 		btn.tooltip_text = fname
 		grid.add_child(btn)
 

@@ -48,6 +48,7 @@ func _make_button(obj_type: int, tex: Texture2D, tip: String) -> Button:
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(TILE_SIZE + 4, TILE_SIZE + 4)
 	btn.clip_contents = true
+	btn.mouse_filter = Control.MOUSE_FILTER_PASS
 	btn.tooltip_text = tip
 
 	var container := CenterContainer.new()
