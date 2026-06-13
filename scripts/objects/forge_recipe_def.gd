@@ -11,7 +11,7 @@ static func load_recipes() -> void:
 	if f == null:
 		push_error("ForgeRecipeDef: cannot open res://data/forge_recipes.json")
 		return
-	var parsed := JSON.parse_string(f.get_as_text())
+	var parsed: Variant = JSON.parse_string(f.get_as_text())
 	f.close()
 	if parsed == null or not (parsed is Array):
 		push_error("ForgeRecipeDef: invalid JSON")
