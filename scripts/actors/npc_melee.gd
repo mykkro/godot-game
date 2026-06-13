@@ -9,6 +9,7 @@ const DIR_CHANGE_MAX := 8.0
 const MARK_BASE_Y    := -90.0
 const BOB_AMP        := 3.0
 const BOB_PERIOD     := 1.2
+const QUEST_MARK_COLOR := Color(1.0, 0.85, 0.0)
 
 var npc_id:     String   = ""
 var heading:    float    = 0.0
@@ -40,7 +41,7 @@ func _ready() -> void:
 
 	_mark          = Sprite2D.new()
 	_mark.texture  = load("res://media/cursors/Outline/Default/mark_exclamation.png")
-	_mark.modulate = Color(1.0, 0.85, 0.0)
+	_mark.modulate = QUEST_MARK_COLOR
 	_mark.position = Vector2(0.0, MARK_BASE_Y)
 	add_child(_mark)
 

@@ -88,13 +88,8 @@ func _refresh() -> void:
 			var gy := center.y - half + row
 			_image.set_pixel(col, row, _cell_color(Vector2i(gx, gy)))
 
-	# Player dot: 3×3 white at center
-	for dy in range(-1, 2):
-		for dx in range(-1, 2):
-			_image.set_pixel(half + dx, half + dy, Color.WHITE)
-
 	# Quest-giver dots: 3×3 yellow for each fog-revealed NpcMelee
-	var q_color := Color(1.0, 0.85, 0.0)
+	var q_color := NpcMelee.QUEST_MARK_COLOR
 	for child in _world.get_children():
 		if not (child is NpcMelee):
 			continue
@@ -111,6 +106,11 @@ func _refresh() -> void:
 				var iy := py + dy
 				if ix >= 0 and ix < CELLS and iy >= 0 and iy < CELLS:
 					_image.set_pixel(ix, iy, q_color)
+
+	# Player dot: 3×3 white at center — painted last so it is always on top
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			_image.set_pixel(half + dx, half + dy, Color.WHITE)
 
 	_texture.update(_image)
 
