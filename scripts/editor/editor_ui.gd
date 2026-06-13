@@ -220,7 +220,7 @@ func _build_status_bar() -> void:
 	bar.add_child(hbox)
 
 	var lbl_hint := Label.new()
-	lbl_hint.text = "LMB: paint  |  RMB: remove object  |  MMB: pan  |  Scroll: zoom"
+	lbl_hint.text = "LMB: paint  |  RMB: remove object / open chest  |  MMB: pan  |  Scroll: zoom"
 	lbl_hint.add_theme_font_size_override("font_size", 12)
 	lbl_hint.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
 	hbox.add_child(lbl_hint)

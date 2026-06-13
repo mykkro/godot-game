@@ -73,6 +73,22 @@ func remove_from_slot(slot: int, n: int) -> int:
 	return removed
 
 
+## Move the item at from_idx to a different position.
+## If to_idx < count: swap the two slots.
+## If to_idx >= count: move item to end of the list.
+func move_slot(from_idx: int, to_idx: int) -> void:
+	if from_idx < 0 or from_idx >= items.size() or from_idx == to_idx:
+		return
+	if to_idx < items.size():
+		var tmp: Dictionary = items[from_idx]
+		items[from_idx] = items[to_idx]
+		items[to_idx]   = tmp
+	else:
+		var item: Dictionary = items[from_idx]
+		items.remove_at(from_idx)
+		items.append(item)
+
+
 func to_dict() -> Dictionary:
 	var arr: Array = []
 	for slot in items:

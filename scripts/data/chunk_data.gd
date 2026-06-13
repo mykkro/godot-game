@@ -17,6 +17,13 @@ var cells: Array = []
 var pickable_counts: Dictionary = {}
 ## Dominant biome for this chunk (BiomeDef.Type value).
 var biome: int = BiomeDef.Type.PLAINS
+## Selected chest sprite variant (1-12) per cell, keyed by lx + ly*CHUNK_SIZE.
+## 0 means "use default formula"; stored only for editor-placed chests.
+var chest_variants: Dictionary = {}
+## Editor-assigned chest contents per cell, keyed by lx + ly*CHUNK_SIZE.
+## Stored only when the editor has explicitly set contents (even empty).
+## Generated randomly on game spawn when absent.
+var chest_contents: Dictionary = {}
 
 
 func _init(p_cx: int = 0, p_cy: int = 0) -> void:
@@ -57,6 +64,31 @@ func erase_pickable_count(x: int, y: int) -> void:
 	pickable_counts.erase(x * CHUNK_SIZE + y)
 
 
+## Returns stored chest variant (1-12), or 0 if not set (use default formula).
+func get_chest_variant(lx: int, ly: int) -> int:
+	return int(chest_variants.get(lx + ly * CHUNK_SIZE, 0))
+
+
+func set_chest_variant(lx: int, ly: int, variant: int) -> void:
+	if variant == 0:
+		chest_variants.erase(lx + ly * CHUNK_SIZE)
+	else:
+		chest_variants[lx + ly * CHUNK_SIZE] = variant
+
+
+## Returns editor-set chest contents for this cell, or null when not set.
+## null = generate deterministically; [] = intentionally empty.
+func get_chest_contents(lx: int, ly: int) -> Variant:
+	var key := lx + ly * CHUNK_SIZE
+	if chest_contents.has(key):
+		return chest_contents[key]
+	return null
+
+
+func set_chest_contents(lx: int, ly: int, arr: Array) -> void:
+	chest_contents[lx + ly * CHUNK_SIZE] = arr
+
+
 ## Unique string key for this chunk (used for file naming).
 func get_key() -> String:
 	return "%d_%d" % [chunk_x, chunk_y]
@@ -74,12 +106,20 @@ func to_dict() -> Dictionary:
 	var pc_pairs: Array = []
 	for k in pickable_counts:
 		pc_pairs.append([int(k), int(pickable_counts[k])])
+	var cv_pairs: Array = []
+	for k in chest_variants:
+		cv_pairs.append([int(k), int(chest_variants[k])])
+	var cc_pairs: Array = []
+	for k in chest_contents:
+		cc_pairs.append([int(k), (chest_contents[k] as Array).duplicate(true)])
 	return {
 		"chunk_x":         chunk_x,
 		"chunk_y":         chunk_y,
 		"biome":           biome,
 		"cells":           rows,
 		"pickable_counts": pc_pairs,
+		"chest_variants":  cv_pairs,
+		"chest_contents":  cc_pairs,
 	}
 
 
@@ -93,4 +133,13 @@ static func from_dict(data: Dictionary) -> ChunkData:
 			chunk.cells[y][x] = CellData.from_dict(row[x])
 	for pair in data.get("pickable_counts", []):
 		chunk.pickable_counts[int((pair as Array)[0])] = int((pair as Array)[1])
+	for pair in data.get("chest_variants", []):
+		chunk.chest_variants[int((pair as Array)[0])] = int((pair as Array)[1])
+	for pair in data.get("chest_contents", []):
+		var key := int((pair as Array)[0])
+		var raw_arr: Array = (pair as Array)[1]
+		var arr: Array = []
+		for entry in raw_arr:
+			arr.append({"type": int(entry["type"]), "count": int(entry["count"])})
+		chunk.chest_contents[key] = arr
 	return chunk

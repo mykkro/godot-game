@@ -16,8 +16,11 @@ var _cell_y: int = 0
 var contents: Array[Dictionary] = []
 
 
+## p_variant 0 = use deterministic formula from position.
+## p_stored_contents null = generate randomly; [] = intentionally empty.
 func initialize(p_cx: int, p_cy: int,
-		p_chunk_x: int = 0, p_chunk_y: int = 0) -> void:
+		p_chunk_x: int = 0, p_chunk_y: int = 0,
+		p_variant: int = 0, p_stored_contents: Variant = null) -> void:
 	_cell_x = p_cx
 	_cell_y = p_cy
 
@@ -33,10 +36,9 @@ func initialize(p_cx: int, p_cy: int,
 	col.shape = rect
 	add_child(col)
 
-	# Pick a chest variant deterministically from position.
-	var variant := ((p_cx * 7 + p_cy * 13) % CHEST_VARIANTS) + 1
-	var path    := "res://media/chests/chest_%02d.png" % variant
-	var tex     := load(path) as Texture2D
+	var variant := p_variant if p_variant > 0 \
+			else ((p_cx * 7 + p_cy * 13) % CHEST_VARIANTS) + 1
+	var tex := TextureCache.get_chest_texture(variant)
 
 	var sprite               := Sprite2D.new()
 	sprite.texture            = tex
@@ -44,7 +46,11 @@ func initialize(p_cx: int, p_cy: int,
 	sprite.scale              = Vector2(SPRITE_SCALE, SPRITE_SCALE)
 	add_child(sprite)
 
-	_fill_contents(p_chunk_x, p_chunk_y, p_cx, p_cy)
+	if p_stored_contents == null:
+		_fill_contents(p_chunk_x, p_chunk_y, p_cx, p_cy)
+	else:
+		for entry in (p_stored_contents as Array):
+			contents.append({"type": int(entry["type"]), "count": int(entry["count"])})
 
 
 func _fill_contents(cx: int, cy: int, lx: int, ly: int) -> void:

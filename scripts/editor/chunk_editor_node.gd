@@ -89,7 +89,9 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 	if obj_type == MapObject.Type.CHEST_SMALL:
 		var cx      := px / CELL_SIZE
 		var cy      := py / CELL_SIZE
-		var variant := ((cx * 7 + cy * 13) % ChestNode.CHEST_VARIANTS) + 1
+		var variant := _data.get_chest_variant(cx, cy)
+		if variant == 0:
+			variant = ((cx * 7 + cy * 13) % ChestNode.CHEST_VARIANTS) + 1
 		var tex     := TextureCache.get_chest_texture(variant)
 		if tex != null:
 			var s  := float(CELL_SIZE) * 0.65

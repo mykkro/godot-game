@@ -99,6 +99,7 @@ func _ready() -> void:
 		_slot_labels.append(slot_data[1]       as Label)
 		_slot_count_badges.append(slot_data[3] as Label)
 		slot.gui_input.connect(_on_slot_gui_input.bind(i))
+		_setup_slot_drag(slot, i)
 		grid.add_child(slot)
 
 	# ── Context menu backdrop ─────────────────────────────────────────────────
@@ -361,6 +362,43 @@ func _make_slot() -> Array:
 	vb.add_child(lbl)
 
 	return [icon, lbl, slot, badge]
+
+
+## Attach drag-to-move behaviour to a slot PanelContainer.
+## Dragging a slot onto another slot swaps items; dragging to an empty slot
+## moves the item there.
+func _setup_slot_drag(slot: PanelContainer, slot_index: int) -> void:
+	slot.set_drag_forwarding(
+		# get_drag_data — start drag only when slot has an item.
+		func(_pos: Vector2) -> Variant:
+			if _inventory == null or slot_index >= _inventory.count():
+				return null
+			var item_type := _inventory.get_type(slot_index)
+			var tex := TextureCache.get_object_texture(
+					PickableItemDef.get_sprite(item_type))
+			var preview                  := TextureRect.new()
+			preview.texture               = tex
+			preview.custom_minimum_size   = Vector2(44, 44)
+			preview.expand_mode           = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+			preview.stretch_mode          = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			preview.texture_filter        = CanvasItem.TEXTURE_FILTER_NEAREST
+			slot.set_drag_preview(preview)
+			return {"inv_src_slot": slot_index},
+
+		# can_drop_data — accept another inventory slot being dragged here.
+		func(_pos: Vector2, data: Variant) -> bool:
+			if not (data is Dictionary) or not data.has("inv_src_slot"):
+				return false
+			var src: int = data["inv_src_slot"]
+			return src != slot_index,
+
+		# drop_data — perform the move/swap.
+		func(_pos: Vector2, data: Variant) -> void:
+			if _inventory == null:
+				return
+			_inventory.move_slot(int(data["inv_src_slot"]), slot_index)
+			_refresh()
+	)
 
 
 func _make_cm_button(label: String, callback: Callable) -> Button:

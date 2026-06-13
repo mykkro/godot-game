@@ -14,6 +14,8 @@ var _dirty:      bool          = false
 var _autosave:   bool          = true
 var _timer:      Timer         = null
 
+var _chest_editor: ChestInventoryEditor = null
+
 
 func _ready() -> void:
 	_build_scene_tree()
@@ -54,7 +56,6 @@ func _build_scene_tree() -> void:
 	add_child(world_layer)
 
 	_camera = EditorCamera.new()
-	# Centre on chunk (0,0); zoom out so the full chunk is visible at startup.
 	_camera.position = Vector2(512, 512)
 	_camera.zoom     = Vector2(0.5, 0.5)
 	world_layer.add_child(_camera)
@@ -79,6 +80,11 @@ func _build_scene_tree() -> void:
 
 	_ui.set_exit_guard(func() -> bool: return _dirty)
 
+	_chest_editor = ChestInventoryEditor.new()
+	add_child(_chest_editor)
+	_chest_editor.closed.connect(_on_chest_editor_closed)
+	_chest_editor.chest_removed.connect(_on_chest_removed)
+
 
 func _load_initial_chunks() -> void:
 	for cy in range(-LOAD_RADIUS, LOAD_RADIUS + 1):
@@ -89,7 +95,7 @@ func _load_initial_chunks() -> void:
 
 func _connect_signals() -> void:
 	_input_node.paint_cell.connect(_on_paint_cell)
-	_input_node.erase_cell.connect(_on_erase_cell)
+	_input_node.erase_cell.connect(_on_right_click_cell)
 	_input_node.hover_cell.connect(_on_hover_cell)
 
 	_ui.save_pressed.connect(_on_save)
@@ -119,8 +125,11 @@ func _ensure_chunk(cc: Vector2i) -> ChunkEditorNode:
 # ── Edit operations ───────────────────────────────────────────────────────────
 
 func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
-	var terrain_sel: String = _ui.get_terrain_palette().get_selected()
-	var item_sel:    int    = _ui.get_item_palette().get_selected()
+	if _chest_editor.visible:
+		return   # block painting while chest editor is open
+	var terrain_sel:    String = _ui.get_terrain_palette().get_selected()
+	var item_sel:       int    = _ui.get_item_palette().get_selected()
+	var chest_variant:  int    = _ui.get_item_palette().get_selected_chest_variant()
 
 	if terrain_sel == "" and item_sel == ItemPalette.NONE_TYPE:
 		return
@@ -135,16 +144,30 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 		cell.terrain_type = terrain_sel
 		cell.is_obstacle  = not TileRegistry.is_passable(terrain_sel)
 		cell.objects.clear()
+		# Clear chest-specific data when terrain is replaced.
+		data.set_chest_variant(lc.x, lc.y, 0)
+		data.set_chest_contents(lc.x, lc.y, [])
 
 	if item_sel != ItemPalette.NONE_TYPE:
-		if not cell.objects.has(item_sel):
-			cell.add_object(item_sel)
+		cell.objects.clear()   # one object per cell
+		cell.add_object(item_sel)
+		if item_sel == MapObject.Type.CHEST_SMALL:
+			data.set_chest_variant(lc.x, lc.y, chest_variant)
+			# Start with empty contents (designer fills via chest editor).
+			data.set_chest_contents(lc.x, lc.y, [])
+		else:
+			# Clear any stale chest data if replacing a chest cell.
+			data.set_chest_variant(lc.x, lc.y, 0)
+			data.set_chest_contents(lc.x, lc.y, [])
 
 	chunk_node.set_cell(lc.x, lc.y, cell)
 	_mark_dirty()
 
 
-func _on_erase_cell(cc: Vector2i, lc: Vector2i) -> void:
+## Right-click: open chest editor if cell contains a chest, otherwise erase objects.
+func _on_right_click_cell(cc: Vector2i, lc: Vector2i) -> void:
+	if _chest_editor.visible:
+		return
 	if not _chunks.has(cc):
 		return
 	var chunk_node := _chunks[cc] as ChunkEditorNode
@@ -153,9 +176,17 @@ func _on_erase_cell(cc: Vector2i, lc: Vector2i) -> void:
 	if cell == null:
 		return
 
-	# Right-click removes all objects but leaves terrain intact.
+	if cell.objects.has(MapObject.Type.CHEST_SMALL):
+		_chest_editor.open(data, lc.x, lc.y)
+		# Store the current chunk coord so we know which node to redraw on close.
+		_chest_editor.set_meta("chunk_coord", cc)
+		return
+
+	# Default: erase objects.
 	if not cell.objects.is_empty():
 		cell.objects.clear()
+		data.set_chest_variant(lc.x, lc.y, 0)
+		data.set_chest_contents(lc.x, lc.y, [])
 		chunk_node.set_cell(lc.x, lc.y, cell)
 		_mark_dirty()
 
@@ -170,6 +201,36 @@ func _on_hover_cell(cc: Vector2i, lc: Vector2i) -> void:
 	for coord in _chunks.keys():
 		(_chunks[coord] as ChunkEditorNode).set_hover(
 				lc if coord == cc else Vector2i(-1, -1))
+
+
+# ── Chest editor callbacks ────────────────────────────────────────────────────
+
+func _on_chest_editor_closed() -> void:
+	_redraw_chest_chunk()
+	_mark_dirty()
+
+
+func _on_chest_removed() -> void:
+	var cc := _chest_editor.get_meta("chunk_coord", Vector2i.ZERO) as Vector2i
+	if not _chunks.has(cc):
+		return
+	var chunk_node := _chunks[cc] as ChunkEditorNode
+	var data       := chunk_node.get_data()
+	var lx: int    = _chest_editor.get_lx()
+	var ly: int    = _chest_editor.get_ly()
+	var cell       := data.get_cell(lx, ly)
+	if cell != null:
+		cell.objects.erase(MapObject.Type.CHEST_SMALL)
+		data.set_chest_variant(lx, ly, 0)
+		data.set_chest_contents(lx, ly, [])
+		chunk_node.set_cell(lx, ly, cell)
+	_mark_dirty()
+
+
+func _redraw_chest_chunk() -> void:
+	var cc := _chest_editor.get_meta("chunk_coord", Vector2i.ZERO) as Vector2i
+	if _chunks.has(cc):
+		(_chunks[cc] as ChunkEditorNode).queue_redraw()
 
 
 # ── Persistence ───────────────────────────────────────────────────────────────
