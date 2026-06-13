@@ -182,9 +182,12 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 		return
 	if obj_type == MapObject.Type.CHEST_SMALL:
 		return  # rendered by ChestNode sprite
-	var center := Vector2(px + CELL_SIZE * 0.5, py + CELL_SIZE * 0.5)
-	match obj_type:
-		MapObject.Type.ROCK:
-			draw_circle(center, CELL_SIZE * 0.25, MapObject.get_color(obj_type))
-			draw_arc(center, CELL_SIZE * 0.25, 0.0, TAU, 16,
-					 Color(0.25, 0.22, 0.18), 1.5)
+	if obj_type == MapObject.Type.FORGE:
+		return  # rendered by ForgeNode sprite
+	if obj_type == MapObject.Type.ROCK:
+		var tex := TextureCache.get_items2_texture("granite.png")
+		if tex != null:
+			var s  := float(CELL_SIZE) * 0.65
+			var ox := px + (CELL_SIZE - s) * 0.5
+			var oy := py + (CELL_SIZE - s) * 0.5
+			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
