@@ -49,7 +49,7 @@ func _ready() -> void:
 
 	_sprite = KnightSprite.new()
 	_sprite.scale  = Vector2(0.56, 0.56)
-	_sprite.offset = Vector2(0.0, -45.0)
+	_sprite.offset = Vector2(0.0, -3.1)
 	add_child(_sprite)
 
 	_pickup_sound = AudioStreamPlayer.new()
@@ -149,7 +149,6 @@ func _setup_collision() -> void:
 	var circle := CircleShape2D.new()
 	circle.radius = COLL_RADIUS
 	col.shape     = circle
-	col.position  = Vector2(0.0, COLL_OFFSET_Y)
 	add_child(col)
 
 
@@ -162,7 +161,6 @@ func _setup_pickup_area() -> void:
 	var circle := CircleShape2D.new()
 	circle.radius = COLL_RADIUS
 	col.shape     = circle
-	col.position  = Vector2(0.0, COLL_OFFSET_Y)
 	_pickup_area.add_child(col)
 	add_child(_pickup_area)
 
@@ -231,8 +229,7 @@ func _try_shoot() -> void:
 		return
 	_shoot_cooldown = SHOOT_COOLDOWN
 	var dir    := Vector2(cos(heading), sin(heading))
-	var origin := position + Vector2(0.0, COLL_OFFSET_Y) \
-			+ dir * (COLL_RADIUS + ProjectileNode.RADIUS + 2.0)
+	var origin := position + dir * (COLL_RADIUS + ProjectileNode.RADIUS + 2.0)
 	var proj   := ProjectileNode.new()
 	proj.initialize(origin, dir, _world)
 	_world.add_child(proj)
@@ -290,6 +287,7 @@ func _on_click(world_pos: Vector2) -> void:
 		return
 	var path := Pathfinder.find_path(_world, position, world_pos)
 	if not path.is_empty():
+		path[path.size() - 1] = world_pos
 		_path = path
 
 

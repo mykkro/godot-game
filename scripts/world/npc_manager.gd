@@ -1,9 +1,11 @@
 class_name NpcManager
 extends Node
 
-const SPAWN_CHANCE := 0.70   # probability per newly loaded chunk
+const SPAWN_CHANCE       := 0.70   # NpcKnight probability per chunk
+const MELEE_SPAWN_CHANCE := 0.50   # NpcMelee probability per chunk (at most 1)
 
-var _world: World = null
+var _world:         World      = null
+var _melee_spawned: Dictionary = {}   # Vector2i → true for chunks that have a melee NPC
 
 
 ## Wire to World BEFORE world.start() so startup chunks are covered.
@@ -12,33 +14,53 @@ func setup(world: World) -> void:
 	world.chunk_loaded.connect(_on_chunk_loaded)
 
 
-## Collect every live NpcKnight and persist their state.
+## Collect every live NPC and persist their state.
 func save() -> void:
 	var data: Array = []
 	for child in _world.get_children():
 		if child is NpcKnight:
 			data.append((child as NpcKnight).to_dict())
+		elif child is NpcMelee:
+			data.append((child as NpcMelee).to_dict())
 	SaveManager.save_npcs(data)
 
 
-## Spawn NpcKnights from a previously saved snapshot.
+## Spawn NPCs from a previously saved snapshot.
 ## Call after world.start() so the scene tree is ready.
 func load_and_spawn() -> void:
 	for entry in SaveManager.load_npcs():
-		var npc := NpcKnight.new()
-		_world.add_child(npc)
-		npc.restore_from_dict(entry as Dictionary)
+		var d := entry as Dictionary
+		match d.get("type", "knight"):
+			"melee":
+				var npc := NpcMelee.new()
+				_world.add_child(npc)
+				npc.restore_from_dict(d)
+				# Mark chunk so we don't double-spawn on chunk-load signal.
+				var cc := _chunk_of(npc.position)
+				_melee_spawned[cc] = true
+			_:
+				var npc := NpcKnight.new()
+				_world.add_child(npc)
+				npc.restore_from_dict(d)
 
 
 func _on_chunk_loaded(coord: Vector2i) -> void:
-	if randf() > SPAWN_CHANCE:
-		return
-	var spawn := _find_spawn_pos(coord)
-	if not is_finite(spawn.x):
-		return
-	var npc      := NpcKnight.new()
-	npc.position  = spawn
-	_world.add_child(npc)
+	# Wandering greatsword knight (temporary).
+	if randf() < SPAWN_CHANCE:
+		var spawn := _find_spawn_pos(coord)
+		if is_finite(spawn.x):
+			var npc      := NpcKnight.new()
+			npc.position  = spawn
+			_world.add_child(npc)
+
+	# Idle melee NPC (permanent, at most 1 per chunk).
+	if not _melee_spawned.has(coord) and randf() < MELEE_SPAWN_CHANCE:
+		var spawn := _find_spawn_pos(coord)
+		if is_finite(spawn.x):
+			var npc      := NpcMelee.new()
+			npc.position  = spawn
+			_world.add_child(npc)
+			_melee_spawned[coord] = true
 
 
 ## Returns world-space centre of a random passable, empty cell in the chunk,
@@ -62,3 +84,10 @@ func _find_spawn_pos(chunk_coord: Vector2i) -> Vector2:
 		)
 
 	return Vector2(INF, INF)
+
+
+static func _chunk_of(world_pos: Vector2) -> Vector2i:
+	return Vector2i(
+		int(floor(world_pos.x / ChunkData.CHUNK_PIXEL_SIZE)),
+		int(floor(world_pos.y / ChunkData.CHUNK_PIXEL_SIZE))
+	)

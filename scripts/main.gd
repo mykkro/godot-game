@@ -14,11 +14,17 @@ var _music_index:  int               = 0
 @onready var _minimap:      MinimapUI    = $MinimapUI
 @onready var _npc_manager:  NpcManager   = $NpcManager
 
+var _actor_refs: ActorRefOverlay = null
+
 
 func _ready() -> void:
 	var cursor := load("res://media/cursors/Outline/Default/cursor_none.png") as Texture2D
 	if cursor != null:
 		Input.set_custom_mouse_cursor(cursor, Input.CURSOR_ARROW, Vector2.ZERO)
+
+	_actor_refs = ActorRefOverlay.new()
+	_actor_refs.visible = false
+	add_child(_actor_refs)
 
 	AudioManager.apply_saved_settings()
 	_start_music()
@@ -41,6 +47,7 @@ func _ready() -> void:
 
 	# Now load the initial chunks; signals will reach FogManager correctly.
 	_world.start()
+	_actor_refs.setup(_avatar, _world)
 
 	# Restore saved position, or find a spawn point for a fresh game.
 	var spawn := _load_or_find_spawn()
@@ -60,7 +67,9 @@ func _input(event: InputEvent) -> void:
 	if not ke.pressed or ke.echo:
 		return
 	if ke.keycode == KEY_F4:
-		get_tree().debug_collisions_hint = not get_tree().debug_collisions_hint
+		var on := not get_tree().debug_collisions_hint
+		get_tree().debug_collisions_hint = on
+		_actor_refs.visible              = on
 		get_viewport().set_input_as_handled()
 
 

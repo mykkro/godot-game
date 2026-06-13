@@ -56,7 +56,7 @@ static func _h(a: Vector2i, b: Vector2i) -> float:
 static func _neighbors(cell: Vector2i, world: World) -> Array:
 	var result: Array = []
 	for d in [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]:
-		var n  := cell + d
+		var n  := cell + (d as Vector2i)
 		var nw := Vector2((n.x + 0.5) * CELL_SIZE, (n.y + 0.5) * CELL_SIZE)
 		var c  := world.get_cell_at(nw)
 		if c != null and not c.is_obstacle:

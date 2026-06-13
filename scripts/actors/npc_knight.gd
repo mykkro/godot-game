@@ -33,7 +33,7 @@ func _setup_collision() -> void:
 	var circle := CircleShape2D.new()
 	circle.radius = COLL_RADIUS
 	col.shape     = circle
-	col.position  = Vector2(0.0, COLL_OFFSET_Y)
+	col.position  = Vector2.ZERO
 	add_child(col)
 
 
@@ -46,7 +46,7 @@ func _ready() -> void:
 
 	_sprite        = GreatswordSprite.new()
 	_sprite.scale  = Vector2(0.56, 0.56)
-	_sprite.offset = Vector2(0.0, -45.0)
+	_sprite.offset = Vector2(0.0, -3.1)
 	add_child(_sprite)
 
 	_idle_timer = randf_range(IDLE_MIN, IDLE_MAX)
@@ -107,6 +107,7 @@ func _go_idle() -> void:
 
 func to_dict() -> Dictionary:
 	return {
+		"type":    "knight",
 		"x":       position.x,
 		"y":       position.y,
 		"heading": heading,

@@ -122,6 +122,7 @@ func _build_text() -> String:
 	lines.append("[Position]")
 	lines.append("  World:    %.1f, %.1f" % [wx, wy])
 	lines.append("  Chunk:    %d, %d" % [chunk_coord.x, chunk_coord.y])
+	lines.append("  World cell: %d, %d" % [cell_global.x, cell_global.y])
 	lines.append("  Cell:     %d, %d  (local in chunk)" % [cell_local.x, cell_local.y])
 	lines.append("  Sub-cell: %.1f, %.1f  (px within cell)" % [sub_x, sub_y])
 	lines.append("  Heading:  %.1f°  %s" % [deg, compass])
