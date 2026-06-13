@@ -15,6 +15,7 @@ var _music_index:  int               = 0
 @onready var _npc_manager:  NpcManager   = $NpcManager
 
 var _actor_refs: ActorRefOverlay = null
+var _npc_dialog: NpcDialog       = null
 
 
 func _ready() -> void:
@@ -25,6 +26,9 @@ func _ready() -> void:
 	_actor_refs = ActorRefOverlay.new()
 	_actor_refs.visible = false
 	add_child(_actor_refs)
+
+	_npc_dialog = NpcDialog.new()
+	add_child(_npc_dialog)
 
 	AudioManager.apply_saved_settings()
 	_start_music()
@@ -38,6 +42,7 @@ func _ready() -> void:
 	_avatar.inventory = SaveManager.load_inventory()
 
 	_avatar.setup(_world, _fog_manager, _inventory_ui)
+	_avatar.npc_interact_requested.connect(_npc_dialog.open)
 	_inventory_ui.drop_requested.connect(_avatar.drop_item)
 	_debug.setup(_world, _fog_manager, _avatar)
 	_pause_menu.setup(_fog_manager, _avatar, _npc_manager)

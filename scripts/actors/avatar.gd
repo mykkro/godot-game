@@ -4,6 +4,8 @@ extends Actor
 const MOVE_SPEED     := 200.0  # pixels / second
 const PICKUP_RADIUS  := 52.0   # pixels; pickup detection zone radius
 const WAYPOINT_REACH := 24.0   # pixels; distance to consider a path waypoint reached
+## Max centre-to-centre distance at which the avatar can interact with an NPC.
+const INTERACT_DIST  := 46.0   # COLL_RADIUS*2 + small buffer
 ## Collision layer mask for PickableNode (must match PickableNode.LAYER_PICKABLE).
 const PICKUP_MASK    := 2
 
@@ -14,6 +16,8 @@ const PICKUP_SOUND_VOLUME := 1.0
 const SHOOT_SOUND_VOLUME  := 0.8
 const DROP_SOUND_VOLUME   := 0.9
 const SHOOT_COOLDOWN      := 0.5
+
+signal npc_interact_requested(npc: Node2D)
 
 var _world:        World        = null
 var _fog_manager:  FogManager   = null
@@ -118,7 +122,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var ke := event as InputEventKey
 	if ke.keycode == KEY_E and ke.pressed and not ke.echo:
-		_try_pickup()
+		var npc := get_interactable_npc()
+		if npc != null:
+			npc_interact_requested.emit(npc)
+		else:
+			_try_pickup()
 		get_viewport().set_input_as_handled()
 	elif ke.keycode == KEY_CTRL and ke.pressed and not ke.echo:
 		_try_shoot()
@@ -304,6 +312,29 @@ func _is_cell_visible(gc: Vector2i) -> bool:
 	if fog == null:
 		return false
 	return fog.get_level(lx, ly) >= FogData.PARTIAL
+
+
+## Returns the nearest NPC that is within INTERACT_DIST and roughly in front.
+func get_interactable_npc() -> Node2D:
+	if _world == null:
+		return null
+	var best:      Node2D = null
+	var best_dist: float  = INF
+	for child in _world.get_children():
+		if not (child is NpcKnight or child is NpcMelee):
+			continue
+		var npc := child as Node2D
+		var d   := position.distance_to(npc.position)
+		if d > INTERACT_DIST:
+			continue
+		var to_npc := (npc.position - position).angle()
+		var diff   := absf(wrapf(to_npc - heading, -PI, PI))
+		if diff > PI * 0.75:   # within 135° forward arc
+			continue
+		if d < best_dist:
+			best_dist = d
+			best      = npc
+	return best
 
 
 static func _read_input() -> Vector2:

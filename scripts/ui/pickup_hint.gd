@@ -33,6 +33,12 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _avatar == null:
 		return
+	# NPC interaction takes priority over item pickup.
+	if _avatar.get_interactable_npc() != null:
+		_label.text    = "E  talk"
+		_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.7))
+		_label.visible = true
+		return
 	var nearby      := _avatar.get_nearest_pickable_name()
 	var nearby_type := _avatar.get_nearest_pickable_type()
 	if nearby.is_empty():

@@ -34,7 +34,8 @@ func setup(inventory: Inventory) -> void:
 
 
 func _ready() -> void:
-	layer = 70
+	layer        = 70
+	process_mode = Node.PROCESS_MODE_ALWAYS
 
 	_center = CenterContainer.new()
 	_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -165,12 +166,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if _visible_flag:
-			_visible_flag = false
-			_center.visible = false
+			_visible_flag     = false
+			_center.visible   = false
+			get_tree().paused = false
 			get_viewport().set_input_as_handled()
 	elif ke.keycode == KEY_I:
-		_visible_flag = not _visible_flag
-		_center.visible = _visible_flag
+		# Don't open inventory if something else already paused the game.
+		if get_tree().paused and not _visible_flag:
+			return
+		_visible_flag     = not _visible_flag
+		_center.visible   = _visible_flag
+		get_tree().paused = _visible_flag
 		if _visible_flag:
 			_refresh()
 			if _open_sound != null:
