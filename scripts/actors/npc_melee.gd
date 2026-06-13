@@ -6,7 +6,7 @@ extends StaticBody2D
 const COLL_RADIUS    := 18.75
 const DIR_CHANGE_MIN := 3.0
 const DIR_CHANGE_MAX := 8.0
-const MARK_BASE_Y    := -90.0
+const MARK_BASE_Y    := -51.6
 const BOB_AMP        := 3.0
 const BOB_PERIOD     := 1.2
 const QUEST_MARK_COLOR := Color(1.0, 0.85, 0.0)
