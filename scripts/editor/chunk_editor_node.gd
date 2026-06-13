@@ -100,13 +100,16 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
 			return
 	if obj_type == MapObject.Type.FORGE:
-		var tex := PickableItemDef.get_texture(MapObject.Type.FORGE)
+		var tex := TextureCache.get_items2_texture("forge.png")
 		if tex != null:
 			var s  := float(CELL_SIZE) * 0.65
 			var ox := px + (CELL_SIZE - s) * 0.5
 			var oy := py + (CELL_SIZE - s) * 0.5
 			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
 			return
+		# Texture failed — draw a distinct amber square so FORGE is visible.
+		draw_rect(Rect2(px + CELL_SIZE * 0.2, py + CELL_SIZE * 0.2,
+				CELL_SIZE * 0.6, CELL_SIZE * 0.6), Color(0.80, 0.45, 0.10))
 	# Fallback: coloured square for ROCK / unknown.
 	var col: Color = OBJ_COLORS.get(obj_type, Color(0.7, 0.7, 0.7))
 	var m := CELL_SIZE * 0.2

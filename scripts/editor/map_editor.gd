@@ -194,6 +194,7 @@ func _on_right_click_cell(cc: Vector2i, lc: Vector2i) -> void:
 func _on_hover_cell(cc: Vector2i, lc: Vector2i) -> void:
 	_ui.set_chunk_coords(cc)
 	_ui.set_cell_coords(lc)
+	_ui.set_world_coords(cc.x * ChunkData.CHUNK_SIZE + lc.x, cc.y * ChunkData.CHUNK_SIZE + lc.y)
 	if _chunks.has(cc):
 		var cell := (_chunks[cc] as ChunkEditorNode).get_data().get_cell(lc.x, lc.y)
 		if cell != null:

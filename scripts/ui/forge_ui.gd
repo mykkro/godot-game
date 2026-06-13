@@ -149,10 +149,45 @@ func _build_craft_area() -> VBoxContainer:
 	vbox.add_theme_constant_override("separation", 8)
 
 	_craft_btn = Button.new()
-	_craft_btn.text     = "CRAFT"
-	_craft_btn.disabled = true
-	_craft_btn.add_theme_font_size_override("font_size", 13)
+	_craft_btn.text                = "CRAFT"
+	_craft_btn.disabled            = true
+	_craft_btn.custom_minimum_size = Vector2(80, 52)
+	_craft_btn.add_theme_font_size_override("font_size", 16)
 	_craft_btn.pressed.connect(_on_craft_pressed)
+
+	var _sn := StyleBoxFlat.new(); _sn.bg_color = Color(0.12,0.55,0.20)
+	for _s in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: _sn.set_border_width(_s,1)
+	_sn.border_color = Color(0.25,0.80,0.30)
+	for _c in range(4): _sn.set_corner_radius(_c, 6)
+	_sn.set_content_margin_all(8)
+	_craft_btn.add_theme_stylebox_override("normal", _sn)
+
+	var _sh := StyleBoxFlat.new(); _sh.bg_color = Color(0.16,0.68,0.26)
+	for _s in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: _sh.set_border_width(_s,1)
+	_sh.border_color = Color(0.30,0.92,0.36)
+	for _c in range(4): _sh.set_corner_radius(_c, 6)
+	_sh.set_content_margin_all(8)
+	_craft_btn.add_theme_stylebox_override("hover", _sh)
+
+	var _sp := StyleBoxFlat.new(); _sp.bg_color = Color(0.08,0.40,0.14)
+	for _s in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: _sp.set_border_width(_s,1)
+	_sp.border_color = Color(0.20,0.75,0.24)
+	for _c in range(4): _sp.set_corner_radius(_c, 6)
+	_sp.set_content_margin_all(8)
+	_craft_btn.add_theme_stylebox_override("pressed", _sp)
+
+	var _sd := StyleBoxFlat.new(); _sd.bg_color = Color(0.16,0.16,0.20)
+	for _s in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: _sd.set_border_width(_s,1)
+	_sd.border_color = Color(0.28,0.28,0.38)
+	for _c in range(4): _sd.set_corner_radius(_c, 6)
+	_sd.set_content_margin_all(8)
+	_craft_btn.add_theme_stylebox_override("disabled", _sd)
+
+	_craft_btn.add_theme_color_override("font_color",          Color(0.92, 1.00, 0.92))
+	_craft_btn.add_theme_color_override("font_hover_color",    Color(0.92, 1.00, 0.92))
+	_craft_btn.add_theme_color_override("font_pressed_color",  Color(0.75, 0.92, 0.75))
+	_craft_btn.add_theme_color_override("font_disabled_color", Color(0.40, 0.40, 0.45))
+
 	vbox.add_child(_craft_btn)
 
 	var arrow := Label.new()

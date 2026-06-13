@@ -55,6 +55,11 @@ func set_cell_coords(lc: Vector2i) -> void:
 		_lbl_cell.text = "Cell: (%d, %d)" % [lc.x, lc.y]
 
 
+func set_world_coords(wx: int, wy: int) -> void:
+	if _lbl_world != null:
+		_lbl_world.text = "World: (%d, %d)" % [wx, wy]
+
+
 func set_hover_terrain(terrain: String) -> void:
 	if _lbl_terrain != null:
 		_lbl_terrain.text = "Terrain: %s" % terrain
@@ -143,6 +148,7 @@ func _build_right_panel() -> void:
 
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = Color(0.08, 0.08, 0.13, 0.95)
+	bg.content_margin_left = 8.0
 	panel.add_theme_stylebox_override("panel", bg)
 
 	var scroll := ScrollContainer.new()
@@ -168,6 +174,12 @@ func _build_right_panel() -> void:
 	_lbl_cell.text = "Cell: —"
 	_lbl_cell.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(_lbl_cell)
+
+	_lbl_world = Label.new()
+	_lbl_world.text = "World: —"
+	_lbl_world.add_theme_font_size_override("font_size", 12)
+	_lbl_world.add_theme_color_override("font_color", Color(0.60, 0.60, 0.72))
+	vbox.add_child(_lbl_world)
 
 	_lbl_terrain = Label.new()
 	_lbl_terrain.text = "Terrain: —"
