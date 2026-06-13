@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Iron Bar",
+    "inputs":  [{"type": 12, "count": 2}, {"type": 49, "count": 1}],
+    "outputs": [{"type": 16, "count": 2}]
+  },
+  {
+    "name": "Copper Wire",
+    "inputs":  [{"type": 11, "count": 2}, {"type": 64, "count": 1}],
+    "outputs": [{"type": 62, "count": 3}]
+  },
+  {
+    "name": "Bronze Axe",
+    "inputs":  [{"type": 15, "count": 2}, {"type": 16, "count": 1}, {"type": 9, "count": 1}],
+    "outputs": [{"type": 24, "count": 1}]
+  },
+  {
+    "name": "Glass Vial",
+    "inputs":  [{"type": 63, "count": 2}, {"type": 7, "count": 1}],
+    "outputs": [{"type": 95, "count": 3}]
+  },
+  {
+    "name": "Cloth Strip",
+    "inputs":  [{"type": 21, "count": 3}, {"type": 88, "count": 1}],
+    "outputs": [{"type": 10, "count": 2}]
+  }
+]
