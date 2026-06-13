@@ -49,6 +49,15 @@ func _ready() -> void:
 
 	# Load saved inventory (empty Inventory if no save exists).
 	_avatar.inventory = SaveManager.load_inventory()
+	if _avatar.inventory.count() == 0:
+		for entry in [
+			[12, 2], [49, 1],         # Iron Bar
+			[11, 2], [64, 1],         # Copper Wire
+			[15, 2], [16, 1], [9, 1], # Bronze Axe
+			[63, 2], [7,  1],         # Glass Vial
+			[21, 3], [88, 1],         # Cloth Strip
+		]:
+			_avatar.inventory.items.append({"type": entry[0], "count": entry[1]})
 
 	_avatar.setup(_world, _fog_manager, _inventory_ui)
 	_avatar.npc_interact_requested.connect(_npc_dialog.open)
