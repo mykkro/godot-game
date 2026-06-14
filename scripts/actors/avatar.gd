@@ -1,7 +1,7 @@
 class_name Avatar
 extends Actor
 
-const MOVE_SPEED     := 200.0  # pixels / second
+const MOVE_SPEED     := 100.0  # pixels / second (base — Swift Walker perk scales this up)
 const PICKUP_RADIUS  := 52.0   # pixels; pickup detection zone radius
 const WAYPOINT_REACH := 24.0   # pixels; distance to consider a path waypoint reached
 ## Max centre-to-centre distance at which the avatar can interact with an NPC.
@@ -81,20 +81,22 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var dir := _read_input()
+	var dir   := _read_input()
+	var speed := MOVE_SPEED * PerkDef.swift_walker_speed_mult(
+			perks.get_level(PerkDef.ID.SWIFT_WALKER))
 
 	if dir != Vector2.ZERO:
 		_path.clear()           # keyboard cancels click-to-move
 		dir      = dir.normalized()
 		heading  = dir.angle()
-		velocity = dir * MOVE_SPEED
+		velocity = dir * speed
 	elif not _path.is_empty():
 		if position.distance_to(_path[0]) < WAYPOINT_REACH:
 			_path.pop_front()
 		if not _path.is_empty():
 			dir      = (_path[0] - position).normalized()
 			heading  = dir.angle()
-			velocity = dir * MOVE_SPEED
+			velocity = dir * speed
 		else:
 			velocity = Vector2.ZERO
 	else:
@@ -111,6 +113,8 @@ func _physics_process(delta: float) -> void:
 		_shoot_cooldown -= delta
 
 	if _sprite != null:
+		_sprite.walk_speed_scale = PerkDef.swift_walker_speed_mult(
+				perks.get_level(PerkDef.ID.SWIFT_WALKER)) * 0.5
 		_sprite.update_anim(velocity != Vector2.ZERO, heading)
 
 

@@ -9,6 +9,8 @@ var _textures:    Dictionary = {}
 var _frame_rects: Dictionary = {}
 var _anim_fps:    Dictionary = {}
 
+var walk_speed_scale: float  = 1.0
+
 var _anim:      String = "Idle"
 var _dir:       int    = 1
 var _frame_idx: int    = 0
@@ -78,7 +80,7 @@ func _process(delta: float) -> void:
 	if _frames.is_empty():
 		return
 	_frame_acc += delta
-	var effective_fps := _fps * (WALK_FPS_MULT if _anim == "Walk" else 1.0)
+	var effective_fps := _fps * (WALK_FPS_MULT * walk_speed_scale if _anim == "Walk" else 1.0)
 	var spf := 1.0 / effective_fps
 	while _frame_acc >= spf:
 		_frame_acc -= spf

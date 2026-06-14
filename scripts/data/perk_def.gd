@@ -4,22 +4,22 @@ class_name PerkDef
 ## Level 0 always means "does not have this perk".
 
 enum ID {
-	TRADER = 0,
-	## Add future perks here, e.g.:
-	## BLACKSMITH = 1,
-	## HERBALIST  = 2,
+	TRADER       = 0,
+	SWIFT_WALKER = 1,
 }
 
 
 static func get_perk_name(perk: ID) -> String:
 	match perk:
-		ID.TRADER: return "Trader"
+		ID.TRADER:       return "Trader"
+		ID.SWIFT_WALKER: return "Swift Walker"
 	return "Unknown"
 
 
 static func get_max_level(perk: ID) -> int:
 	match perk:
-		ID.TRADER: return 4
+		ID.TRADER:       return 4
+		ID.SWIFT_WALKER: return 3
 	return 0
 
 
@@ -34,7 +34,22 @@ static func get_level_name(perk: ID, level: int) -> String:
 				2: return "Journeyman Trader"
 				3: return "Expert Trader"
 				4: return "Master Trader"
+		ID.SWIFT_WALKER:
+			match level:
+				1: return "Wayfarer"
+				2: return "Strider"
+				3: return "Windwalker"
 	return ""
+
+
+## Movement speed multiplier relative to the (halved) baseline.
+## Level 2 restores the original speed; level 3 exceeds it.
+static func swift_walker_speed_mult(level: int) -> float:
+	match level:
+		1: return 1.35
+		2: return 2.0
+		3: return 2.75
+	return 1.0
 
 
 ## Factor applied to the coin amount the NPC pays when buying from the player.
