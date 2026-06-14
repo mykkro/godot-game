@@ -2,7 +2,7 @@ class_name ShopUI
 extends CanvasLayer
 
 const COLS          := 5
-const ROWS          := 4
+const ROWS          := 8
 const SLOT_SIZE     := 52
 const SLOT_PAD      := 4
 ## NPC coin pool given at shop open (used for change / buying player items).
@@ -20,8 +20,8 @@ var _shop_orig:   Array = []
 
 ## Cache of all pickable item types except COIN (built once at first open).
 static var _all_pickable_types: Array = []
-## Persistent coin pool per NPC id — depletes as the NPC pays out.
-static var _npc_coin_pools: Dictionary = {}
+## Persistent shop state per NPC id — full item array saved on every Trade.
+static var _npc_shop_states: Dictionary = {}
 
 var _npc_id: String = ""
 
@@ -416,7 +416,7 @@ func _on_trade_pressed() -> void:
 		return
 	if bal < 0:
 		_pay_npc_coins_to_player(-bal)
-	_npc_coin_pools[_npc_id] = _get_npc_coins()
+	_npc_shop_states[_npc_id] = _deep_copy_items(_shop_work)
 	assert(_player_work.size() <= Inventory.MAX_ITEMS, "shop produced oversized player_work")
 	_inventory.items = _player_work
 	close()
@@ -455,8 +455,10 @@ func open(inventory: Inventory, npc: NpcMelee) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(npc.npc_id) if not npc.npc_id.is_empty() else randi()
 
-	var coin_pool: int = int(_npc_coin_pools.get(_npc_id, NPC_COIN_POOL))
-	_shop_orig   = _generate_shop_items(rng, coin_pool)
+	if _npc_shop_states.has(_npc_id):
+		_shop_orig = _deep_copy_items(_npc_shop_states[_npc_id])
+	else:
+		_shop_orig = _generate_shop_items(rng)
 	_player_orig = _deep_copy_items(inventory.items)
 	_shop_work   = _deep_copy_items(_shop_orig)
 	_player_work = _deep_copy_items(_player_orig)
@@ -486,7 +488,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _generate_shop_items(rng: RandomNumberGenerator, coin_pool: int) -> Array:
+func _generate_shop_items(rng: RandomNumberGenerator) -> Array:
 	_ensure_types_cache()
 	var pool  := _all_pickable_types.duplicate()
 	var count := rng.randi_range(3, 8)
@@ -505,8 +507,7 @@ func _generate_shop_items(rng: RandomNumberGenerator, coin_pool: int) -> Array:
 			100: quantity = rng.randi_range(5, 50)
 			_:   quantity = 1
 		result.append({"type": item_type, "count": quantity})
-	if coin_pool > 0:
-		result.append({"type": MapObject.Type.COIN, "count": coin_pool})
+	result.append({"type": MapObject.Type.COIN, "count": NPC_COIN_POOL})
 	return result
 
 
@@ -816,3 +817,11 @@ func _split_player_to_npc(player_idx: int, npc_idx: int, take: int) -> void:
 		_player_work[player_idx]["count"] = src_count - take
 		if int(_player_work[player_idx]["count"]) <= 0:
 			_player_work.remove_at(player_idx)
+
+
+static func get_shop_states() -> Dictionary:
+	return _npc_shop_states
+
+
+static func set_shop_states(data: Dictionary) -> void:
+	_npc_shop_states = data

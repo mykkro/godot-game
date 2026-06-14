@@ -171,6 +171,7 @@ func _save_all() -> void:
 		_npc_manager.save()
 	if _npc_dialog != null:
 		SaveManager.save_dialog_visited(_npc_dialog.get_visited_data())
+	SaveManager.save_shop_states(ShopUI.get_shop_states())
 
 
 func _build_confirm_overlay() -> void:

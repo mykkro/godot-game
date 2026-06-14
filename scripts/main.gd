@@ -100,6 +100,7 @@ func _ready() -> void:
 	_fog_manager.update_avatar_position(spawn)
 	_npc_manager.load_and_spawn()
 	_npc_dialog.set_visited_data(SaveManager.load_dialog_visited())
+	ShopUI.set_shop_states(SaveManager.load_shop_states())
 
 
 func _input(event: InputEvent) -> void:

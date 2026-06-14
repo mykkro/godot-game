@@ -9,6 +9,7 @@ const INVENTORY_FILE := "user://inventory.json"
 const SETTINGS_FILE  := "user://settings.json"
 const NPCS_FILE      := "user://npcs.json"
 const DIALOG_FILE    := "user://dialog_visited.json"
+const SHOPS_FILE     := "user://shops.json"
 
 
 ## Returns true when a previous game session exists (any saved chunk).
@@ -62,7 +63,7 @@ static func load_player() -> Dictionary:
 static func wipe() -> void:
 	_wipe_dir(CHUNKS_DIR)
 	_wipe_dir(FOG_DIR)
-	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE]:
+	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 
@@ -142,6 +143,30 @@ static func load_dialog_visited() -> Dictionary:
 	if not FileAccess.file_exists(DIALOG_FILE):
 		return {}
 	var file := FileAccess.open(DIALOG_FILE, FileAccess.READ)
+	if file == null:
+		return {}
+	var text := file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(text)
+	if parsed is Dictionary:
+		return parsed as Dictionary
+	return {}
+
+
+static func save_shop_states(states: Dictionary) -> void:
+	var file := FileAccess.open(SHOPS_FILE, FileAccess.WRITE)
+	if file == null:
+		push_error("SaveManager: cannot write shop states (error %d)" \
+				% FileAccess.get_open_error())
+		return
+	file.store_string(JSON.stringify(states))
+	file.close()
+
+
+static func load_shop_states() -> Dictionary:
+	if not FileAccess.file_exists(SHOPS_FILE):
+		return {}
+	var file := FileAccess.open(SHOPS_FILE, FileAccess.READ)
 	if file == null:
 		return {}
 	var text := file.get_as_text()
