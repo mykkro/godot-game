@@ -228,7 +228,7 @@ func _build_avatar_column() -> VBoxContainer:
 	svc.add_child(sv)
 
 	_knight = KnightSprite.new()
-	_knight.position = Vector2(80, 165)
+	_knight.position = Vector2(80, 175)
 	_knight.scale    = Vector2(2.8, 2.8)
 	sv.add_child(_knight)
 
