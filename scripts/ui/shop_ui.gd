@@ -33,10 +33,14 @@ var _player_badges:    Array  = []
 var _npc_icons:        Array  = []
 var _npc_badges:       Array  = []
 var _npc_title_lbl:    Label  = null
+var _npc_badge_lbl:    Label  = null
 var _player_count_lbl: Label  = null
 var _npc_count_lbl:    Label  = null
 var _balance_lbl:      Label  = null
 var _trade_btn:        Button = null
+
+var _npc_trader_level:    int = 0
+var _player_trader_level: int = 0
 
 
 func _ready() -> void:
@@ -147,6 +151,12 @@ func _build_npc_panel() -> PanelContainer:
 	header.add_child(_npc_title_lbl)
 	header.add_child(_make_button("Compact", _on_compact_npc))
 	header.add_child(_make_button("Sort", _on_sort_npc))
+
+	_npc_badge_lbl = Label.new()
+	_npc_badge_lbl.add_theme_font_size_override("font_size", 11)
+	_npc_badge_lbl.add_theme_color_override("font_color", Color(0.85, 0.72, 0.35))
+	_npc_badge_lbl.visible = false
+	vbox.add_child(_npc_badge_lbl)
 
 	_npc_count_lbl = _make_count_label()
 	vbox.add_child(_npc_count_lbl)
@@ -422,7 +432,7 @@ func _on_reset_pressed() -> void:
 
 
 func _on_trade_pressed() -> void:
-	var bal := _compute_balance()
+	var bal := _adjusted_balance()
 	if bal > 0:
 		return
 	if bal < 0:
@@ -487,11 +497,21 @@ func _auto_move_npc_to_player(npc_idx: int) -> void:
 	_move_npc_to_player(npc_idx, _player_work.size())
 
 
-func open(inventory: Inventory, npc: NpcMelee) -> void:
+func open(inventory: Inventory, npc: NpcMelee, player_perks: CharacterPerks = null) -> void:
 	_inventory          = inventory
 	_npc_id             = npc.npc_id if not npc.npc_id.is_empty() else str(hash(npc))
 	_npc_name           = npc.npc_name if not npc.npc_name.is_empty() else "Brawler"
 	_npc_title_lbl.text = _npc_name + "'s Shop"
+
+	_npc_trader_level    = npc.perks.get_level(PerkDef.ID.TRADER)
+	_player_trader_level = player_perks.get_level(PerkDef.ID.TRADER) if player_perks != null else 0
+
+	var badge_name := PerkDef.get_level_name(PerkDef.ID.TRADER, _npc_trader_level)
+	if badge_name.is_empty():
+		_npc_badge_lbl.visible = false
+	else:
+		_npc_badge_lbl.text    = "⚖ " + badge_name
+		_npc_badge_lbl.visible = true
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(npc.npc_id) if not npc.npc_id.is_empty() else randi()
@@ -599,7 +619,7 @@ func _refresh_npc_panel() -> void:
 
 
 func _refresh_balance() -> void:
-	var bal := _compute_balance()
+	var bal := _adjusted_balance()
 	if bal > 0:
 		_balance_lbl.text = "Balance: +%d coins  (offer more)" % bal
 		_balance_lbl.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
@@ -618,8 +638,24 @@ func _refresh_balance() -> void:
 		_trade_btn.disabled = false
 
 
+## Raw balance before margin: positive = player owes NPC, negative = NPC owes player.
 func _compute_balance() -> int:
 	return _array_value(_shop_orig) - _array_value(_shop_work)
+
+
+## Margin-adjusted balance used for all UI and trade execution.
+func _adjusted_balance() -> int:
+	var raw := _compute_balance()
+	if raw == 0:
+		return 0
+	if raw < 0:
+		# NPC pays player (player sold items) — margin reduces payout.
+		var f := PerkDef.trader_sell_factor(_player_trader_level, _npc_trader_level)
+		return -maxi(1, ceili(-raw * f))
+	else:
+		# Player pays NPC (player bought items) — margin increases cost.
+		var f := PerkDef.trader_buy_factor(_player_trader_level, _npc_trader_level)
+		return maxi(1, ceili(raw * f))
 
 
 func _array_value(arr: Array) -> int:

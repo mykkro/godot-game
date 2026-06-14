@@ -70,6 +70,7 @@ func _ready() -> void:
 
 	# Load saved inventory (empty Inventory if no save exists).
 	_avatar.inventory = SaveManager.load_inventory()
+	_avatar.perks     = SaveManager.load_perks()
 	if _avatar.inventory.count() == 0:
 		for entry in [
 			[12, 2], [49, 1],         # Iron Bar
@@ -93,7 +94,7 @@ func _ready() -> void:
 
 	_npc_dialog.shop_requested.connect(
 		func(npc: NpcMelee) -> void:
-			_shop_ui.open(_avatar.inventory, npc)
+			_shop_ui.open(_avatar.inventory, npc, _avatar.perks)
 	)
 	_inventory_ui.drop_requested.connect(_avatar.drop_item)
 	_debug.setup(_world, _fog_manager, _avatar)

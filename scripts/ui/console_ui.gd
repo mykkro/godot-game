@@ -178,6 +178,7 @@ func _execute(text: String) -> void:
 		"night":      _cmd_night()
 		"timescale":  _cmd_timescale(parts)
 		"clear_inv":  _cmd_clear_inv()
+		"perk":       _cmd_perk(parts)
 		"help":       _cmd_help()
 		var unknown:  _print_line("Unknown: /" + unknown + "  (try /help)")
 
@@ -195,6 +196,7 @@ func _cmd_help() -> void:
 	_print_line("/set_time HH:MM    set time (24 h)")
 	_print_line("/timescale <n>     game clock speed (1=normal, 0=stop)")
 	_print_line("/clear_inv         wipe player inventory")
+	_print_line("/perk [name] [lvl] show or set a perk  (/perk trader 3)")
 
 
 func _cmd_give(parts: Array) -> void:
@@ -353,6 +355,38 @@ func _cmd_set_time(parts: Array) -> void:
 	var new_s := GameClock.to_seconds(dt["year"], dt["month_idx"], dt["day"], hour, minute)
 	GameClock.load_time(new_s)
 	_print_line("Time → %02d:%02d" % [hour, minute])
+
+
+func _cmd_perk(parts: Array) -> void:
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	if parts.size() == 1:
+		# Show all current perks.
+		var any := false
+		for key in PerkDef.ID:
+			var id: PerkDef.ID = PerkDef.ID[key]
+			var lv := _avatar.perks.get_level(id)
+			var name := PerkDef.get_level_name(id, lv) if lv > 0 else "(none)"
+			_print_line("%s: %s (level %d)" % [PerkDef.get_perk_name(id), name, lv])
+			any = true
+		if not any:
+			_print_line("No perks defined yet.")
+		return
+	# /perk <perk_name> <level>
+	if parts.size() < 3:
+		_print_line("Usage: /perk <perk_name> <level>  e.g. /perk trader 3")
+		return
+	var perk_key := (parts[1] as String).to_upper()
+	if not PerkDef.ID.has(perk_key):
+		_print_line("Unknown perk '%s'.  Known: %s" \
+				% [parts[1], ", ".join(PerkDef.ID.keys()).to_lower()])
+		return
+	var perk_id: PerkDef.ID = PerkDef.ID[perk_key]
+	var level := clampi(int(parts[2] as String), 0, PerkDef.get_max_level(perk_id))
+	_avatar.perks.set_level(perk_id, level)
+	var label := PerkDef.get_level_name(perk_id, level) if level > 0 else "(none)"
+	_print_line("%s → %s (level %d)" % [PerkDef.get_perk_name(perk_id), label, level])
 
 
 func _cmd_clear_inv() -> void:

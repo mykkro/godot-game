@@ -69,6 +69,11 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 			_next_melee_id  += 1
 			npc.position    = spawn
 			npc.birth_time  = GameClock.get_game_time()
+			var tr := randf()
+			if   tr < 0.05: npc.perks.set_level(PerkDef.ID.TRADER, 4)
+			elif tr < 0.15: npc.perks.set_level(PerkDef.ID.TRADER, 3)
+			elif tr < 0.30: npc.perks.set_level(PerkDef.ID.TRADER, 2)
+			elif tr < 0.55: npc.perks.set_level(PerkDef.ID.TRADER, 1)
 			_world.add_child(npc)
 			if randf() < QUEST_GIVER_CHANCE:
 				npc.make_quest_giver(NpcMelee.NAMES[randi() % NpcMelee.NAMES.size()])

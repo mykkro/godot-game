@@ -22,6 +22,7 @@ var heading:        float    = 0.0
 var is_quest_giver: bool     = false
 var npc_name:       String   = ""
 var birth_time:     float    = 0.0
+var perks:      CharacterPerks = CharacterPerks.new()
 var _sprite:    MeleeSprite = null
 var _dir_timer: float    = 0.0
 var _mark:      Sprite2D = null
@@ -86,6 +87,7 @@ func to_dict() -> Dictionary:
 		"is_quest_giver": is_quest_giver,
 		"npc_name":       npc_name,
 		"birth_time":     birth_time,
+		"perks":          perks.to_dict(),
 	}
 
 
@@ -96,6 +98,7 @@ func restore_from_dict(data: Dictionary) -> void:
 	is_quest_giver = bool(data.get("is_quest_giver", false))
 	npc_name       = str(data.get("npc_name", ""))
 	birth_time     = float(data.get("birth_time", 0.0))
+	perks.from_dict(data.get("perks", {}))
 	if _mark != null:
 		_mark.visible = is_quest_giver
 	_update_dir()

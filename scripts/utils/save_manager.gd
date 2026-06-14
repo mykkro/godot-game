@@ -11,6 +11,7 @@ const NPCS_FILE      := "user://npcs.json"
 const DIALOG_FILE    := "user://dialog_visited.json"
 const SHOPS_FILE     := "user://shops.json"
 const CLOCK_FILE     := "user://clock.json"
+const PERKS_FILE     := "user://player_perks.json"
 
 
 ## Returns true when a previous game session exists (any saved chunk).
@@ -64,7 +65,7 @@ static func load_player() -> Dictionary:
 static func wipe() -> void:
 	_wipe_dir(CHUNKS_DIR)
 	_wipe_dir(FOG_DIR)
-	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE]:
+	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE, PERKS_FILE]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 
@@ -228,6 +229,28 @@ static func load_npcs() -> Array:
 	if result is Array:
 		return result
 	return []
+
+
+static func save_perks(perks: CharacterPerks) -> void:
+	var file := FileAccess.open(PERKS_FILE, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify(perks.to_dict()))
+	file.close()
+
+
+static func load_perks() -> CharacterPerks:
+	var p := CharacterPerks.new()
+	if not FileAccess.file_exists(PERKS_FILE):
+		return p
+	var file := FileAccess.open(PERKS_FILE, FileAccess.READ)
+	if file == null:
+		return p
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if parsed is Dictionary:
+		p.from_dict(parsed as Dictionary)
+	return p
 
 
 static func _wipe_dir(path: String) -> void:
