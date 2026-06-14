@@ -34,6 +34,7 @@ var _npc_icons:        Array  = []
 var _npc_badges:       Array  = []
 var _npc_title_lbl:    Label  = null
 var _npc_badge_lbl:    Label  = null
+var _player_badge_lbl: Label  = null
 var _player_count_lbl: Label  = null
 var _npc_count_lbl:    Label  = null
 var _balance_lbl:      Label  = null
@@ -116,6 +117,11 @@ func _build_player_panel() -> PanelContainer:
 	header.add_child(_make_title_label("Your Inventory"))
 	header.add_child(_make_button("Compact", _on_compact_player))
 	header.add_child(_make_button("Sort", _on_sort_player))
+
+	_player_badge_lbl = Label.new()
+	_player_badge_lbl.add_theme_font_size_override("font_size", 11)
+	_player_badge_lbl.add_theme_color_override("font_color", Color(0.65, 0.78, 0.60))
+	vbox.add_child(_player_badge_lbl)
 
 	_player_count_lbl = _make_count_label()
 	vbox.add_child(_player_count_lbl)
@@ -506,12 +512,13 @@ func open(inventory: Inventory, npc: NpcMelee, player_perks: CharacterPerks = nu
 	_npc_trader_level    = npc.perks.get_level(PerkDef.ID.TRADER)
 	_player_trader_level = player_perks.get_level(PerkDef.ID.TRADER) if player_perks != null else 0
 
-	var badge_name := PerkDef.get_level_name(PerkDef.ID.TRADER, _npc_trader_level)
-	if badge_name.is_empty():
-		_npc_badge_lbl.visible = false
-	else:
-		_npc_badge_lbl.text    = "⚖ " + badge_name
-		_npc_badge_lbl.visible = true
+	var npc_badge_name := PerkDef.get_level_name(PerkDef.ID.TRADER, _npc_trader_level)
+	_npc_badge_lbl.text    = "⚖ " + (npc_badge_name if not npc_badge_name.is_empty() else "No trading perk")
+	_npc_badge_lbl.visible = true
+
+	var player_badge_name := PerkDef.get_level_name(PerkDef.ID.TRADER, _player_trader_level)
+	_player_badge_lbl.text    = "⚖ " + (player_badge_name if not player_badge_name.is_empty() else "No trading perk")
+	_player_badge_lbl.visible = true
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(npc.npc_id) if not npc.npc_id.is_empty() else randi()
