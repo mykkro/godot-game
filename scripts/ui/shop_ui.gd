@@ -124,6 +124,7 @@ func _build_npc_panel() -> PanelContainer:
 	panel.add_child(vbox)
 
 	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 6)
 	vbox.add_child(header)
 
 	_npc_title_lbl = _make_title_label("")
