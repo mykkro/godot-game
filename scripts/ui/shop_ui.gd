@@ -1,13 +1,15 @@
 class_name ShopUI
 extends CanvasLayer
 
-const COLS          := 5
-const ROWS          := 8
-const SLOT_SIZE     := 52
-const SLOT_PAD      := 4
+const PLAYER_COLS      := 5
+const PLAYER_ROWS      := 10
+const NPC_COLS         := 5
+const NPC_ROWS_VISIBLE := 10
+const NPC_PANEL_MAX    := 100
+const SLOT_SIZE        := 48
+const SLOT_PAD         := 3
 ## NPC coin pool given at shop open (used for change / buying player items).
-const NPC_COIN_POOL := 1000
-const NPC_PANEL_MAX := COLS * ROWS   # max distinct entries NPC panel holds
+const NPC_COIN_POOL    := 1000
 
 var _inventory: Inventory = null
 var _npc_name:  String    = ""
@@ -27,10 +29,8 @@ var _npc_id: String = ""
 
 ## UI node references.
 var _player_icons:     Array  = []
-var _player_labels:    Array  = []
 var _player_badges:    Array  = []
 var _npc_icons:        Array  = []
-var _npc_labels:       Array  = []
 var _npc_badges:       Array  = []
 var _npc_title_lbl:    Label  = null
 var _player_count_lbl: Label  = null
@@ -110,23 +110,23 @@ func _build_player_panel() -> PanelContainer:
 	header.add_theme_constant_override("separation", 6)
 	vbox.add_child(header)
 	header.add_child(_make_title_label("Your Inventory"))
+	header.add_child(_make_button("Compact", _on_compact_player))
 	header.add_child(_make_button("Sort", _on_sort_player))
 
 	_player_count_lbl = _make_count_label()
 	vbox.add_child(_player_count_lbl)
 
 	var grid := GridContainer.new()
-	grid.columns = COLS
+	grid.columns = PLAYER_COLS
 	grid.add_theme_constant_override("h_separation", SLOT_PAD)
 	grid.add_theme_constant_override("v_separation", SLOT_PAD)
 	vbox.add_child(grid)
 
-	for idx in range(COLS * ROWS):
+	for idx in range(PLAYER_COLS * PLAYER_ROWS):
 		var sd   := _make_slot()
-		var slot := sd[2] as PanelContainer
+		var slot := sd[1] as PanelContainer
 		_player_icons.append(sd[0]  as TextureRect)
-		_player_labels.append(sd[1] as Label)
-		_player_badges.append(sd[3] as Label)
+		_player_badges.append(sd[2] as Label)
 		_setup_player_slot(slot, idx)
 		grid.add_child(slot)
 
@@ -151,18 +151,22 @@ func _build_npc_panel() -> PanelContainer:
 	_npc_count_lbl = _make_count_label()
 	vbox.add_child(_npc_count_lbl)
 
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size    = Vector2(0, NPC_ROWS_VISIBLE * (SLOT_SIZE + SLOT_PAD))
+	vbox.add_child(scroll)
+
 	var grid := GridContainer.new()
-	grid.columns = COLS
+	grid.columns = NPC_COLS
 	grid.add_theme_constant_override("h_separation", SLOT_PAD)
 	grid.add_theme_constant_override("v_separation", SLOT_PAD)
-	vbox.add_child(grid)
+	scroll.add_child(grid)
 
-	for idx in range(COLS * ROWS):
+	for idx in range(NPC_PANEL_MAX):
 		var sd   := _make_slot()
-		var slot := sd[2] as PanelContainer
+		var slot := sd[1] as PanelContainer
 		_npc_icons.append(sd[0]  as TextureRect)
-		_npc_labels.append(sd[1] as Label)
-		_npc_badges.append(sd[3] as Label)
+		_npc_badges.append(sd[2] as Label)
 		_setup_npc_slot(slot, idx)
 		grid.add_child(slot)
 
@@ -219,10 +223,10 @@ func _make_drag_preview(obj_type: int) -> TextureRect:
 	return preview
 
 
-## Returns [TextureRect icon, Label name_lbl, PanelContainer slot, Label badge].
+## Returns [TextureRect icon, PanelContainer slot, Label badge].
 func _make_slot() -> Array:
 	var slot := PanelContainer.new()
-	slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE + 16)
+	slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 
 	var bg := StyleBoxFlat.new()
 	bg.bg_color     = Color(0.12, 0.12, 0.18, 0.9)
@@ -231,15 +235,10 @@ func _make_slot() -> Array:
 	bg.border_color = Color(0.28, 0.28, 0.38, 0.7)
 	slot.add_theme_stylebox_override("panel", bg)
 
-	var vb := VBoxContainer.new()
-	vb.alignment    = BoxContainer.ALIGNMENT_CENTER
-	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slot.add_child(vb)
-
 	var icon_wrap := Control.new()
-	icon_wrap.custom_minimum_size = Vector2(SLOT_SIZE - 6, SLOT_SIZE - 6)
-	icon_wrap.mouse_filter        = Control.MOUSE_FILTER_IGNORE
-	vb.add_child(icon_wrap)
+	icon_wrap.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(icon_wrap)
 
 	var icon := TextureRect.new()
 	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -251,8 +250,8 @@ func _make_slot() -> Array:
 
 	var badge := Label.new()
 	badge.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	badge.offset_left   = -34
-	badge.offset_top    = -15
+	badge.offset_left   = -30
+	badge.offset_top    = -14
 	badge.offset_right  = -1
 	badge.offset_bottom = -1
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -265,18 +264,20 @@ func _make_slot() -> Array:
 	badge.visible      = false
 	icon_wrap.add_child(badge)
 
-	var lbl := Label.new()
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 9)
-	lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
-	lbl.clip_text    = true
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vb.add_child(lbl)
-
-	return [icon, lbl, slot, badge]
+	return [icon, slot, badge]
 
 
 func _setup_player_slot(slot: PanelContainer, idx: int) -> void:
+	slot.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton:
+			var mb := event as InputEventMouseButton
+			if mb.double_click and mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+				if idx < _player_work.size():
+					_auto_move_player_to_npc(idx)
+					_refresh()
+					get_viewport().set_input_as_handled()
+	)
+
 	slot.set_drag_forwarding(
 		func(_pos: Vector2) -> Variant:
 			if idx >= _player_work.size():
@@ -341,6 +342,16 @@ func _setup_player_slot(slot: PanelContainer, idx: int) -> void:
 
 
 func _setup_npc_slot(slot: PanelContainer, idx: int) -> void:
+	slot.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton:
+			var mb := event as InputEventMouseButton
+			if mb.double_click and mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+				if idx < _shop_work.size():
+					_auto_move_npc_to_player(idx)
+					_refresh()
+					get_viewport().set_input_as_handled()
+	)
+
 	slot.set_drag_forwarding(
 		func(_pos: Vector2) -> Variant:
 			if idx >= _shop_work.size():
@@ -422,9 +433,24 @@ func _on_trade_pressed() -> void:
 	close()
 
 
+func _on_compact_player() -> void:
+	_compact_items(_player_work)
+	_refresh_player_panel()
+	_refresh_balance()
+
+
 func _on_compact_npc() -> void:
 	_compact_items(_shop_work)
 	_refresh_npc_panel()
+	_refresh_balance()
+
+
+func _on_sort_player() -> void:
+	_compact_items(_player_work)
+	_player_work.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return PickableItemDef.get_display_name(int(a["type"])) \
+				< PickableItemDef.get_display_name(int(b["type"])))
+	_refresh_player_panel()
 	_refresh_balance()
 
 
@@ -437,13 +463,28 @@ func _on_sort_npc() -> void:
 	_refresh_balance()
 
 
-func _on_sort_player() -> void:
-	_compact_items(_player_work)
-	_player_work.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return PickableItemDef.get_display_name(int(a["type"])) \
-				< PickableItemDef.get_display_name(int(b["type"])))
-	_refresh_player_panel()
-	_refresh_balance()
+## Move player item to first matching slot (merge) or end of NPC inventory.
+func _auto_move_player_to_npc(player_idx: int) -> void:
+	if player_idx < 0 or player_idx >= _player_work.size():
+		return
+	var src_type: int = int(_player_work[player_idx]["type"])
+	for i in range(_shop_work.size()):
+		if int(_shop_work[i]["type"]) == src_type:
+			_move_player_to_npc(player_idx, i)
+			return
+	_move_player_to_npc(player_idx, _shop_work.size())
+
+
+## Move NPC item to first matching slot (merge) or end of player inventory.
+func _auto_move_npc_to_player(npc_idx: int) -> void:
+	if npc_idx < 0 or npc_idx >= _shop_work.size():
+		return
+	var src_type: int = int(_shop_work[npc_idx]["type"])
+	for i in range(_player_work.size()):
+		if int(_player_work[i]["type"]) == src_type:
+			_move_npc_to_player(npc_idx, i)
+			return
+	_move_npc_to_player(npc_idx, _player_work.size())
 
 
 func open(inventory: Inventory, npc: NpcMelee) -> void:
@@ -527,39 +568,33 @@ func _refresh() -> void:
 
 func _refresh_player_panel() -> void:
 	_player_count_lbl.text = "%d / %d items" % [_player_work.size(), Inventory.MAX_ITEMS]
-	for i in range(COLS * ROWS):
+	for i in range(PLAYER_COLS * PLAYER_ROWS):
 		var icon  := _player_icons[i]  as TextureRect
-		var label := _player_labels[i] as Label
 		var badge := _player_badges[i] as Label
 		if i < _player_work.size():
 			var item_type:  int = int(_player_work[i]["type"])
 			var item_count: int = int(_player_work[i]["count"])
 			icon.texture  = PickableItemDef.get_texture(item_type)
-			label.text    = PickableItemDef.get_display_name(item_type)
 			badge.visible = item_count > 1
 			badge.text    = str(item_count) if item_count > 1 else ""
 		else:
 			icon.texture  = null
-			label.text    = ""
 			badge.visible = false
 
 
 func _refresh_npc_panel() -> void:
 	_npc_count_lbl.text = "%d items" % _shop_work.size()
-	for i in range(COLS * ROWS):
+	for i in range(NPC_PANEL_MAX):
 		var icon  := _npc_icons[i]  as TextureRect
-		var label := _npc_labels[i] as Label
 		var badge := _npc_badges[i] as Label
 		if i < _shop_work.size():
 			var item_type:  int = int(_shop_work[i]["type"])
 			var item_count: int = int(_shop_work[i]["count"])
 			icon.texture  = PickableItemDef.get_texture(item_type)
-			label.text    = PickableItemDef.get_display_name(item_type)
 			badge.visible = item_count > 1
 			badge.text    = str(item_count) if item_count > 1 else ""
 		else:
 			icon.texture  = null
-			label.text    = ""
 			badge.visible = false
 
 
@@ -716,7 +751,6 @@ func _move_player_to_npc(player_idx: int, npc_idx: int) -> void:
 
 	if npc_idx < _shop_work.size():
 		var dst_type: int = int(_shop_work[npc_idx]["type"])
-		# NPC panel is virtual — no stack cap enforced for non-coin items.
 		if dst_type == src_type:
 			_shop_work[npc_idx]["count"] = int(_shop_work[npc_idx]["count"]) + src_count
 			_player_work.remove_at(player_idx)
