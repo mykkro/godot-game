@@ -163,7 +163,7 @@ func _execute(text: String) -> void:
 	if not text.begins_with("/"):
 		_print_line("[hint] Commands start with /  — type /help for list")
 		return
-	var parts := text.substr(1).split(" ", false)
+	var parts := _parse_args(text.substr(1))
 	if parts.is_empty():
 		return
 	match parts[0].to_lower():
@@ -362,6 +362,28 @@ func _cmd_clear_inv() -> void:
 	var n := _avatar.inventory.count()
 	_avatar.inventory.items.clear()
 	_print_line("Cleared %d item(s) from inventory" % n)
+
+
+# ── Argument parsing ─────────────────────────────────────────────────────────
+
+## Split on spaces, but treat text enclosed in single quotes as one token.
+## /give 'Gold Bar' 10  →  ["give", "Gold Bar", "10"]
+static func _parse_args(text: String) -> Array[String]:
+	var parts: Array[String] = []
+	var current              := ""
+	var in_quote             := false
+	for ch in text:
+		if ch == "'":
+			in_quote = not in_quote
+		elif ch == " " and not in_quote:
+			if not current.is_empty():
+				parts.append(current)
+				current = ""
+		else:
+			current += ch
+	if not current.is_empty():
+		parts.append(current)
+	return parts
 
 
 # ── Output ────────────────────────────────────────────────────────────────────
