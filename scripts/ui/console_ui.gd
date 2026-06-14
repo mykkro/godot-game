@@ -1,7 +1,7 @@
 class_name ConsoleUI
 extends CanvasLayer
 
-const MAX_LINES := 6
+const MAX_LINES := 300
 
 var _output: RichTextLabel = null
 var _input:  LineEdit      = null
@@ -55,8 +55,10 @@ func _build_ui() -> void:
 
 	_output = RichTextLabel.new()
 	_output.bbcode_enabled         = false
-	_output.scroll_active          = false
+	_output.scroll_active          = true
+	_output.scroll_following       = true
 	_output.size_flags_vertical    = Control.SIZE_EXPAND_FILL
+	_output.custom_minimum_size    = Vector2(0, 120)
 	_output.add_theme_font_size_override("normal_font_size", 13)
 	_output.add_theme_color_override("default_color", Color(0.80, 0.85, 0.80))
 	vbox.add_child(_output)
@@ -144,6 +146,14 @@ func _on_input_key(event: InputEvent) -> void:
 		else:
 			_input.text  = _history[_history_idx]
 		_input.caret_column = _input.text.length()
+		_input.accept_event()
+	elif ke.keycode == KEY_PAGEUP:
+		var sb := _output.get_v_scroll_bar()
+		sb.value -= sb.page
+		_input.accept_event()
+	elif ke.keycode == KEY_PAGEDOWN:
+		var sb := _output.get_v_scroll_bar()
+		sb.value += sb.page
 		_input.accept_event()
 
 
