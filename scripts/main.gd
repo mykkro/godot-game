@@ -22,6 +22,7 @@ var _shop_ui:       ShopUI          = null
 var _clock_ui:      ClockUI         = null
 var _day_night:     DayNightCycle   = null
 var _console_ui:    ConsoleUI       = null
+var _wait_ui:       WaitUI          = null
 
 
 func _ready() -> void:
@@ -54,6 +55,9 @@ func _ready() -> void:
 
 	_console_ui = ConsoleUI.new()
 	add_child(_console_ui)
+
+	_wait_ui = WaitUI.new()
+	add_child(_wait_ui)
 
 	AudioManager.apply_saved_settings()
 	_start_music()

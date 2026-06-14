@@ -4,16 +4,17 @@ extends CanvasModulate
 ## Day/night tint keyframes: [hour_float_0_to_24, Color].
 ## First and last share the same color so midnight wraps cleanly.
 const _TIME_KEYS := [
-	[0.0,  Color(0.55, 0.60, 0.75)],  # midnight
-	[4.0,  Color(0.50, 0.55, 0.72)],  # pre-dawn (darkest)
-	[5.5,  Color(0.82, 0.68, 0.62)],  # dawn — warm orange
+	[0.0,  Color(0.28, 0.32, 0.58)],  # midnight — dark, deep blue
+	[4.0,  Color(0.22, 0.26, 0.52)],  # pre-dawn — darkest
+	[5.5,  Color(0.75, 0.55, 0.48)],  # dawn — warm orange
 	[7.0,  Color(0.97, 0.93, 0.90)],  # morning — slightly warm
 	[10.0, Color(1.00, 1.00, 1.00)],  # midday — neutral
 	[15.0, Color(1.00, 1.00, 0.98)],  # afternoon — barely warm
-	[18.0, Color(1.00, 0.90, 0.75)],  # golden hour
-	[20.0, Color(0.78, 0.58, 0.65)],  # dusk — purple-orange
-	[22.0, Color(0.62, 0.63, 0.78)],  # evening — blue-purple
-	[24.0, Color(0.55, 0.60, 0.75)],  # midnight (wrap)
+	[18.0, Color(1.00, 0.88, 0.68)],  # golden hour
+	[19.5, Color(0.82, 0.55, 0.55)],  # dusk — deep red-orange
+	[21.0, Color(0.48, 0.42, 0.68)],  # evening — blue-purple
+	[22.5, Color(0.32, 0.35, 0.62)],  # late night transition
+	[24.0, Color(0.28, 0.32, 0.58)],  # midnight (wrap)
 ]
 
 const WINTER_TINT     := Color(0.90, 0.93, 1.00)  # cool, faintly grayish-white

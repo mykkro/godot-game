@@ -7,6 +7,10 @@ var _output: RichTextLabel = null
 var _input:  LineEdit      = null
 var _lines:  Array[String] = []
 
+var _history:     Array[String] = []
+var _history_idx: int           = -1
+var _input_saved: String        = ""
+
 
 func _ready() -> void:
 	layer        = 90
@@ -63,6 +67,7 @@ func _build_ui() -> void:
 	_input.add_theme_color_override("caret_color",               Color(1.0, 1.0, 0.8))
 	_input.process_mode = Node.PROCESS_MODE_ALWAYS
 	_input.text_submitted.connect(_on_submitted)
+	_input.gui_input.connect(_on_input_key)
 	vbox.add_child(_input)
 
 
@@ -85,10 +90,44 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_submitted(text: String) -> void:
 	_input.clear()
 	_input.grab_focus()
+	_history_idx = -1
+	_input_saved = ""
 	var trimmed := text.strip_edges()
 	if trimmed.is_empty():
 		return
+	if _history.is_empty() or _history.back() != trimmed:
+		_history.append(trimmed)
 	_execute(trimmed)
+
+
+func _on_input_key(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var ke := event as InputEventKey
+	if not ke.pressed:
+		return
+	if ke.keycode == KEY_UP:
+		if _history.is_empty():
+			return
+		if _history_idx == -1:
+			_input_saved  = _input.text
+			_history_idx  = _history.size() - 1
+		elif _history_idx > 0:
+			_history_idx -= 1
+		_input.text          = _history[_history_idx]
+		_input.caret_column  = _input.text.length()
+		_input.accept_event()
+	elif ke.keycode == KEY_DOWN:
+		if _history_idx == -1:
+			return
+		_history_idx += 1
+		if _history_idx >= _history.size():
+			_history_idx        = -1
+			_input.text         = _input_saved
+		else:
+			_input.text         = _history[_history_idx]
+		_input.caret_column = _input.text.length()
+		_input.accept_event()
 
 
 # ── Command dispatch ──────────────────────────────────────────────────────────
