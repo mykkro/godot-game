@@ -258,12 +258,84 @@ func _make_slot() -> Array:
 	return [icon, lbl, slot, badge]
 
 
-func _setup_player_slot(_slot: PanelContainer, _idx: int) -> void:
-	pass
+func _setup_player_slot(slot: PanelContainer, idx: int) -> void:
+	slot.set_drag_forwarding(
+		func(_pos: Vector2) -> Variant:
+			if idx >= _player_work.size():
+				return null
+			var item_type := int(_player_work[idx]["type"])
+			slot.set_drag_preview(_make_drag_preview(item_type))
+			return {"shop_player_slot": idx},
+
+		func(_pos: Vector2, data: Variant) -> bool:
+			if not (data is Dictionary):
+				return false
+			if data.has("shop_player_slot"):
+				return int(data["shop_player_slot"]) != idx
+			return data.has("shop_npc_slot"),
+
+		func(_pos: Vector2, data: Variant) -> void:
+			if data.has("shop_player_slot"):
+				var src: int = int(data["shop_player_slot"])
+				if src < _player_work.size() and idx < _player_work.size():
+					var src_type := int(_player_work[src]["type"])
+					if src_type == int(_player_work[idx]["type"]):
+						var max_st := PickableItemDef.max_stack_size(src_type)
+						if max_st > 1:
+							var space := max_st - int(_player_work[idx]["count"])
+							if space > 0:
+								var move := mini(int(_player_work[src]["count"]), space)
+								_player_work[idx]["count"] = int(_player_work[idx]["count"]) + move
+								_player_work[src]["count"] = int(_player_work[src]["count"]) - move
+								if int(_player_work[src]["count"]) <= 0:
+									_player_work.remove_at(src)
+								_refresh()
+								return
+				_move_player_to_player(src, idx)
+			elif data.has("shop_npc_slot"):
+				_move_npc_to_player(int(data["shop_npc_slot"]), idx)
+			_refresh()
+	)
 
 
-func _setup_npc_slot(_slot: PanelContainer, _idx: int) -> void:
-	pass
+func _setup_npc_slot(slot: PanelContainer, idx: int) -> void:
+	slot.set_drag_forwarding(
+		func(_pos: Vector2) -> Variant:
+			if idx >= _shop_work.size():
+				return null
+			var item_type := int(_shop_work[idx]["type"])
+			slot.set_drag_preview(_make_drag_preview(item_type))
+			return {"shop_npc_slot": idx},
+
+		func(_pos: Vector2, data: Variant) -> bool:
+			if not (data is Dictionary):
+				return false
+			if data.has("shop_npc_slot"):
+				return int(data["shop_npc_slot"]) != idx
+			return data.has("shop_player_slot"),
+
+		func(_pos: Vector2, data: Variant) -> void:
+			if data.has("shop_npc_slot"):
+				var src: int = int(data["shop_npc_slot"])
+				if src < _shop_work.size() and idx < _shop_work.size():
+					var src_type := int(_shop_work[src]["type"])
+					if src_type == int(_shop_work[idx]["type"]):
+						var max_st := PickableItemDef.max_stack_size(src_type)
+						if max_st > 1:
+							var space := max_st - int(_shop_work[idx]["count"])
+							if space > 0:
+								var move := mini(int(_shop_work[src]["count"]), space)
+								_shop_work[idx]["count"] = int(_shop_work[idx]["count"]) + move
+								_shop_work[src]["count"] = int(_shop_work[src]["count"]) - move
+								if int(_shop_work[src]["count"]) <= 0:
+									_shop_work.remove_at(src)
+								_refresh()
+								return
+				_move_npc_to_npc(src, idx)
+			elif data.has("shop_player_slot"):
+				_move_player_to_npc(int(data["shop_player_slot"]), idx)
+			_refresh()
+	)
 
 
 func _on_reset_pressed() -> void:
@@ -503,3 +575,96 @@ func _add_coins_to_player(amount: int) -> void:
 		var add := mini(remaining, max_st)
 		_player_work.append({"type": MapObject.Type.COIN, "count": add})
 		remaining -= add
+
+
+func _move_player_to_player(src: int, dst: int) -> void:
+	if src == dst or src < 0 or src >= _player_work.size():
+		return
+	if dst < _player_work.size():
+		var tmp: Dictionary = _player_work[src]
+		_player_work[src]   = _player_work[dst]
+		_player_work[dst]   = tmp
+	else:
+		var item: Dictionary = _player_work[src]
+		_player_work.remove_at(src)
+		_player_work.append(item)
+
+
+func _move_npc_to_npc(src: int, dst: int) -> void:
+	if src == dst or src < 0 or src >= _shop_work.size():
+		return
+	if dst < _shop_work.size():
+		var tmp: Dictionary = _shop_work[src]
+		_shop_work[src]     = _shop_work[dst]
+		_shop_work[dst]     = tmp
+	else:
+		var item: Dictionary = _shop_work[src]
+		_shop_work.remove_at(src)
+		_shop_work.append(item)
+
+
+## Move any item from player panel to NPC panel.
+## Coins merge into NPC coin pile without cap; other items swap or append.
+func _move_player_to_npc(player_idx: int, npc_idx: int) -> void:
+	if player_idx < 0 or player_idx >= _player_work.size():
+		return
+	var src_type:  int = int(_player_work[player_idx]["type"])
+	var src_count: int = int(_player_work[player_idx]["count"])
+
+	if src_type == MapObject.Type.COIN:
+		for i in range(_shop_work.size()):
+			if int(_shop_work[i]["type"]) == MapObject.Type.COIN:
+				_shop_work[i]["count"] = int(_shop_work[i]["count"]) + src_count
+				_player_work.remove_at(player_idx)
+				return
+		if _shop_work.size() < NPC_PANEL_MAX:
+			_shop_work.append({"type": MapObject.Type.COIN, "count": src_count})
+			_player_work.remove_at(player_idx)
+		return
+
+	if npc_idx < _shop_work.size():
+		var dst_type: int = int(_shop_work[npc_idx]["type"])
+		if dst_type == src_type:
+			_shop_work[npc_idx]["count"] = int(_shop_work[npc_idx]["count"]) + src_count
+			_player_work.remove_at(player_idx)
+		else:
+			var dst: Dictionary      = _shop_work[npc_idx]
+			_shop_work[npc_idx]      = {"type": src_type, "count": src_count}
+			_player_work[player_idx] = dst
+	else:
+		if _shop_work.size() < NPC_PANEL_MAX:
+			_shop_work.append({"type": src_type, "count": src_count})
+			_player_work.remove_at(player_idx)
+
+
+## Move NPC item/coins to player panel. Player-side stack limits apply.
+func _move_npc_to_player(npc_idx: int, player_idx: int) -> void:
+	if npc_idx < 0 or npc_idx >= _shop_work.size():
+		return
+	var src_type:  int = int(_shop_work[npc_idx]["type"])
+	var src_count: int = int(_shop_work[npc_idx]["count"])
+
+	if player_idx < _player_work.size():
+		var dst_type: int = int(_player_work[player_idx]["type"])
+		if dst_type == src_type:
+			var max_st := PickableItemDef.max_stack_size(src_type)
+			var space  := max_st - int(_player_work[player_idx]["count"])
+			var move   := mini(src_count, space)
+			if move <= 0:
+				return
+			_player_work[player_idx]["count"] = int(_player_work[player_idx]["count"]) + move
+			_shop_work[npc_idx]["count"]      = src_count - move
+			if int(_shop_work[npc_idx]["count"]) <= 0:
+				_shop_work.remove_at(npc_idx)
+		else:
+			var dst: Dictionary      = _player_work[player_idx]
+			_player_work[player_idx] = {"type": src_type, "count": src_count}
+			_shop_work[npc_idx]      = dst
+	else:
+		if _player_work.size() < Inventory.MAX_ITEMS:
+			var max_st    := PickableItemDef.max_stack_size(src_type)
+			var add_count := mini(src_count, max_st)
+			_player_work.append({"type": src_type, "count": add_count})
+			_shop_work[npc_idx]["count"] = src_count - add_count
+			if int(_shop_work[npc_idx]["count"]) <= 0:
+				_shop_work.remove_at(npc_idx)
