@@ -25,8 +25,10 @@ var _world:        World        = null
 var _fog_manager:  FogManager   = null
 var _inventory_ui: InventoryUI  = null
 
-var inventory: Inventory      = Inventory.new()
-var perks:     CharacterPerks = CharacterPerks.new()
+var inventory:       Inventory      = Inventory.new()
+var perks:           CharacterPerks = CharacterPerks.new()
+var char_name:       String         = ""
+var char_birth_time: float          = 0.0
 
 ## Nearby pickable items tracked via Area2D overlap signals.
 var _path:             Array[Vector2]    = []   # queued waypoints from click-to-move

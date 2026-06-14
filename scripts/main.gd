@@ -23,6 +23,7 @@ var _clock_ui:      ClockUI         = null
 var _day_night:     DayNightCycle   = null
 var _console_ui:    ConsoleUI       = null
 var _wait_ui:       WaitUI          = null
+var _char_ui:       CharacterUI     = null
 
 
 func _ready() -> void:
@@ -60,6 +61,9 @@ func _ready() -> void:
 	_wait_ui = WaitUI.new()
 	add_child(_wait_ui)
 
+	_char_ui = CharacterUI.new()
+	add_child(_char_ui)
+
 	AudioManager.apply_saved_settings()
 	_start_music()
 
@@ -71,6 +75,11 @@ func _ready() -> void:
 	# Load saved inventory (empty Inventory if no save exists).
 	_avatar.inventory = SaveManager.load_inventory()
 	_avatar.perks     = SaveManager.load_perks()
+
+	var char_data             := SaveManager.load_character()
+	_avatar.char_name         = char_data.get("name", "")
+	_avatar.char_birth_time   = float(char_data.get("birth_time",
+			GameClock.get_game_time()))
 	if _avatar.inventory.count() == 0:
 		for entry in [
 			[12, 2], [49, 1],         # Iron Bar
@@ -80,6 +89,18 @@ func _ready() -> void:
 			[21, 3], [88, 1],         # Cloth Strip
 		]:
 			_avatar.inventory.items.append({"type": entry[0], "count": entry[1]})
+
+	_char_ui.setup(_avatar)
+
+	# Show name input on new character (no saved name).
+	if _avatar.char_name.is_empty():
+		var ni := NameInputUI.new()
+		add_child(ni)
+		ni.name_confirmed.connect(func(cname: String) -> void:
+			_avatar.char_name       = cname
+			_avatar.char_birth_time = GameClock.get_game_time()
+			SaveManager.save_character(cname, _avatar.char_birth_time)
+		)
 
 	_avatar.setup(_world, _fog_manager, _inventory_ui)
 	_avatar.npc_interact_requested.connect(_npc_dialog.open)

@@ -179,6 +179,7 @@ func _execute(text: String) -> void:
 		"timescale":  _cmd_timescale(parts)
 		"clear_inv":  _cmd_clear_inv()
 		"perk":       _cmd_perk(parts)
+		"name":       _cmd_name(parts)
 		"help":       _cmd_help()
 		var unknown:  _print_line("Unknown: /" + unknown + "  (try /help)")
 
@@ -197,6 +198,7 @@ func _cmd_help() -> void:
 	_print_line("/timescale <n>     game clock speed (1=normal, 0=stop)")
 	_print_line("/clear_inv         wipe player inventory")
 	_print_line("/perk [name] [lvl] show or set a perk  (/perk trader 3)")
+	_print_line("/name <new name>   rename your character")
 
 
 func _cmd_give(parts: Array) -> void:
@@ -387,6 +389,22 @@ func _cmd_perk(parts: Array) -> void:
 	_avatar.perks.set_level(perk_id, level)
 	var label := PerkDef.get_level_name(perk_id, level) if level > 0 else "(none)"
 	_print_line("%s → %s (level %d)" % [PerkDef.get_perk_name(perk_id), label, level])
+
+
+func _cmd_name(parts: Array) -> void:
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	if parts.size() < 2:
+		_print_line("Name: " + (_avatar.char_name if not _avatar.char_name.is_empty() else "(unset)"))
+		return
+	var new_name := " ".join(parts.slice(1)).strip_edges()
+	if new_name.is_empty():
+		_print_line("Name cannot be empty")
+		return
+	_avatar.char_name = new_name
+	SaveManager.save_character(_avatar.char_name, _avatar.char_birth_time)
+	_print_line("Character renamed to: " + new_name)
 
 
 func _cmd_clear_inv() -> void:

@@ -12,6 +12,7 @@ const DIALOG_FILE    := "user://dialog_visited.json"
 const SHOPS_FILE     := "user://shops.json"
 const CLOCK_FILE     := "user://clock.json"
 const PERKS_FILE     := "user://player_perks.json"
+const CHAR_FILE      := "user://character.json"
 
 
 ## Returns true when a previous game session exists (any saved chunk).
@@ -65,7 +66,7 @@ static func load_player() -> Dictionary:
 static func wipe() -> void:
 	_wipe_dir(CHUNKS_DIR)
 	_wipe_dir(FOG_DIR)
-	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE, PERKS_FILE]:
+	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE, PERKS_FILE, CHAR_FILE]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 
@@ -251,6 +252,27 @@ static func load_perks() -> CharacterPerks:
 	if parsed is Dictionary:
 		p.from_dict(parsed as Dictionary)
 	return p
+
+
+static func save_character(char_name: String, birth_time: float) -> void:
+	var file := FileAccess.open(CHAR_FILE, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify({"name": char_name, "birth_time": birth_time}))
+	file.close()
+
+
+static func load_character() -> Dictionary:
+	if not FileAccess.file_exists(CHAR_FILE):
+		return {}
+	var file := FileAccess.open(CHAR_FILE, FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if parsed is Dictionary:
+		return parsed as Dictionary
+	return {}
 
 
 static func _wipe_dir(path: String) -> void:
