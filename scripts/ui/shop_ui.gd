@@ -20,6 +20,10 @@ var _shop_orig:   Array = []
 
 ## Cache of all pickable item types except COIN (built once at first open).
 static var _all_pickable_types: Array = []
+## Persistent coin pool per NPC id — depletes as the NPC pays out.
+static var _npc_coin_pools: Dictionary = {}
+
+var _npc_id: String = ""
 
 ## UI node references.
 var _player_icons:     Array  = []
@@ -141,6 +145,8 @@ func _build_npc_panel() -> PanelContainer:
 
 	_npc_title_lbl = _make_title_label("")
 	header.add_child(_npc_title_lbl)
+	header.add_child(_make_button("Compact", _on_compact_npc))
+	header.add_child(_make_button("Sort", _on_sort_npc))
 
 	_npc_count_lbl = _make_count_label()
 	vbox.add_child(_npc_count_lbl)
@@ -275,8 +281,11 @@ func _setup_player_slot(slot: PanelContainer, idx: int) -> void:
 		func(_pos: Vector2) -> Variant:
 			if idx >= _player_work.size():
 				return null
-			var item_type := int(_player_work[idx]["type"])
+			var item_type  := int(_player_work[idx]["type"])
+			var item_count := int(_player_work[idx]["count"])
 			slot.set_drag_preview(_make_drag_preview(item_type))
+			if item_count > 1 and Input.is_key_pressed(KEY_SHIFT):
+				return {"shop_player_slot": idx, "move_count": max(1, item_count / 2)}
 			return {"shop_player_slot": idx},
 
 		func(_pos: Vector2, data: Variant) -> bool:
@@ -288,26 +297,45 @@ func _setup_player_slot(slot: PanelContainer, idx: int) -> void:
 
 		func(_pos: Vector2, data: Variant) -> void:
 			if data.has("shop_player_slot"):
-				var src: int = int(data["shop_player_slot"])
+				var src:       int  = int(data["shop_player_slot"])
+				var is_split:  bool = data.has("move_count")
 				if src < 0 or src >= _player_work.size():
 					return
-				if src < _player_work.size() and idx < _player_work.size():
-					var src_type := int(_player_work[src]["type"])
+				var src_type:  int = int(_player_work[src]["type"])
+				var src_count: int = int(_player_work[src]["count"])
+				var take:      int = int(data["move_count"]) if is_split else src_count
+				if idx < _player_work.size():
 					if src_type == int(_player_work[idx]["type"]):
 						var max_st := PickableItemDef.max_stack_size(src_type)
 						if max_st > 1:
 							var space := max_st - int(_player_work[idx]["count"])
 							if space > 0:
-								var move := mini(int(_player_work[src]["count"]), space)
-								_player_work[idx]["count"] = int(_player_work[idx]["count"]) + move
-								_player_work[src]["count"] = int(_player_work[src]["count"]) - move
+								var add := mini(take, mini(src_count, space))
+								_player_work[idx]["count"] = int(_player_work[idx]["count"]) + add
+								_player_work[src]["count"] = src_count - add
 								if int(_player_work[src]["count"]) <= 0:
 									_player_work.remove_at(src)
 								_refresh()
 								return
-				_move_player_to_player(src, idx)
+					if not is_split:
+						_move_player_to_player(src, idx)
+				else:
+					if is_split:
+						var add := mini(take, src_count)
+						if _player_work.size() < Inventory.MAX_ITEMS:
+							_player_work.append({"type": src_type, "count": add})
+							_player_work[src]["count"] = src_count - add
+							if int(_player_work[src]["count"]) <= 0:
+								_player_work.remove_at(src)
+					else:
+						_move_player_to_player(src, idx)
 			elif data.has("shop_npc_slot"):
-				_move_npc_to_player(int(data["shop_npc_slot"]), idx)
+				var src:      int  = int(data["shop_npc_slot"])
+				var is_split: bool = data.has("move_count")
+				if is_split:
+					_split_npc_to_player(src, idx, int(data["move_count"]))
+				else:
+					_move_npc_to_player(src, idx)
 			_refresh()
 	)
 
@@ -317,8 +345,11 @@ func _setup_npc_slot(slot: PanelContainer, idx: int) -> void:
 		func(_pos: Vector2) -> Variant:
 			if idx >= _shop_work.size():
 				return null
-			var item_type := int(_shop_work[idx]["type"])
+			var item_type  := int(_shop_work[idx]["type"])
+			var item_count := int(_shop_work[idx]["count"])
 			slot.set_drag_preview(_make_drag_preview(item_type))
+			if item_count > 1 and Input.is_key_pressed(KEY_SHIFT):
+				return {"shop_npc_slot": idx, "move_count": max(1, item_count / 2)}
 			return {"shop_npc_slot": idx},
 
 		func(_pos: Vector2, data: Variant) -> bool:
@@ -330,26 +361,45 @@ func _setup_npc_slot(slot: PanelContainer, idx: int) -> void:
 
 		func(_pos: Vector2, data: Variant) -> void:
 			if data.has("shop_npc_slot"):
-				var src: int = int(data["shop_npc_slot"])
+				var src:       int  = int(data["shop_npc_slot"])
+				var is_split:  bool = data.has("move_count")
 				if src < 0 or src >= _shop_work.size():
 					return
-				if src < _shop_work.size() and idx < _shop_work.size():
-					var src_type := int(_shop_work[src]["type"])
+				var src_type:  int = int(_shop_work[src]["type"])
+				var src_count: int = int(_shop_work[src]["count"])
+				var take:      int = int(data["move_count"]) if is_split else src_count
+				if idx < _shop_work.size():
 					if src_type == int(_shop_work[idx]["type"]):
 						var max_st := PickableItemDef.max_stack_size(src_type)
 						if max_st > 1:
 							var space := max_st - int(_shop_work[idx]["count"])
 							if space > 0:
-								var move := mini(int(_shop_work[src]["count"]), space)
-								_shop_work[idx]["count"] = int(_shop_work[idx]["count"]) + move
-								_shop_work[src]["count"] = int(_shop_work[src]["count"]) - move
+								var add := mini(take, mini(src_count, space))
+								_shop_work[idx]["count"] = int(_shop_work[idx]["count"]) + add
+								_shop_work[src]["count"] = src_count - add
 								if int(_shop_work[src]["count"]) <= 0:
 									_shop_work.remove_at(src)
 								_refresh()
 								return
-				_move_npc_to_npc(src, idx)
+					if not is_split:
+						_move_npc_to_npc(src, idx)
+				else:
+					if is_split:
+						var add := mini(take, src_count)
+						if _shop_work.size() < NPC_PANEL_MAX:
+							_shop_work.append({"type": src_type, "count": add})
+							_shop_work[src]["count"] = src_count - add
+							if int(_shop_work[src]["count"]) <= 0:
+								_shop_work.remove_at(src)
+					else:
+						_move_npc_to_npc(src, idx)
 			elif data.has("shop_player_slot"):
-				_move_player_to_npc(int(data["shop_player_slot"]), idx)
+				var src:      int  = int(data["shop_player_slot"])
+				var is_split: bool = data.has("move_count")
+				if is_split:
+					_split_player_to_npc(src, idx, int(data["move_count"]))
+				else:
+					_move_player_to_npc(src, idx)
 			_refresh()
 	)
 
@@ -366,9 +416,25 @@ func _on_trade_pressed() -> void:
 		return
 	if bal < 0:
 		_pay_npc_coins_to_player(-bal)
+	_npc_coin_pools[_npc_id] = _get_npc_coins()
 	assert(_player_work.size() <= Inventory.MAX_ITEMS, "shop produced oversized player_work")
 	_inventory.items = _player_work
 	close()
+
+
+func _on_compact_npc() -> void:
+	_compact_items(_shop_work)
+	_refresh_npc_panel()
+	_refresh_balance()
+
+
+func _on_sort_npc() -> void:
+	_compact_items(_shop_work)
+	_shop_work.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return PickableItemDef.get_display_name(int(a["type"])) \
+				< PickableItemDef.get_display_name(int(b["type"])))
+	_refresh_npc_panel()
+	_refresh_balance()
 
 
 func _on_sort_player() -> void:
@@ -382,13 +448,15 @@ func _on_sort_player() -> void:
 
 func open(inventory: Inventory, npc: NpcMelee) -> void:
 	_inventory          = inventory
+	_npc_id             = npc.npc_id if not npc.npc_id.is_empty() else str(hash(npc))
 	_npc_name           = npc.npc_name if not npc.npc_name.is_empty() else "Brawler"
 	_npc_title_lbl.text = _npc_name + "'s Shop"
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(npc.npc_id) if not npc.npc_id.is_empty() else randi()
 
-	_shop_orig   = _generate_shop_items(rng)
+	var coin_pool: int = int(_npc_coin_pools.get(_npc_id, NPC_COIN_POOL))
+	_shop_orig   = _generate_shop_items(rng, coin_pool)
 	_player_orig = _deep_copy_items(inventory.items)
 	_shop_work   = _deep_copy_items(_shop_orig)
 	_player_work = _deep_copy_items(_player_orig)
@@ -418,7 +486,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _generate_shop_items(rng: RandomNumberGenerator) -> Array:
+func _generate_shop_items(rng: RandomNumberGenerator, coin_pool: int) -> Array:
 	_ensure_types_cache()
 	var pool  := _all_pickable_types.duplicate()
 	var count := rng.randi_range(3, 8)
@@ -437,12 +505,8 @@ func _generate_shop_items(rng: RandomNumberGenerator) -> Array:
 			100: quantity = rng.randi_range(5, 50)
 			_:   quantity = 1
 		result.append({"type": item_type, "count": quantity})
-	var coin_max   := PickableItemDef.max_stack_size(MapObject.Type.COIN)
-	var coins_left := NPC_COIN_POOL
-	while coins_left > 0:
-		var stack := mini(coins_left, coin_max)
-		result.append({"type": MapObject.Type.COIN, "count": stack})
-		coins_left -= stack
+	if coin_pool > 0:
+		result.append({"type": MapObject.Type.COIN, "count": coin_pool})
 	return result
 
 
@@ -639,21 +703,14 @@ func _move_player_to_npc(player_idx: int, npc_idx: int) -> void:
 	var src_count: int = int(_player_work[player_idx]["count"])
 
 	if src_type == MapObject.Type.COIN:
-		var coin_max  := PickableItemDef.max_stack_size(MapObject.Type.COIN)
-		var remaining := src_count
 		for i in range(_shop_work.size()):
-			if remaining <= 0:
-				break
 			if int(_shop_work[i]["type"]) == MapObject.Type.COIN:
-				var space := coin_max - int(_shop_work[i]["count"])
-				var add   := mini(remaining, space)
-				_shop_work[i]["count"] = int(_shop_work[i]["count"]) + add
-				remaining -= add
-		while remaining > 0 and _shop_work.size() < NPC_PANEL_MAX:
-			var stack := mini(remaining, coin_max)
-			_shop_work.append({"type": MapObject.Type.COIN, "count": stack})
-			remaining -= stack
-		_player_work.remove_at(player_idx)
+				_shop_work[i]["count"] = int(_shop_work[i]["count"]) + src_count
+				_player_work.remove_at(player_idx)
+				return
+		if _shop_work.size() < NPC_PANEL_MAX:
+			_shop_work.append({"type": MapObject.Type.COIN, "count": src_count})
+			_player_work.remove_at(player_idx)
 		return
 
 	if npc_idx < _shop_work.size():
@@ -703,3 +760,59 @@ func _move_npc_to_player(npc_idx: int, player_idx: int) -> void:
 			_shop_work[npc_idx]["count"] = src_count - add_count
 			if int(_shop_work[npc_idx]["count"]) <= 0:
 				_shop_work.remove_at(npc_idx)
+
+
+## Take `take` items from NPC slot and add them to a player slot (no swap).
+func _split_npc_to_player(npc_idx: int, player_idx: int, take: int) -> void:
+	if npc_idx < 0 or npc_idx >= _shop_work.size():
+		return
+	var src_type:  int = int(_shop_work[npc_idx]["type"])
+	var src_count: int = int(_shop_work[npc_idx]["count"])
+	take = mini(take, src_count)
+	if take <= 0:
+		return
+	var max_st := PickableItemDef.max_stack_size(src_type)
+	if player_idx < _player_work.size():
+		if int(_player_work[player_idx]["type"]) != src_type:
+			return
+		var space := max_st - int(_player_work[player_idx]["count"])
+		var add   := mini(take, space)
+		if add <= 0:
+			return
+		_player_work[player_idx]["count"] = int(_player_work[player_idx]["count"]) + add
+		_shop_work[npc_idx]["count"]      = src_count - add
+		if int(_shop_work[npc_idx]["count"]) <= 0:
+			_shop_work.remove_at(npc_idx)
+	else:
+		if _player_work.size() >= Inventory.MAX_ITEMS:
+			return
+		var add := mini(take, max_st)
+		_player_work.append({"type": src_type, "count": add})
+		_shop_work[npc_idx]["count"] = src_count - add
+		if int(_shop_work[npc_idx]["count"]) <= 0:
+			_shop_work.remove_at(npc_idx)
+
+
+## Take `take` items from player slot and add them to NPC slot (no swap).
+func _split_player_to_npc(player_idx: int, npc_idx: int, take: int) -> void:
+	if player_idx < 0 or player_idx >= _player_work.size():
+		return
+	var src_type:  int = int(_player_work[player_idx]["type"])
+	var src_count: int = int(_player_work[player_idx]["count"])
+	take = mini(take, src_count)
+	if take <= 0:
+		return
+	if npc_idx < _shop_work.size():
+		if int(_shop_work[npc_idx]["type"]) != src_type:
+			return
+		_shop_work[npc_idx]["count"]      = int(_shop_work[npc_idx]["count"]) + take
+		_player_work[player_idx]["count"] = src_count - take
+		if int(_player_work[player_idx]["count"]) <= 0:
+			_player_work.remove_at(player_idx)
+	else:
+		if _shop_work.size() >= NPC_PANEL_MAX:
+			return
+		_shop_work.append({"type": src_type, "count": take})
+		_player_work[player_idx]["count"] = src_count - take
+		if int(_player_work[player_idx]["count"]) <= 0:
+			_player_work.remove_at(player_idx)
