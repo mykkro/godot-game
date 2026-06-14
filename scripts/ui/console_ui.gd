@@ -88,7 +88,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not ke.pressed or ke.echo:
 		return
 
-	if ke.keycode == KEY_QUOTELEFT:
+	if ke.keycode == KEY_QUOTELEFT or ke.keycode == KEY_SLASH:
 		visible = not visible
 		if visible:
 			_input.grab_focus()
