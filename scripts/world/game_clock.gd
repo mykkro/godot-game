@@ -42,6 +42,17 @@ func get_date_time() -> Dictionary:
 	return from_seconds(_game_time)
 
 
+## Convert explicit calendar components to raw game seconds.
+static func to_seconds(year: int, month_idx: int, day: int, hour: int, minute: int) -> float:
+	return float(
+		(year - 1) * 360 * 86400
+		+ month_idx * 30 * 86400
+		+ (day - 1) * 86400
+		+ hour * 3600
+		+ minute * 60
+	)
+
+
 func from_seconds(s: float) -> Dictionary:
 	var total_minutes := int(s / 60)
 	var minute        := total_minutes % 60

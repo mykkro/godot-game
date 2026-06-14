@@ -21,6 +21,7 @@ var _forge_ui:      ForgeUI         = null
 var _shop_ui:       ShopUI          = null
 var _clock_ui:      ClockUI         = null
 var _day_night:     DayNightCycle   = null
+var _console_ui:    ConsoleUI       = null
 
 
 func _ready() -> void:
@@ -50,6 +51,9 @@ func _ready() -> void:
 
 	_day_night = DayNightCycle.new()
 	add_child(_day_night)
+
+	_console_ui = ConsoleUI.new()
+	add_child(_console_ui)
 
 	AudioManager.apply_saved_settings()
 	_start_music()
