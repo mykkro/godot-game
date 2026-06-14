@@ -11,6 +11,8 @@ var _npc:          Node2D        = null
 ## Visited options per NPC: "x,y" position key → {label: true}
 var _visited:      Dictionary    = {}
 
+signal shop_requested(npc: NpcMelee)
+
 
 func _ready() -> void:
 	layer        = 65
@@ -134,11 +136,12 @@ func _build_menu(npc: Node2D) -> void:
 
 	if npc is NpcMelee:
 		_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom, key)
+		_add_menu_btn("3.  Shop", _on_shop, key)
 		if (npc as NpcMelee).is_quest_giver:
-			_add_menu_btn("3.  Quest", _on_quest, key)
-			_add_menu_btn("4.  Goodbye", close, key)
+			_add_menu_btn("4.  Quest", _on_quest, key)
+			_add_menu_btn("5.  Goodbye", close, key)
 		else:
-			_add_menu_btn("3.  Goodbye", close, key)
+			_add_menu_btn("4.  Goodbye", close, key)
 	else:
 		_add_menu_btn("2.  Goodbye", close, key)
 
@@ -179,6 +182,12 @@ func _on_wisdom() -> void:
 
 func _on_quest() -> void:
 	_show_speech("I have no quests for you at this time, traveler.")
+
+
+func _on_shop() -> void:
+	var npc := _npc as NpcMelee
+	close()
+	shop_requested.emit(npc)
 
 
 func _add_menu_btn(label: String, cb: Callable, npc_key: String) -> void:

@@ -18,6 +18,7 @@ var _actor_refs:    ActorRefOverlay = null
 var _npc_dialog:    NpcDialog       = null
 var _chest_loot_ui: ChestLootUI     = null
 var _forge_ui:      ForgeUI         = null
+var _shop_ui:       ShopUI          = null
 
 
 func _ready() -> void:
@@ -38,6 +39,9 @@ func _ready() -> void:
 	ForgeRecipeDef.load_recipes()
 	_forge_ui = ForgeUI.new()
 	add_child(_forge_ui)
+
+	_shop_ui = ShopUI.new()
+	add_child(_shop_ui)
 
 	AudioManager.apply_saved_settings()
 	_start_music()
@@ -68,6 +72,11 @@ func _ready() -> void:
 	_avatar.forge_interact_requested.connect(
 		func(forge: ForgeNode) -> void:
 			_forge_ui.open(_avatar.inventory, forge)
+	)
+
+	_npc_dialog.shop_requested.connect(
+		func(npc: NpcMelee) -> void:
+			_shop_ui.open(_avatar.inventory, npc)
 	)
 	_inventory_ui.drop_requested.connect(_avatar.drop_item)
 	_debug.setup(_world, _fog_manager, _avatar)
