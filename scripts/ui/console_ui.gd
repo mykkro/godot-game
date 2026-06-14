@@ -116,7 +116,7 @@ func _cmd_set_date(parts: Array) -> void:
 	if parts.size() < 2:
 		_print_line("Usage: /set_date MM/DD")
 		return
-	var tokens := parts[1].split("/")
+	var tokens := (parts[1] as String).split("/")
 	if tokens.size() != 2:
 		_print_line("Usage: /set_date MM/DD")
 		return
@@ -136,7 +136,7 @@ func _cmd_set_time(parts: Array) -> void:
 	if parts.size() < 2:
 		_print_line("Usage: /set_time HH:MM")
 		return
-	var tokens := parts[1].split(":")
+	var tokens := (parts[1] as String).split(":")
 	if tokens.size() != 2:
 		_print_line("Usage: /set_time HH:MM")
 		return
