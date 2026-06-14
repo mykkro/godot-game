@@ -267,12 +267,235 @@ func _setup_npc_slot(_slot: PanelContainer, _idx: int) -> void:
 
 
 func _on_reset_pressed() -> void:
-	pass
+	_shop_work   = _deep_copy_items(_shop_orig)
+	_player_work = _deep_copy_items(_player_orig)
+	_refresh()
 
 
 func _on_trade_pressed() -> void:
-	pass
+	var bal := _compute_balance()
+	if bal > 0:
+		return
+	if bal < 0:
+		_pay_npc_coins_to_player(-bal)
+	_inventory.items = _player_work
+	close()
 
 
 func _on_sort_player() -> void:
-	pass
+	_compact_items(_player_work)
+	_player_work.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return PickableItemDef.get_display_name(int(a["type"])) \
+				< PickableItemDef.get_display_name(int(b["type"])))
+	_refresh_player_panel()
+	_refresh_balance()
+
+
+func open(inventory: Inventory, npc: NpcMelee) -> void:
+	_inventory          = inventory
+	_npc_name           = npc.npc_name if not npc.npc_name.is_empty() else "Brawler"
+	_npc_title_lbl.text = _npc_name + "'s Shop"
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(npc.npc_id) if not npc.npc_id.is_empty() else randi()
+
+	_shop_orig   = _generate_shop_items(rng)
+	_player_orig = _deep_copy_items(inventory.items)
+	_shop_work   = _deep_copy_items(_shop_orig)
+	_player_work = _deep_copy_items(_player_orig)
+
+	visible           = true
+	get_tree().paused = true
+	_refresh()
+
+
+func close() -> void:
+	if not visible:
+		return
+	visible           = false
+	get_tree().paused = false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if not (event is InputEventKey):
+		return
+	var ke := event as InputEventKey
+	if not ke.pressed or ke.echo:
+		return
+	if ke.keycode == KEY_ESCAPE:
+		close()
+		get_viewport().set_input_as_handled()
+
+
+func _generate_shop_items(rng: RandomNumberGenerator) -> Array:
+	_ensure_types_cache()
+	var pool  := _all_pickable_types.duplicate()
+	var count := rng.randi_range(3, 8)
+	var result: Array = []
+	while result.size() < count and not pool.is_empty():
+		var idx       := rng.randi_range(0, pool.size() - 1)
+		var item_type: int = int(pool[idx])
+		pool.remove_at(idx)
+		var max_st := PickableItemDef.max_stack_size(item_type)
+		var quantity: int
+		match max_st:
+			4:   quantity = rng.randi_range(1, 3)
+			8:   quantity = rng.randi_range(1, 5)
+			16:  quantity = rng.randi_range(2, 8)
+			64:  quantity = rng.randi_range(3, 20)
+			100: quantity = rng.randi_range(5, 50)
+			_:   quantity = 1
+		result.append({"type": item_type, "count": quantity})
+	result.append({"type": MapObject.Type.COIN, "count": NPC_COIN_POOL})
+	return result
+
+
+static func _ensure_types_cache() -> void:
+	if not _all_pickable_types.is_empty():
+		return
+	for val in MapObject.Type.values():
+		if PickableItemDef.is_pickable(val) and val != MapObject.Type.COIN:
+			_all_pickable_types.append(val)
+
+
+func _refresh() -> void:
+	_refresh_player_panel()
+	_refresh_npc_panel()
+	_refresh_balance()
+
+
+func _refresh_player_panel() -> void:
+	_player_count_lbl.text = "%d / %d items" % [_player_work.size(), Inventory.MAX_ITEMS]
+	for i in range(COLS * ROWS):
+		var icon  := _player_icons[i]  as TextureRect
+		var label := _player_labels[i] as Label
+		var badge := _player_badges[i] as Label
+		if i < _player_work.size():
+			var item_type:  int = int(_player_work[i]["type"])
+			var item_count: int = int(_player_work[i]["count"])
+			icon.texture  = PickableItemDef.get_texture(item_type)
+			label.text    = PickableItemDef.get_display_name(item_type)
+			badge.visible = item_count > 1
+			badge.text    = str(item_count) if item_count > 1 else ""
+		else:
+			icon.texture  = null
+			label.text    = ""
+			badge.visible = false
+
+
+func _refresh_npc_panel() -> void:
+	_npc_count_lbl.text = "%d items" % _shop_work.size()
+	for i in range(COLS * ROWS):
+		var icon  := _npc_icons[i]  as TextureRect
+		var label := _npc_labels[i] as Label
+		var badge := _npc_badges[i] as Label
+		if i < _shop_work.size():
+			var item_type:  int = int(_shop_work[i]["type"])
+			var item_count: int = int(_shop_work[i]["count"])
+			icon.texture  = PickableItemDef.get_texture(item_type)
+			label.text    = PickableItemDef.get_display_name(item_type)
+			badge.visible = item_count > 1
+			badge.text    = str(item_count) if item_count > 1 else ""
+		else:
+			icon.texture  = null
+			label.text    = ""
+			badge.visible = false
+
+
+func _refresh_balance() -> void:
+	var bal := _compute_balance()
+	if bal > 0:
+		_balance_lbl.text = "Balance: +%d coins  (offer more)" % bal
+		_balance_lbl.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3))
+		_trade_btn.disabled = true
+	else:
+		var npc_coins := _get_npc_coins()
+		var will_pay  := mini(-bal, npc_coins)
+		if bal == 0:
+			_balance_lbl.text = "Balance: 0 coins"
+		elif will_pay < -bal:
+			_balance_lbl.text = "Balance: %d coins  (NPC pays %d, %d forfeit)" \
+					% [bal, will_pay, -bal - will_pay]
+		else:
+			_balance_lbl.text = "Balance: %d coins  (NPC pays %d)" % [bal, will_pay]
+		_balance_lbl.add_theme_color_override("font_color", Color(0.3, 0.9, 0.3))
+		_trade_btn.disabled = false
+
+
+func _compute_balance() -> int:
+	return _array_value(_shop_orig) - _array_value(_shop_work)
+
+
+func _array_value(arr: Array) -> int:
+	var total := 0
+	for slot in arr:
+		total += PickableItemDef.get_coin_value(int(slot["type"])) * int(slot["count"])
+	return total
+
+
+func _get_npc_coins() -> int:
+	for slot in _shop_work:
+		if int(slot["type"]) == MapObject.Type.COIN:
+			return int(slot["count"])
+	return 0
+
+
+static func _deep_copy_items(arr: Array) -> Array:
+	var copy: Array = []
+	for slot in arr:
+		copy.append({"type": int(slot["type"]), "count": int(slot["count"])})
+	return copy
+
+
+func _compact_items(arr: Array) -> void:
+	var i := 0
+	while i < arr.size():
+		var obj_type: int = int(arr[i]["type"])
+		var max_st   := PickableItemDef.max_stack_size(obj_type)
+		if max_st > 1:
+			var j := i + 1
+			while j < arr.size() and int(arr[i]["count"]) < max_st:
+				if int(arr[j]["type"]) == obj_type:
+					var space: int = max_st - int(arr[i]["count"])
+					var take:  int = mini(int(arr[j]["count"]), space)
+					arr[i]["count"] = int(arr[i]["count"]) + take
+					arr[j]["count"] = int(arr[j]["count"]) - take
+					if int(arr[j]["count"]) <= 0:
+						arr.remove_at(j)
+					else:
+						j += 1
+				else:
+					j += 1
+		i += 1
+
+
+func _pay_npc_coins_to_player(amount: int) -> void:
+	for i in range(_shop_work.size()):
+		if int(_shop_work[i]["type"]) != MapObject.Type.COIN:
+			continue
+		var available: int = int(_shop_work[i]["count"])
+		var take           := mini(amount, available)
+		_shop_work[i]["count"] = available - take
+		if int(_shop_work[i]["count"]) <= 0:
+			_shop_work.remove_at(i)
+		_add_coins_to_player(take)
+		return
+
+
+func _add_coins_to_player(amount: int) -> void:
+	var remaining := amount
+	var max_st    := PickableItemDef.max_stack_size(MapObject.Type.COIN)
+	for i in range(_player_work.size()):
+		if remaining <= 0:
+			break
+		if int(_player_work[i]["type"]) == MapObject.Type.COIN:
+			var space := max_st - int(_player_work[i]["count"])
+			var add   := mini(remaining, space)
+			_player_work[i]["count"] = int(_player_work[i]["count"]) + add
+			remaining -= add
+	while remaining > 0 and _player_work.size() < Inventory.MAX_ITEMS:
+		var add := mini(remaining, max_st)
+		_player_work.append({"type": MapObject.Type.COIN, "count": add})
+		remaining -= add
