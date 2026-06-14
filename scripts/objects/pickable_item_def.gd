@@ -331,9 +331,7 @@ static func get_texture(obj_type: int) -> Texture2D:
 ## Coin value for one unit of this item type.  Used by ShopUI for balance calc.
 static func get_coin_value(obj_type: int) -> int:
 	match obj_type:
-		MapObject.Type.COIN:
-			return 1
-		MapObject.Type.STONE, MapObject.Type.GRANITE, MapObject.Type.FEATHER:
+		MapObject.Type.COIN, MapObject.Type.STONE, MapObject.Type.GRANITE, MapObject.Type.FEATHER:
 			return 1
 		MapObject.Type.NAILS,        MapObject.Type.WOOD_PLANK,   \
 		MapObject.Type.WOODEN_ROD,   MapObject.Type.CLOTH,        \
