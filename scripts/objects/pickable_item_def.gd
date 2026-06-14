@@ -6,7 +6,7 @@ class_name PickableItemDef
 ## Maximum items per inventory stack. 1 = non-stackable (default).
 static func max_stack_size(obj_type: int) -> int:
 	match obj_type:
-		MapObject.Type.COIN: return 100
+		MapObject.Type.COIN: return 1000
 
 		# Stack 64 — raw materials, ores, seeds, fibers, bulk solids.
 		MapObject.Type.NAILS,         MapObject.Type.WOOD_PLANK,  \
