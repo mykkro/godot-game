@@ -20,6 +20,7 @@ var _chest_loot_ui: ChestLootUI     = null
 var _forge_ui:      ForgeUI         = null
 var _shop_ui:       ShopUI          = null
 var _clock_ui:      ClockUI         = null
+var _day_night:     DayNightCycle   = null
 
 
 func _ready() -> void:
@@ -46,6 +47,9 @@ func _ready() -> void:
 
 	_clock_ui = ClockUI.new()
 	add_child(_clock_ui)
+
+	_day_night = DayNightCycle.new()
+	add_child(_day_night)
 
 	AudioManager.apply_saved_settings()
 	_start_music()

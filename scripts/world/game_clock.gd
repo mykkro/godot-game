@@ -35,6 +35,7 @@ func get_game_time() -> float:
 func load_time(s: float) -> void:
 	_game_time   = s
 	_last_minute = int(_game_time / 60)
+	time_changed.emit()
 
 
 func get_date_time() -> Dictionary:
