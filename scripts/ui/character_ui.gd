@@ -217,18 +217,18 @@ func _build_avatar_column() -> VBoxContainer:
 	col.custom_minimum_size = Vector2(170, 0)
 
 	var svc := SubViewportContainer.new()
-	svc.custom_minimum_size = Vector2(160, 190)
+	svc.custom_minimum_size = Vector2(160, 230)
 	svc.stretch = true
 	col.add_child(svc)
 
 	var sv := SubViewport.new()
-	sv.size           = Vector2i(160, 190)
+	sv.size           = Vector2i(160, 230)
 	sv.transparent_bg = true
 	sv.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	svc.add_child(sv)
 
 	_knight = KnightSprite.new()
-	_knight.position = Vector2(80, 115)
+	_knight.position = Vector2(80, 155)
 	_knight.scale    = Vector2(2.8, 2.8)
 	sv.add_child(_knight)
 
