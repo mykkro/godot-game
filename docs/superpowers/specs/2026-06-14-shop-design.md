@@ -3,7 +3,7 @@
 
 ## Overview
 
-Every melee NPC (`NpcMelee`) gains a **Shop** dialog option. Clicking it opens a two-panel barter window where the player can exchange items (or coins) for goods from the NPC's random stock. The trade is finalised only when the player's offer covers the value of what they are taking.
+Every melee NPC (`NpcMelee`) gains a **Shop** dialog option. Clicking it opens a two-panel trade window. The player can **buy** NPC goods (drag NPC items to player panel, pay with coins dragged to NPC panel) or **sell** items (drag player items to NPC panel; on Trade the NPC auto-pays from its coin pool). Coins are the only currency — no item-for-item barter. Each NPC starts with 1 000 coins; if the NPC owes more than it holds, the shortfall is forfeit.
 
 ---
 
@@ -42,13 +42,17 @@ Every melee NPC (`NpcMelee`) gains a **Shop** dialog option. Clicking it opens a
 
 **Balance formula:**
 ```
-balance = (orig_shop_value − current_shop_value)
-        − (orig_player_value − current_player_value)
+balance = orig_shop_value − current_shop_value
 ```
-- Positive → player still owes; Trade disabled (button greyed)
-- Zero or negative → player has paid enough; Trade enabled
+Because conservation of value means items only move between the two panels, this equals the net coin-equivalent value the player has taken from the NPC.
 
-**On Trade:** copy `_player_work` back into `avatar.inventory.items`.  
+- Positive → player still owes; Trade disabled
+- Zero or negative → player has paid enough (or NPC owes player); Trade enabled
+
+**On Trade:**
+1. If `balance < 0`: NPC auto-pays `min(|balance|, npc_coin_pool)` coins to player (fills existing coin slots first, then creates new ones up to `Inventory.MAX_ITEMS`). Any unpayable remainder is forfeit.
+2. Copy `_player_work` back into `avatar.inventory.items`.
+
 **On Reset:** copy `_player_orig` → `_player_work`, `_shop_orig` → `_shop_work`, refresh UI.  
 **On ESC / close without Trade:** discard working arrays, real inventory unchanged.
 
@@ -70,20 +74,22 @@ Dark semi-transparent overlay. Centered `HBoxContainer` containing two equal pan
 ```
 
 - **Both grids:** 5 columns × 4 rows = 20 slots, 52 px slot size, 4 px padding — identical widget to `ChestLootUI._make_slot()`
-- **Balance label:** red when `balance > 0`, green when `≤ 0`
+- **Balance label:** red when `balance > 0` ("offer more"); green when `≤ 0`. When NPC owes coins on trade, shows "NPC pays X" and optionally "Y forfeit" if the NPC's coin pool is insufficient.
 - **Trade button:** disabled when `balance > 0`; clicking finalises exchange and closes
 - **Reset button:** always enabled; restores both panels to their state at open
 - **ESC:** closes without trading (same pattern as all other UIs)
 - **Sort button** on player panel only — sort + compact player working array
 
-### Drag-and-drop tags
+### Drag-and-drop rules
+
+Any item may be dragged in either direction. Coins dragged from player → NPC merge into the NPC's single coin pile (no stack cap on NPC side). When player drags their items to NPC panel, that represents items offered for sale; on Trade the NPC pays for them automatically in coins.
 
 | Tag key | Direction |
 |---|---|
 | `shop_player_slot` | dragged from player panel |
 | `shop_npc_slot` | dragged from NPC panel |
 
-Dropping a player slot onto an NPC slot (or vice-versa) moves the item between `_player_work` / `_shop_work`, then recomputes balance. Same-type stackable merging applies (identical logic to `ChestLootUI`).
+Same-type stackable merging applies (identical logic to `ChestLootUI`). Dragging NPC coins to player side caps at `max_stack_size` (100) per slot.
 
 ---
 
@@ -93,7 +99,7 @@ Called inside `ShopUI.open()`. Stock is **not** persisted — fresh random roll 
 
 **Seed:** `hash(npc.npc_id)` so the same NPC always rolls the same seed (stable within one session; resets on world reload — acceptable).
 
-**Selection:** pick 3–8 unique types at random from the full list of pickable types, excluding `COIN` and the three non-pickables already excluded by `PickableItemDef.is_pickable` (ROCK, CHEST_SMALL, FORGE).
+**Selection:** pick 3–8 unique types at random from the full list of pickable types, excluding `COIN` and the non-pickables already excluded by `PickableItemDef.is_pickable` (ROCK, CHEST_SMALL, FORGE). After selecting items, always append one COIN entry with count 1 000 — this is the NPC's payment reserve.
 
 The full pickable-type list is built once at startup by iterating `MapObject.Type` values filtered through `PickableItemDef.is_pickable()`, cached as a static Array.
 
