@@ -65,6 +65,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if ke.keycode == KEY_ESCAPE or ke.keycode == KEY_E:
 		close()
 		get_viewport().set_input_as_handled()
+	elif ke.keycode == KEY_A:
+		_on_take_all()
+		get_viewport().set_input_as_handled()
 
 
 # ── UI Construction ────────────────────────────────────────────────────────────
