@@ -64,10 +64,11 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 	if not _melee_spawned.has(coord) and randf() < MELEE_SPAWN_CHANCE:
 		var spawn := _find_spawn_pos(coord)
 		if is_finite(spawn.x):
-			var npc      := NpcMelee.new()
-			npc.npc_id    = "melee_%03d" % _next_melee_id
-			_next_melee_id += 1
-			npc.position  = spawn
+			var npc        := NpcMelee.new()
+			npc.npc_id      = "melee_%03d" % _next_melee_id
+			_next_melee_id  += 1
+			npc.position    = spawn
+			npc.birth_time  = GameClock.get_game_time()
 			_world.add_child(npc)
 			if randf() < QUEST_GIVER_CHANCE:
 				npc.make_quest_giver(NpcMelee.NAMES[randi() % NpcMelee.NAMES.size()])

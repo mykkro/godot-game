@@ -24,6 +24,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 TileRegistry="*res://scripts/editor/tile_registry.gd"
+GameClock="*res://scripts/world/game_clock.gd"
 
 [display]
 

@@ -19,6 +19,7 @@ var _npc_dialog:    NpcDialog       = null
 var _chest_loot_ui: ChestLootUI     = null
 var _forge_ui:      ForgeUI         = null
 var _shop_ui:       ShopUI          = null
+var _clock_ui:      ClockUI         = null
 
 
 func _ready() -> void:
@@ -42,6 +43,9 @@ func _ready() -> void:
 
 	_shop_ui = ShopUI.new()
 	add_child(_shop_ui)
+
+	_clock_ui = ClockUI.new()
+	add_child(_clock_ui)
 
 	AudioManager.apply_saved_settings()
 	_start_music()
@@ -101,6 +105,7 @@ func _ready() -> void:
 	_npc_manager.load_and_spawn()
 	_npc_dialog.set_visited_data(SaveManager.load_dialog_visited())
 	ShopUI.set_shop_states(SaveManager.load_shop_states())
+	GameClock.load_time(SaveManager.load_clock())
 
 
 func _input(event: InputEvent) -> void:
