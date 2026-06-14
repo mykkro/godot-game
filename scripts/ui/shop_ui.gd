@@ -278,6 +278,7 @@ func _on_trade_pressed() -> void:
 		return
 	if bal < 0:
 		_pay_npc_coins_to_player(-bal)
+	assert(_player_work.size() <= Inventory.MAX_ITEMS, "shop produced oversized player_work")
 	_inventory.items = _player_work
 	close()
 
@@ -469,6 +470,9 @@ func _compact_items(arr: Array) -> void:
 				else:
 					j += 1
 		i += 1
+	for k in range(arr.size() - 1, -1, -1):
+		if int(arr[k]["count"]) <= 0:
+			arr.remove_at(k)
 
 
 func _pay_npc_coins_to_player(amount: int) -> void:
@@ -477,10 +481,10 @@ func _pay_npc_coins_to_player(amount: int) -> void:
 			continue
 		var available: int = int(_shop_work[i]["count"])
 		var take           := mini(amount, available)
+		_add_coins_to_player(take)
 		_shop_work[i]["count"] = available - take
 		if int(_shop_work[i]["count"]) <= 0:
 			_shop_work.remove_at(i)
-		_add_coins_to_player(take)
 		return
 
 
