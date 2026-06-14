@@ -54,9 +54,21 @@ func _build_ui() -> void:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
 
+	var win_style := StyleBoxFlat.new()
+	win_style.bg_color = Color(0.06, 0.06, 0.10, 0.95)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		win_style.set_border_width(side, 1)
+	win_style.border_color = Color(0.35, 0.35, 0.45, 0.8)
+	for c in range(4):
+		win_style.set_corner_radius(c, 8)
+	win_style.set_content_margin_all(14)
+	var window_panel := PanelContainer.new()
+	window_panel.add_theme_stylebox_override("panel", win_style)
+	center.add_child(window_panel)
+
 	var outer_vbox := VBoxContainer.new()
 	outer_vbox.add_theme_constant_override("separation", 10)
-	center.add_child(outer_vbox)
+	window_panel.add_child(outer_vbox)
 
 	var panels_hbox := HBoxContainer.new()
 	panels_hbox.add_theme_constant_override("separation", 18)
@@ -425,7 +437,12 @@ func _generate_shop_items(rng: RandomNumberGenerator) -> Array:
 			100: quantity = rng.randi_range(5, 50)
 			_:   quantity = 1
 		result.append({"type": item_type, "count": quantity})
-	result.append({"type": MapObject.Type.COIN, "count": NPC_COIN_POOL})
+	var coin_max   := PickableItemDef.max_stack_size(MapObject.Type.COIN)
+	var coins_left := NPC_COIN_POOL
+	while coins_left > 0:
+		var stack := mini(coins_left, coin_max)
+		result.append({"type": MapObject.Type.COIN, "count": stack})
+		coins_left -= stack
 	return result
 
 
@@ -513,10 +530,11 @@ func _array_value(arr: Array) -> int:
 
 
 func _get_npc_coins() -> int:
+	var total := 0
 	for slot in _shop_work:
 		if int(slot["type"]) == MapObject.Type.COIN:
-			return int(slot["count"])
-	return 0
+			total += int(slot["count"])
+	return total
 
 
 static func _deep_copy_items(arr: Array) -> Array:
@@ -552,16 +570,21 @@ func _compact_items(arr: Array) -> void:
 
 
 func _pay_npc_coins_to_player(amount: int) -> void:
-	for i in range(_shop_work.size()):
-		if int(_shop_work[i]["type"]) != MapObject.Type.COIN:
-			continue
-		var available: int = int(_shop_work[i]["count"])
-		var take           := mini(amount, available)
-		_add_coins_to_player(take)
-		_shop_work[i]["count"] = available - take
-		if int(_shop_work[i]["count"]) <= 0:
-			_shop_work.remove_at(i)
-		return
+	var remaining := amount
+	var i := 0
+	while i < _shop_work.size() and remaining > 0:
+		if int(_shop_work[i]["type"]) == MapObject.Type.COIN:
+			var available: int = int(_shop_work[i]["count"])
+			var take           := mini(remaining, available)
+			_add_coins_to_player(take)
+			_shop_work[i]["count"] = available - take
+			remaining -= take
+			if int(_shop_work[i]["count"]) <= 0:
+				_shop_work.remove_at(i)
+			else:
+				i += 1
+		else:
+			i += 1
 
 
 func _add_coins_to_player(amount: int) -> void:
@@ -616,14 +639,21 @@ func _move_player_to_npc(player_idx: int, npc_idx: int) -> void:
 	var src_count: int = int(_player_work[player_idx]["count"])
 
 	if src_type == MapObject.Type.COIN:
+		var coin_max  := PickableItemDef.max_stack_size(MapObject.Type.COIN)
+		var remaining := src_count
 		for i in range(_shop_work.size()):
+			if remaining <= 0:
+				break
 			if int(_shop_work[i]["type"]) == MapObject.Type.COIN:
-				_shop_work[i]["count"] = int(_shop_work[i]["count"]) + src_count
-				_player_work.remove_at(player_idx)
-				return
-		if _shop_work.size() < NPC_PANEL_MAX:
-			_shop_work.append({"type": MapObject.Type.COIN, "count": src_count})
-			_player_work.remove_at(player_idx)
+				var space := coin_max - int(_shop_work[i]["count"])
+				var add   := mini(remaining, space)
+				_shop_work[i]["count"] = int(_shop_work[i]["count"]) + add
+				remaining -= add
+		while remaining > 0 and _shop_work.size() < NPC_PANEL_MAX:
+			var stack := mini(remaining, coin_max)
+			_shop_work.append({"type": MapObject.Type.COIN, "count": stack})
+			remaining -= stack
+		_player_work.remove_at(player_idx)
 		return
 
 	if npc_idx < _shop_work.size():
