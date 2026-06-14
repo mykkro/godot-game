@@ -326,3 +326,122 @@ static func get_texture(obj_type: int) -> Texture2D:
 	if coord.x >= 0:
 		return TextureCache.get_material_texture(coord.x, coord.y)
 	return TextureCache.get_object_texture(get_sprite(obj_type))
+
+
+## Coin value for one unit of this item type.  Used by ShopUI for balance calc.
+static func get_coin_value(obj_type: int) -> int:
+	match obj_type:
+		MapObject.Type.COIN:
+			return 1
+		MapObject.Type.STONE, MapObject.Type.GRANITE, MapObject.Type.FEATHER:
+			return 1
+		MapObject.Type.NAILS,        MapObject.Type.WOOD_PLANK,   \
+		MapObject.Type.WOODEN_ROD,   MapObject.Type.CLOTH,        \
+		MapObject.Type.COAL_ORE,     MapObject.Type.FLAX_SEEDS,   \
+		MapObject.Type.OAT_SEEDS,    MapObject.Type.ROSE_SEEDS,   \
+		MapObject.Type.WHEAT_SEEDS:
+			return 3
+		MapObject.Type.CEDAR_LOG,    MapObject.Type.RED_PINE_LOG,  \
+		MapObject.Type.WILLOW_LOG,   MapObject.Type.LEATHER,       \
+		MapObject.Type.FLAX,         MapObject.Type.SEA_GRAPES,    \
+		MapObject.Type.SEASHELL,     MapObject.Type.APPLE,         \
+		MapObject.Type.BERRY,        MapObject.Type.BLUEBERRY,     \
+		MapObject.Type.BLACKBERRY,   MapObject.Type.BANANA,        \
+		MapObject.Type.ORANGE,       MapObject.Type.PEAR,          \
+		MapObject.Type.COCONUT,      MapObject.Type.BLACK_OLIVE,   \
+		MapObject.Type.WHEAT,        MapObject.Type.OATS:
+			return 4
+		MapObject.Type.DRAGONTAIL_LOG, MapObject.Type.ROSE,         \
+		MapObject.Type.SARGASSUM,    MapObject.Type.CARRAGEEN_MOSS, \
+		MapObject.Type.JUICE,        MapObject.Type.TORCH:
+			return 5
+		MapObject.Type.COPPER_ORE,   MapObject.Type.GLASS,         \
+		MapObject.Type.BREAD_ROLL,   MapObject.Type.SHRIMP:
+			return 6
+		MapObject.Type.IRON_ORE,     MapObject.Type.CASSITERITE,   \
+		MapObject.Type.CHROMITE,     MapObject.Type.CINNABAR,      \
+		MapObject.Type.GALENA,       MapObject.Type.MOLYBDENITE,   \
+		MapObject.Type.QUARTZITE,    MapObject.Type.LODESTONE,     \
+		MapObject.Type.MELANTERITE,  MapObject.Type.CHARACTITE,    \
+		MapObject.Type.MUSHROOM,     MapObject.Type.FRITILLARIA:
+			return 8
+		MapObject.Type.COPPER_DISK,  MapObject.Type.COPPER_WIRE,   \
+		MapObject.Type.HEARTROOT,    MapObject.Type.MAP_PIN,       \
+		MapObject.Type.FLAX_STRING,  MapObject.Type.FLAX_LEASH,   \
+		MapObject.Type.BADGE:
+			return 10
+		MapObject.Type.COPPER_BAR,   MapObject.Type.GLASS_FIBER,   \
+		MapObject.Type.MINIUM,       MapObject.Type.NITER,         \
+		MapObject.Type.SARGASSUM_POWDER, MapObject.Type.OATMEAL_BREAD:
+			return 12
+		MapObject.Type.MERCURY,      MapObject.Type.SPIDER_PLASTIC, \
+		MapObject.Type.CHARACTER_POWDER,                            \
+		MapObject.Type.FRITILLARIA_POWDER, MapObject.Type.ROSE_POWDER, \
+		MapObject.Type.VIAL_SLUG_GEL, MapObject.Type.VIAL_LEAD_DIOXIDE, \
+		MapObject.Type.VIAL_MERCURY, MapObject.Type.LEAD_BAR,      \
+		MapObject.Type.SMOOTHIE,     MapObject.Type.UPGRADED_FLAX_LEASH, \
+		MapObject.Type.RECYCLING_STAMP:
+			return 15
+		MapObject.Type.IRON_BAR,     MapObject.Type.VIAL_NITRIC_ACID, \
+		MapObject.Type.VIAL_SULPHURIC_ACID:
+			return 18
+		MapObject.Type.SILVER_NUGGET, MapObject.Type.GLASS_VIAL,   \
+		MapObject.Type.CALENDAR,     MapObject.Type.BRONZE_BUCKET, \
+		MapObject.Type.SOUP,         MapObject.Type.SIGN,          \
+		MapObject.Type.WEAK_STUDYING_DRINK, MapObject.Type.ELEMENTAL_JAR, \
+		MapObject.Type.CAMPFIRE,     MapObject.Type.HERB,          \
+		MapObject.Type.STONE_AXE,    MapObject.Type.STONE_PICK,    \
+		MapObject.Type.WOODEN_HOE:
+			return 20
+		MapObject.Type.STEW,         MapObject.Type.TRUFFLE,       \
+		MapObject.Type.CRYSTAL,      MapObject.Type.LINEN_SHOES,   \
+		MapObject.Type.THERMOMETER,  MapObject.Type.RECIPE,        \
+		MapObject.Type.SMOKE_SIGNAL, MapObject.Type.TICKET,        \
+		MapObject.Type.CLAY_POT,     MapObject.Type.TIN_CAGE:
+			return 25
+		MapObject.Type.GOLD_NUGGET,  MapObject.Type.CHARACTER,     \
+		MapObject.Type.BRONZE_AXE,   MapObject.Type.BRONZE_PICK,   \
+		MapObject.Type.BRONZE_HOE,   MapObject.Type.BRONZE_SICKLE, \
+		MapObject.Type.BRONZE_SPADE, MapObject.Type.COPPER_SICKLE, \
+		MapObject.Type.BOOK,         MapObject.Type.FISHING_ROD,   \
+		MapObject.Type.ALMANAC,      MapObject.Type.LINEN_BACKPACK, \
+		MapObject.Type.SMALL_WILLOW_CHEST, MapObject.Type.POT,     \
+		MapObject.Type.POTION:
+			return 30
+		MapObject.Type.SILVER_BAR,   MapObject.Type.BIOME_MAP,     \
+		MapObject.Type.COPPER_RETORT, MapObject.Type.BRONZE_BUCKET_CLAY, \
+		MapObject.Type.BRONZE_BUCKET_SAND:
+			return 35
+		MapObject.Type.FISHING_NET,  MapObject.Type.TINY_BACKPACK, \
+		MapObject.Type.SKIS,         MapObject.Type.SAFETY_MAP,    \
+		MapObject.Type.GLASS_RETORT, MapObject.Type.AUTOFEEDER,    \
+		MapObject.Type.BINOCULARS,   MapObject.Type.ELEMENTAL_JAR_SAP:
+			return 40
+		MapObject.Type.SHOCK_STEEL_BAR, MapObject.Type.FERROCHROME, \
+		MapObject.Type.MAP_DISPLAY:
+			return 45
+		MapObject.Type.GOLD_BAR,     MapObject.Type.GEM,           \
+		MapObject.Type.DRAGONSCALE,  MapObject.Type.IRON_HOE,      \
+		MapObject.Type.IRON_SICKLE,  MapObject.Type.IRON_AXE,      \
+		MapObject.Type.IRON_PICK,    MapObject.Type.IRON_HAMMER,   \
+		MapObject.Type.SADDLE,       MapObject.Type.WILLOW_CHEST:
+			return 50
+		MapObject.Type.FLASHLIGHT,   MapObject.Type.WATCH,         \
+		MapObject.Type.HAMSTER_WHEEL, MapObject.Type.CHARGING_PAD, \
+		MapObject.Type.LEAD_ACID_BATTERY:
+			return 60
+		MapObject.Type.STEEL_PICK,   MapObject.Type.ANVIL:
+			return 70
+		MapObject.Type.RAFT,         MapObject.Type.ELEMENTAL_JAR_LAVA, \
+		MapObject.Type.ELEMENTAL_JAR_WATER:
+			return 80
+		MapObject.Type.HAMSTER_WHEEL_GENERATOR:
+			return 90
+		MapObject.Type.CEDAR_BOAT,   MapObject.Type.HOMOPOLAR_GENERATOR, \
+		MapObject.Type.BLACKHOLE_BACKPACK:
+			return 100
+		MapObject.Type.DRAGONTAIL_BOAT:
+			return 150
+		MapObject.Type.JETPACK:
+			return 200
+	return 10
