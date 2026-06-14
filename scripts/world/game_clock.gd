@@ -16,12 +16,13 @@ const MONTH_NAMES: Array[String] = [
 
 signal time_changed
 
+var time_scale:   float = 1.0   # multiplier — set via console /timescale
 var _game_time:   float = DEFAULT_START_TIME
 var _last_minute: int   = -1
 
 
 func _process(delta: float) -> void:
-	_game_time += delta * SECS_PER_REAL_SEC
+	_game_time += delta * SECS_PER_REAL_SEC * time_scale
 	var current_minute := int(_game_time / 60)
 	if current_minute != _last_minute:
 		_last_minute = current_minute

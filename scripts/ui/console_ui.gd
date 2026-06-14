@@ -11,12 +11,18 @@ var _history:     Array[String] = []
 var _history_idx: int           = -1
 var _input_saved: String        = ""
 
+var _avatar: Avatar = null
+
 
 func _ready() -> void:
 	layer        = 90
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible      = false
 	_build_ui()
+
+
+func setup(avatar: Avatar) -> void:
+	_avatar = avatar
 
 
 func _build_ui() -> void:
@@ -62,14 +68,16 @@ func _build_ui() -> void:
 	_input = LineEdit.new()
 	_input.placeholder_text = "Enter command…  (/help for list)"
 	_input.add_theme_font_size_override("font_size", 14)
-	_input.add_theme_color_override("font_color",                Color(1.0, 1.0, 0.9))
-	_input.add_theme_color_override("font_placeholder_color",    Color(0.5, 0.5, 0.45))
-	_input.add_theme_color_override("caret_color",               Color(1.0, 1.0, 0.8))
+	_input.add_theme_color_override("font_color",             Color(1.0, 1.0, 0.9))
+	_input.add_theme_color_override("font_placeholder_color", Color(0.5, 0.5, 0.45))
+	_input.add_theme_color_override("caret_color",            Color(1.0, 1.0, 0.8))
 	_input.process_mode = Node.PROCESS_MODE_ALWAYS
 	_input.text_submitted.connect(_on_submitted)
 	_input.gui_input.connect(_on_input_key)
 	vbox.add_child(_input)
 
+
+# ── Input handling ────────────────────────────────────────────────────────────
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
@@ -77,13 +85,22 @@ func _unhandled_input(event: InputEvent) -> void:
 	var ke := event as InputEventKey
 	if not ke.pressed or ke.echo:
 		return
+
 	if ke.keycode == KEY_QUOTELEFT:
 		visible = not visible
 		if visible:
 			_input.grab_focus()
+			get_tree().paused = true
+		else:
+			get_tree().paused = false
 		get_viewport().set_input_as_handled()
-	elif ke.keycode == KEY_ESCAPE and visible:
-		visible = false
+		return
+
+	# Console open — swallow everything so the game never sees it.
+	if visible:
+		if ke.keycode == KEY_ESCAPE:
+			visible           = false
+			get_tree().paused = false
 		get_viewport().set_input_as_handled()
 
 
@@ -110,22 +127,22 @@ func _on_input_key(event: InputEvent) -> void:
 		if _history.is_empty():
 			return
 		if _history_idx == -1:
-			_input_saved  = _input.text
-			_history_idx  = _history.size() - 1
+			_input_saved = _input.text
+			_history_idx = _history.size() - 1
 		elif _history_idx > 0:
 			_history_idx -= 1
-		_input.text          = _history[_history_idx]
-		_input.caret_column  = _input.text.length()
+		_input.text         = _history[_history_idx]
+		_input.caret_column = _input.text.length()
 		_input.accept_event()
 	elif ke.keycode == KEY_DOWN:
 		if _history_idx == -1:
 			return
 		_history_idx += 1
 		if _history_idx >= _history.size():
-			_history_idx        = -1
-			_input.text         = _input_saved
+			_history_idx = -1
+			_input.text  = _input_saved
 		else:
-			_input.text         = _history[_history_idx]
+			_input.text  = _history[_history_idx]
 		_input.caret_column = _input.text.length()
 		_input.accept_event()
 
@@ -140,15 +157,153 @@ func _execute(text: String) -> void:
 	if parts.is_empty():
 		return
 	match parts[0].to_lower():
-		"set_date": _cmd_set_date(parts)
-		"set_time": _cmd_set_time(parts)
-		"help":     _cmd_help()
-		var unknown: _print_line("Unknown command: /" + unknown)
+		"set_date":   _cmd_set_date(parts)
+		"set_time":   _cmd_set_time(parts)
+		"give":       _cmd_give(parts)
+		"coins":      _cmd_coins(parts)
+		"items":      _cmd_items(parts)
+		"pos":        _cmd_pos()
+		"tp":         _cmd_tp(parts)
+		"day":        _cmd_day()
+		"night":      _cmd_night()
+		"timescale":  _cmd_timescale(parts)
+		"clear_inv":  _cmd_clear_inv()
+		"help":       _cmd_help()
+		var unknown:  _print_line("Unknown: /" + unknown + "  (try /help)")
 
+
+# ── Command implementations ───────────────────────────────────────────────────
 
 func _cmd_help() -> void:
-	_print_line("/set_date MM/DD    — set month and day (month 1-12, day 1-30)")
-	_print_line("/set_time HH:MM    — set time of day in 24-hour format")
+	_print_line("/give <name> [n]   give item(s) — use /items to browse names")
+	_print_line("/coins <n>         add n coins")
+	_print_line("/items [filter]    list item names")
+	_print_line("/pos               show player position")
+	_print_line("/tp <x> <y>        teleport player")
+	_print_line("/day  /night       jump to 8 AM / 10 PM")
+	_print_line("/set_date MM/DD    set date")
+	_print_line("/set_time HH:MM    set time (24 h)")
+	_print_line("/timescale <n>     game clock speed (1=normal, 0=stop)")
+	_print_line("/clear_inv         wipe player inventory")
+
+
+func _cmd_give(parts: Array) -> void:
+	if parts.size() < 2:
+		_print_line("Usage: /give <name_fragment> [count]")
+		return
+	var query   := (parts[1] as String).to_lower()
+	var count   := int(parts[2]) if parts.size() >= 3 else 1
+	count = maxi(1, count)
+
+	var matches: Array[int] = []
+	for key in MapObject.Type:
+		var val: int = MapObject.Type[key]
+		if not PickableItemDef.is_pickable(val):
+			continue
+		if MapObject.get_display_name(val).to_lower().contains(query):
+			matches.append(val)
+
+	if matches.is_empty():
+		_print_line("No pickable item matches '%s'" % query)
+		return
+	if matches.size() > 1:
+		_print_line("%d matches — be more specific:" % matches.size())
+		for i in range(mini(5, matches.size())):
+			_print_line("  %s" % MapObject.get_display_name(matches[i]))
+		if matches.size() > 5:
+			_print_line("  … and %d more" % (matches.size() - 5))
+		return
+
+	if _avatar == null:
+		_print_line("No avatar reference — call setup() first")
+		return
+	var item_type := matches[0]
+	var added     := 0
+	for _i in range(count):
+		if not _avatar.inventory.add(item_type):
+			break
+		added += 1
+	_print_line("Gave %d× %s" % [added, MapObject.get_display_name(item_type)])
+
+
+func _cmd_coins(parts: Array) -> void:
+	if parts.size() < 2:
+		_print_line("Usage: /coins <amount>")
+		return
+	var amount := maxi(1, int(parts[1] as String))
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var added := 0
+	for _i in range(amount):
+		if not _avatar.inventory.add(MapObject.Type.COIN):
+			break
+		added += 1
+	_print_line("Added %d coin(s)" % added)
+
+
+func _cmd_items(parts: Array) -> void:
+	var filter := (parts[1] as String).to_lower() if parts.size() > 1 else ""
+	var results: Array[String] = []
+	for key in MapObject.Type:
+		var val: int = MapObject.Type[key]
+		if not PickableItemDef.is_pickable(val):
+			continue
+		var name := MapObject.get_display_name(val)
+		if filter.is_empty() or name.to_lower().contains(filter):
+			results.append(name)
+	if results.is_empty():
+		_print_line("No items match '%s'" % filter)
+		return
+	_print_line("%d item(s)%s:" % [results.size(), (" matching '%s'" % filter) if not filter.is_empty() else ""])
+	for i in range(mini(5, results.size())):
+		_print_line("  " + results[i])
+	if results.size() > 5:
+		_print_line("  … and %d more (narrow with /items <filter>)" % (results.size() - 5))
+
+
+func _cmd_pos() -> void:
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var p := _avatar.position
+	_print_line("Position: (%.0f, %.0f)" % [p.x, p.y])
+
+
+func _cmd_tp(parts: Array) -> void:
+	if parts.size() < 3:
+		_print_line("Usage: /tp <x> <y>")
+		return
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var x := float(parts[1] as String)
+	var y := float(parts[2] as String)
+	_avatar.position = Vector2(x, y)
+	_print_line("Teleported to (%.0f, %.0f)" % [x, y])
+
+
+func _cmd_day() -> void:
+	var dt    := GameClock.get_date_time()
+	var new_s := GameClock.to_seconds(dt["year"], dt["month_idx"], dt["day"], 8, 0)
+	GameClock.load_time(new_s)
+	_print_line("Time → 8:00 AM")
+
+
+func _cmd_night() -> void:
+	var dt    := GameClock.get_date_time()
+	var new_s := GameClock.to_seconds(dt["year"], dt["month_idx"], dt["day"], 22, 0)
+	GameClock.load_time(new_s)
+	_print_line("Time → 10:00 PM")
+
+
+func _cmd_timescale(parts: Array) -> void:
+	if parts.size() < 2:
+		_print_line("Current timescale: %.2f  (1 = normal)" % GameClock.time_scale)
+		return
+	var scale := float(parts[1] as String)
+	GameClock.time_scale = maxf(0.0, scale)
+	_print_line("Time scale → %.2f×" % GameClock.time_scale)
 
 
 func _cmd_set_date(parts: Array) -> void:
@@ -164,9 +319,9 @@ func _cmd_set_date(parts: Array) -> void:
 	if month < 1 or month > 12 or day < 1 or day > 30:
 		_print_line("Invalid: month 1–12, day 1–30")
 		return
-	var dt      := GameClock.get_date_time()
-	var hour24  := _hour24(dt["hour12"], dt["am_pm"])
-	var new_s   := GameClock.to_seconds(dt["year"], month - 1, day, hour24, dt["minute"])
+	var dt    := GameClock.get_date_time()
+	var new_s := GameClock.to_seconds(dt["year"], month - 1, day,
+				_hour24(dt["hour12"], dt["am_pm"]), dt["minute"])
 	GameClock.load_time(new_s)
 	_print_line("Date → %d %s, Year %d" % [day, GameClock.MONTH_NAMES[month - 1], dt["year"]])
 
@@ -188,6 +343,15 @@ func _cmd_set_time(parts: Array) -> void:
 	var new_s := GameClock.to_seconds(dt["year"], dt["month_idx"], dt["day"], hour, minute)
 	GameClock.load_time(new_s)
 	_print_line("Time → %02d:%02d" % [hour, minute])
+
+
+func _cmd_clear_inv() -> void:
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var n := _avatar.inventory.count()
+	_avatar.inventory.items.clear()
+	_print_line("Cleared %d item(s) from inventory" % n)
 
 
 # ── Output ────────────────────────────────────────────────────────────────────

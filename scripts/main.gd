@@ -55,6 +55,7 @@ func _ready() -> void:
 
 	_console_ui = ConsoleUI.new()
 	add_child(_console_ui)
+	_console_ui.setup(_avatar)
 
 	_wait_ui = WaitUI.new()
 	add_child(_wait_ui)
