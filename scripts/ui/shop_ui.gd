@@ -277,6 +277,8 @@ func _setup_player_slot(slot: PanelContainer, idx: int) -> void:
 		func(_pos: Vector2, data: Variant) -> void:
 			if data.has("shop_player_slot"):
 				var src: int = int(data["shop_player_slot"])
+				if src < 0 or src >= _player_work.size():
+					return
 				if src < _player_work.size() and idx < _player_work.size():
 					var src_type := int(_player_work[src]["type"])
 					if src_type == int(_player_work[idx]["type"]):
@@ -317,6 +319,8 @@ func _setup_npc_slot(slot: PanelContainer, idx: int) -> void:
 		func(_pos: Vector2, data: Variant) -> void:
 			if data.has("shop_npc_slot"):
 				var src: int = int(data["shop_npc_slot"])
+				if src < 0 or src >= _shop_work.size():
+					return
 				if src < _shop_work.size() and idx < _shop_work.size():
 					var src_type := int(_shop_work[src]["type"])
 					if src_type == int(_shop_work[idx]["type"]):
@@ -624,6 +628,7 @@ func _move_player_to_npc(player_idx: int, npc_idx: int) -> void:
 
 	if npc_idx < _shop_work.size():
 		var dst_type: int = int(_shop_work[npc_idx]["type"])
+		# NPC panel is virtual — no stack cap enforced for non-coin items.
 		if dst_type == src_type:
 			_shop_work[npc_idx]["count"] = int(_shop_work[npc_idx]["count"]) + src_count
 			_player_work.remove_at(player_idx)
