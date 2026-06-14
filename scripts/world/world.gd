@@ -31,7 +31,7 @@ var _preload_queue: Array = []
 
 
 func _ready() -> void:
-	pass  # Intentionally empty; call start() after connecting signals.
+	y_sort_enabled = true  # depth-sort direct children (NPCs) by Y within each z-group
 
 
 func _process(_delta: float) -> void:
@@ -201,6 +201,7 @@ func _load_or_generate(coord: Vector2i) -> ChunkData:
 func _spawn_node(coord: Vector2i, data: ChunkData) -> void:
 	var node      := ChunkNode.new()
 	node.position  = Vector2(coord.x * CHUNK_PIXEL_SIZE, coord.y * CHUNK_PIXEL_SIZE)
+	node.z_index   = -1  # tiles always below z=0 entities regardless of tree order
 	add_child(node)
 	node.initialize(data)
 	_nodes[coord] = node
