@@ -38,6 +38,8 @@ func load_and_spawn() -> void:
 				var npc := NpcMelee.new()
 				_world.add_child(npc)
 				npc.restore_from_dict(d)
+				if not d.has("perks"):
+					_roll_trader_perk(npc)
 				_bump_counter(npc.npc_id, "melee_", _next_melee_id)
 				# Mark chunk so we don't double-spawn on chunk-load signal.
 				var cc := _chunk_of(npc.position)
@@ -69,11 +71,7 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 			_next_melee_id  += 1
 			npc.position    = spawn
 			npc.birth_time  = GameClock.get_game_time()
-			var tr := randf()
-			if   tr < 0.05: npc.perks.set_level(PerkDef.ID.TRADER, 4)
-			elif tr < 0.15: npc.perks.set_level(PerkDef.ID.TRADER, 3)
-			elif tr < 0.30: npc.perks.set_level(PerkDef.ID.TRADER, 2)
-			elif tr < 0.55: npc.perks.set_level(PerkDef.ID.TRADER, 1)
+			_roll_trader_perk(npc)
 			_world.add_child(npc)
 			if randf() < QUEST_GIVER_CHANCE:
 				npc.make_quest_giver(NpcMelee.NAMES[randi() % NpcMelee.NAMES.size()])
@@ -112,6 +110,14 @@ func _bump_counter(id: String, prefix: String, counter: int) -> void:
 				_next_melee_id = n + 1
 			else:
 				_next_knight_id = n + 1
+
+
+static func _roll_trader_perk(npc: NpcMelee) -> void:
+	var r := randf()
+	if   r < 0.05: npc.perks.set_level(PerkDef.ID.TRADER, 4)
+	elif r < 0.15: npc.perks.set_level(PerkDef.ID.TRADER, 3)
+	elif r < 0.30: npc.perks.set_level(PerkDef.ID.TRADER, 2)
+	elif r < 0.55: npc.perks.set_level(PerkDef.ID.TRADER, 1)
 
 
 static func _chunk_of(world_pos: Vector2) -> Vector2i:
