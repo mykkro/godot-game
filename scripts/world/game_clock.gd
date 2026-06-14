@@ -1,4 +1,3 @@
-class_name GameClock
 extends Node
 
 ## 1 game day = 20 real minutes → 86400 game-sec ÷ 1200 real-sec = 72×
