@@ -160,7 +160,7 @@ static func _format_elapsed(elapsed: float) -> String:
 		return "%d day%s, %dh %dm" % [days, "s" if days != 1 else "", hours, mins]
 	if hours > 0:
 		return "%dh %dm" % [hours, mins]
-	return "%d minute%s" % [maxn(mins, 1), "s" if mins != 1 else ""]
+	return "%d minute%s" % [maxi(mins, 1), "s" if mins != 1 else ""]
 
 
 # ── UI builders ──────────────────────────────────────────────────────────────
