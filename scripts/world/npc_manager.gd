@@ -4,11 +4,14 @@ extends Node
 const SPAWN_CHANCE        := 0.70        # NpcKnight probability per chunk
 const MELEE_SPAWN_CHANCE  := 0.50        # NpcMelee probability per chunk (at most 1)
 const QUEST_GIVER_CHANCE  := 1.0 / 3.0  # Fraction of melee NPCs that are quest givers
+const MONSTER_SPAWN_CHANCE := 0.60       # probability per chunk (at most 1)
 
 var _world:         World      = null
 var _melee_spawned: Dictionary = {}   # Vector2i → true for chunks that have a melee NPC
 var _next_melee_id: int        = 1
 var _next_knight_id: int       = 1
+var _monster_spawned: Dictionary = {}   # Vector2i → true for chunks that have a monster
+var _next_monster_id: int        = 1
 
 
 ## Wire to World BEFORE world.start() so startup chunks are covered.
@@ -25,6 +28,8 @@ func save() -> void:
 			data.append((child as NpcKnight).to_dict())
 		elif child is NpcMelee:
 			data.append((child as NpcMelee).to_dict())
+		elif child is MonsterNode:
+			data.append((child as MonsterNode).to_dict())
 	SaveManager.save_npcs(data)
 
 
@@ -37,6 +42,10 @@ func pre_mark_from_save() -> void:
 			var pos := Vector2(float(d.get("x", 0.0)), float(d.get("y", 0.0)))
 			_melee_spawned[_chunk_of(pos)] = true
 			_bump_counter(str(d.get("npc_id", "")), "melee_", _next_melee_id)
+		elif d.get("type", "") == "monster":
+			var pos := Vector2(float(d.get("x", 0.0)), float(d.get("y", 0.0)))
+			_monster_spawned[_chunk_of(pos)] = true
+			_bump_counter(str(d.get("monster_id", "")), "monster_", _next_monster_id)
 
 
 ## Spawn NPCs from a previously saved snapshot.
@@ -55,6 +64,12 @@ func load_and_spawn() -> void:
 				# Mark chunk so we don't double-spawn on chunk-load signal.
 				var cc := _chunk_of(npc.position)
 				_melee_spawned[cc] = true
+			"monster":
+				var monster := MonsterNode.new()
+				_world.add_child(monster)
+				monster.restore_from_dict(d)
+				_bump_counter(monster.monster_id, "monster_", _next_monster_id)
+				_monster_spawned[_chunk_of(monster.position)] = true
 			_:
 				var npc := NpcKnight.new()
 				_world.add_child(npc)
@@ -88,6 +103,18 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 				npc.make_quest_giver(NpcMelee.NAMES[randi() % NpcMelee.NAMES.size()])
 			_melee_spawned[coord] = true
 
+	# Monster (permanent, at most 1 per chunk).
+	if not _monster_spawned.has(coord) and randf() < MONSTER_SPAWN_CHANCE:
+		var spawn := _find_spawn_pos(coord)
+		if is_finite(spawn.x):
+			var monster          := MonsterNode.new()
+			monster.monster_id    = "monster_%03d" % _next_monster_id
+			_next_monster_id     += 1
+			monster.position      = spawn
+			_world.add_child(monster)
+			monster.initialize()
+			_monster_spawned[coord] = true
+
 
 ## Returns world-space centre of a random passable, empty cell in the chunk,
 ## or Vector2(INF, INF) if none found within 20 attempts.
@@ -119,6 +146,8 @@ func _bump_counter(id: String, prefix: String, counter: int) -> void:
 		if n >= counter:
 			if prefix == "melee_":
 				_next_melee_id = n + 1
+			elif prefix == "monster_":
+				_next_monster_id = n + 1
 			else:
 				_next_knight_id = n + 1
 
