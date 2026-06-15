@@ -136,15 +136,15 @@ func _build_menu(npc: Node2D) -> void:
 	_add_menu_btn("1.  Hello", _on_hello, key)
 
 	if npc is NpcMelee:
-			_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom, key)
-			_add_menu_btn("3.  Shop", _on_shop, key)
-			if (npc as NpcMelee).is_quest_giver:
-				_add_menu_btn("4.  Quest",   _on_quest, key)
-				_add_menu_btn("5.  Goodbye", close,     key)
-			else:
-				_add_menu_btn("4.  Goodbye", close, key)
+		_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom, key)
+		_add_menu_btn("3.  Shop", _on_shop, key)
+		if (npc as NpcMelee).is_quest_giver:
+			_add_menu_btn("4.  Quest",   _on_quest, key)
+			_add_menu_btn("5.  Goodbye", close,     key)
 		else:
-			_add_menu_btn("2.  Goodbye", close, key)
+			_add_menu_btn("4.  Goodbye", close, key)
+	else:
+		_add_menu_btn("2.  Goodbye", close, key)
 
 
 func _show_menu() -> void:
