@@ -4,6 +4,7 @@ const TILES_PATH      := "res://media/rpg-tiles/"
 const OBJECTS_PATH    := "res://media/raven-objects/"
 const ITEMS2_PATH     := "res://media/items2/"
 const RAVENMORE_PATH  := "res://media/ravenmore/"
+const BEINGS_PATH     := "res://media/rpg-beings/"
 
 ## In-memory cache: full path → Texture2D (or null if load failed).
 static var _cache: Dictionary = {}
@@ -46,6 +47,11 @@ static func get_ravenmore_texture(filename: String) -> Texture2D:
 ## Item icon from the Kyrise individual-PNG pack (media/kyrise/).
 static func get_kyrise_texture(filename: String) -> Texture2D:
 	return _load_texture("res://media/kyrise/" + filename)
+
+
+## Monster/creature icon from the rpg-beings individual-PNG library (media/rpg-beings/).
+static func get_being_texture(species: String) -> Texture2D:
+	return _load_texture(BEINGS_PATH + species + ".png")
 
 
 ## One cell from the Flare 5×5 armor atlas (media/flare/flare_armor.png).

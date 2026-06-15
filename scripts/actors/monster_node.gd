@@ -45,15 +45,16 @@ func restore_from_dict(data: Dictionary) -> void:
 	_load_sprite()
 
 
+static var _species_pool: Array[String] = []
+
 func _pick_random_species() -> String:
-	var files := DirAccess.get_files_at("res://media/rpg-beings/")
-	var pngs: Array[String] = []
-	for f in files:
-		if f.get_extension() == "png":
-			pngs.append(f.get_basename())
-	if pngs.is_empty():
+	if _species_pool.is_empty():
+		for f in DirAccess.get_files_at("res://media/rpg-beings/"):
+			if f.get_extension() == "png":
+				_species_pool.append(f.get_basename())
+	if _species_pool.is_empty():
 		return "Unknown"
-	return pngs[randi() % pngs.size()]
+	return _species_pool[randi() % _species_pool.size()]
 
 
 func _load_sprite() -> void:
@@ -62,10 +63,9 @@ func _load_sprite() -> void:
 		_sprite = null
 	if species.is_empty():
 		return
-	var path := "res://media/rpg-beings/%s.png" % species
-	var tex   := load(path) as Texture2D
+	var tex := TextureCache.get_being_texture(species)
 	if tex == null:
-		push_error("MonsterNode: texture not found at %s" % path)
+		push_error("MonsterNode: texture not found for species '%s'" % species)
 		return
 	_sprite         = Sprite2D.new()
 	_sprite.texture = tex
