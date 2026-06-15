@@ -24,7 +24,8 @@ func _ready() -> void:
 
 ## Call after add_child for new (non-restored) monsters to pick a random species.
 func initialize() -> void:
-	species = _pick_random_species()
+	if species.is_empty():
+		species = _pick_random_species()
 	_load_sprite()
 
 

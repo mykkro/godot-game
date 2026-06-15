@@ -103,7 +103,30 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 				npc.make_quest_giver(NpcMelee.NAMES[randi() % NpcMelee.NAMES.size()])
 			_melee_spawned[coord] = true
 
-	# Monster (permanent, at most 1 per chunk).
+	# Editor-placed monsters (from ChunkData.monster_placements).
+	if not _monster_spawned.has(coord):
+		var chunk_data := _world.get_chunk(coord)
+		if chunk_data != null:
+			var ox := coord.x * ChunkData.CHUNK_PIXEL_SIZE
+			var oy := coord.y * ChunkData.CHUNK_PIXEL_SIZE
+			for ly in range(ChunkData.CHUNK_SIZE):
+				for lx in range(ChunkData.CHUNK_SIZE):
+					var species := chunk_data.get_monster_placement(lx, ly)
+					if species.is_empty():
+						continue
+					var monster       := MonsterNode.new()
+					monster.monster_id = "monster_%03d" % _next_monster_id
+					_next_monster_id  += 1
+					monster.species    = species
+					monster.position   = Vector2(
+						ox + (lx + 0.5) * ChunkData.CELL_SIZE,
+						oy + (ly + 0.5) * ChunkData.CELL_SIZE
+					)
+					_world.add_child(monster)
+					monster.initialize()
+					_monster_spawned[coord] = true
+
+	# Random monster fallback (skipped if chunk already has an editor-placed monster).
 	if not _monster_spawned.has(coord) and randf() < MONSTER_SPAWN_CHANCE:
 		var spawn := _find_spawn_pos(coord)
 		if is_finite(spawn.x):
