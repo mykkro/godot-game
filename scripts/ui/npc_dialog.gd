@@ -133,18 +133,22 @@ func _build_menu(npc: Node2D) -> void:
 	if not _visited.has(key):
 		_visited[key] = {}
 
-	_add_menu_btn("1.  Hello", _on_hello, key)
-
-	if npc is NpcMelee:
-		_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom, key)
-		_add_menu_btn("3.  Shop", _on_shop, key)
-		if (npc as NpcMelee).is_quest_giver:
-			_add_menu_btn("4.  Quest", _on_quest, key)
-			_add_menu_btn("5.  Goodbye", close, key)
-		else:
-			_add_menu_btn("4.  Goodbye", close, key)
+	if npc is MonsterNode:
+		_add_menu_btn("F.  Fight",    _on_fight, key)
+		_add_menu_btn("2.  Goodbye", close,     key)
 	else:
-		_add_menu_btn("2.  Goodbye", close, key)
+		_add_menu_btn("1.  Hello", _on_hello, key)
+
+		if npc is NpcMelee:
+			_add_menu_btn("2.  What is thy wisdom, o wise one?", _on_wisdom, key)
+			_add_menu_btn("3.  Shop", _on_shop, key)
+			if (npc as NpcMelee).is_quest_giver:
+				_add_menu_btn("4.  Quest",   _on_quest, key)
+				_add_menu_btn("5.  Goodbye", close,     key)
+			else:
+				_add_menu_btn("4.  Goodbye", close, key)
+		else:
+			_add_menu_btn("2.  Goodbye", close, key)
 
 
 func _show_menu() -> void:
@@ -228,6 +232,10 @@ func _on_hello() -> void:
 		_show_speech(lines_melee[randi() % lines_melee.size()])
 	else:
 		_show_speech(lines_knight[randi() % lines_knight.size()])
+
+
+func _on_fight() -> void:
+	_show_speech("No mood for fighting today.")
 
 
 func _on_wisdom() -> void:
@@ -317,6 +325,8 @@ func _make_speech_btn(label: String) -> Button:
 
 
 static func _npc_label(npc: Node2D) -> String:
+	if npc is MonsterNode:
+		return (npc as MonsterNode).species
 	if npc is NpcKnight:
 		return "Knight"
 	if npc is NpcMelee:
