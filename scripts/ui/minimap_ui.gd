@@ -29,12 +29,16 @@ var _flash_timer:   float = 0.0
 var _flash_visible: bool  = true
 ## {px, py, name} for each dot drawn this refresh — drives hover tooltip.
 var _dot_hits: Array[Dictionary] = []
+## chunk_coord → PackedColorArray[CHUNK_SIZE²] of base terrain colours (no fog).
+## Persists across chunk unloads so the minimap never goes blank on revisited areas.
+var _terrain_cache: Dictionary = {}
 
 
 func setup(world: World, fog_manager: FogManager, avatar: Avatar) -> void:
 	_world       = world
 	_fog_manager = fog_manager
 	_avatar      = avatar
+	world.chunk_loaded.connect(_on_chunk_loaded)
 
 
 func _ready() -> void:
@@ -87,7 +91,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_show = not _show
 		_container.visible = _show
 		if _show:
-			_last_center = Vector2i(-99999, -99999)
+			_last_center           = Vector2i(-99999, -99999)
+			_texture_rect.position = Vector2(BORDER, BORDER)
 			_refresh()
 		get_viewport().set_input_as_handled()
 
@@ -107,7 +112,19 @@ func _process(delta: float) -> void:
 			_flash_visible = not _flash_visible
 			_refresh()
 
-	var center := _world_to_cell(_avatar.position)
+	# Sub-cell smooth scroll: shift the TextureRect by the player's fractional
+	# position within the current cell so the map scrolls continuously instead
+	# of snapping by one cell at a time.
+	var scale  := float(_zoom_half) / float(CELLS / 2)
+	var cs     := float(ChunkData.CELL_SIZE)
+	var pos    := _avatar.global_position
+	var frac_x := fposmod(pos.x / cs, 1.0)
+	var frac_y := fposmod(pos.y / cs, 1.0)
+	var off_x  := frac_x * float(PX_CELL) / scale
+	var off_y  := frac_y * float(PX_CELL) / scale
+	_texture_rect.position = Vector2(float(BORDER) - off_x, float(BORDER) - off_y)
+
+	var center := _world_to_cell(pos)
 	if center != _last_center:
 		_last_center = center
 		_refresh()
@@ -116,7 +133,7 @@ func _process(delta: float) -> void:
 func _refresh() -> void:
 	if _avatar == null or _world == null or _fog_manager == null:
 		return
-	var center := _world_to_cell(_avatar.position)
+	var center := _world_to_cell(_avatar.global_position)
 	var half   := CELLS / 2   # image centre pixel = 64
 	var scale  := float(_zoom_half) / float(half)
 
@@ -137,7 +154,7 @@ func _refresh() -> void:
 		var npc := child as NpcMelee
 		if not npc.is_quest_giver:
 			continue
-		var gc := _world_to_cell(npc.position)
+		var gc := _world_to_cell(npc.global_position)
 		var px := half + int(round(float(gc.x - center.x) / scale))
 		var py := half + int(round(float(gc.y - center.y) / scale))
 		if px < 0 or px >= CELLS or py < 0 or py >= CELLS:
@@ -172,7 +189,7 @@ func _draw_tracked_quest(center: Vector2i, half: int, scale: float) -> void:
 	var found   := false
 	for child in _world.get_children():
 		if child is NpcMelee and (child as NpcMelee).npc_id == tracked.giver_npc_id:
-			npc_pos = (child as NpcMelee).position
+			npc_pos = (child as NpcMelee).global_position
 			found   = true
 			break
 	if not found:
@@ -182,16 +199,16 @@ func _draw_tracked_quest(center: Vector2i, half: int, scale: float) -> void:
 	var px  := half + int(round(float(gc.x - center.x) / scale))
 	var py  := half + int(round(float(gc.y - center.y) / scale))
 
-	# Clamp to minimap border when the NPC is outside the visible area.
-	const MARGIN := 4
-	if px < MARGIN or px >= CELLS - MARGIN or py < MARGIN or py >= CELLS - MARGIN:
-		var dir_x := float(px - half)
-		var dir_y := float(py - half)
-		var t     := 1.0
+	# Clamp to minimap border only when the NPC is truly outside the image.
+	if px < 0 or px >= CELLS or py < 0 or py >= CELLS:
+		const EDGE := 3   # how close to the image edge the border indicator sits
+		var dir_x  := float(px - half)
+		var dir_y  := float(py - half)
+		var t      := 1.0
 		if abs(dir_x) > 0.0:
-			t = minf(t, float(half - MARGIN) / abs(dir_x))
+			t = minf(t, float(half - EDGE) / abs(dir_x))
 		if abs(dir_y) > 0.0:
-			t = minf(t, float(half - MARGIN) / abs(dir_y))
+			t = minf(t, float(half - EDGE) / abs(dir_y))
 		px = half + int(dir_x * t)
 		py = half + int(dir_y * t)
 
@@ -236,8 +253,9 @@ func _on_hover(local_pos: Vector2) -> void:
 		var dy := img_y - int(hit["py"])
 		if dx * dx + dy * dy <= 4:   # within ~2 px radius
 			_tooltip_lbl.text = hit["name"] as String
-			# Convert to container space (TextureRect sits at BORDER offset inside container).
-			var tp := Vector2(float(BORDER), float(BORDER)) + local_pos + Vector2(8.0, -18.0)
+			# Convert to container space using the TextureRect's current position
+			# (which shifts with the sub-cell scroll offset).
+			var tp := _texture_rect.position + local_pos + Vector2(8.0, -18.0)
 			tp.x = clampf(tp.x, 0.0, float(PANEL_SIZE) - 80.0)
 			tp.y = clampf(tp.y, 0.0, float(PANEL_SIZE) - 14.0)
 			_tooltip_lbl.position = tp
@@ -265,10 +283,6 @@ func _fog_level_at(gc: Vector2i) -> int:
 
 
 func _cell_color(gc: Vector2i) -> Color:
-	var level := _fog_level_at(gc)
-	if level == FogData.UNEXPLORED:
-		return Color.BLACK
-
 	var cs := ChunkData.CHUNK_SIZE
 	var cc  := Vector2i(
 		int(floor(float(gc.x) / float(cs))),
@@ -277,23 +291,62 @@ func _cell_color(gc: Vector2i) -> Color:
 	var lx := gc.x - cc.x * cs
 	var ly := gc.y - cc.y * cs
 
+	# Resolve base terrain colour: prefer live chunk, fall back to cache.
+	var base: Color
 	var chunk := _world.get_chunk(cc)
-	if chunk == null:
-		return Color.BLACK
+	if chunk != null:
+		var cell := chunk.get_cell(lx, ly)
+		base = _terrain_color(cell.terrain_type)
+		if not cell.objects.is_empty():
+			base = base.darkened(0.35)
+		_write_cache(cc, lx, ly, cs, base)
+	elif _terrain_cache.has(cc):
+		base = (_terrain_cache[cc] as PackedColorArray)[ly * cs + lx]
+	else:
+		return Color.BLACK   # chunk never loaded — truly unknown
 
-	var cell := chunk.get_cell(lx, ly)
-	var base := _terrain_color(cell.terrain_type)
-
-	if not cell.objects.is_empty():
-		base = base.darkened(0.35)
-
+	# Apply fog brightness.  Loaded-but-unexplored terrain shows at 12 % so
+	# the minimap is never blank for a chunk that is in memory or was cached.
+	var level := _fog_level_at(gc)
 	var b: float
 	match level:
-		FogData.DIM:     b = 0.25
-		FogData.PARTIAL: b = 0.6
-		_:               b = 1.0  # VISIBLE
+		FogData.UNEXPLORED: b = 0.12
+		FogData.DIM:        b = 0.25
+		FogData.PARTIAL:    b = 0.60
+		_:                  b = 1.00   # VISIBLE
 
 	return Color(base.r * b, base.g * b, base.b * b)
+
+
+func _write_cache(cc: Vector2i, lx: int, ly: int, cs: int, color: Color) -> void:
+	if not _terrain_cache.has(cc):
+		var arr := PackedColorArray()
+		arr.resize(cs * cs)
+		_terrain_cache[cc] = arr
+	(_terrain_cache[cc] as PackedColorArray)[ly * cs + lx] = color
+
+
+## Pre-cache every cell of a freshly-loaded chunk and refresh the minimap so
+## the new terrain appears immediately without waiting for player movement.
+func _on_chunk_loaded(coord: Vector2i) -> void:
+	var chunk := _world.get_chunk(coord)
+	if chunk == null:
+		return
+	var cs := ChunkData.CHUNK_SIZE
+	if not _terrain_cache.has(coord):
+		var arr := PackedColorArray()
+		arr.resize(cs * cs)
+		_terrain_cache[coord] = arr
+	var cache: PackedColorArray = _terrain_cache[coord]
+	for ly in range(cs):
+		for lx in range(cs):
+			var cell := chunk.get_cell(lx, ly)
+			var base := _terrain_color(cell.terrain_type)
+			if not cell.objects.is_empty():
+				base = base.darkened(0.35)
+			cache[ly * cs + lx] = base
+	if _show:
+		_force_refresh()
 
 
 static func _terrain_color(filename: String) -> Color:

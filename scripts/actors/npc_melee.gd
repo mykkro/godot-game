@@ -71,7 +71,7 @@ func _ready() -> void:
 	_mark.visible  = false
 	add_child(_mark)
 
-	_name_label                    = Label.new()
+	_name_label                      = Label.new()
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_name_label.custom_minimum_size  = Vector2(NAME_LABEL_WIDTH, 0)
 	_name_label.position             = Vector2(-NAME_LABEL_WIDTH / 2.0, NAME_LABEL_Y)
@@ -79,6 +79,11 @@ func _ready() -> void:
 	_name_label.add_theme_constant_override("outline_size", 10)
 	_name_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_name_label.visible = false
+	# Shift the label down by its own height once the engine has measured it,
+	# so NAME_LABEL_Y becomes the bottom edge rather than the top edge.
+	_name_label.minimum_size_changed.connect(func() -> void:
+		_name_label.position.y = NAME_LABEL_Y + _name_label.get_minimum_size().y
+	)
 	add_child(_name_label)
 
 
@@ -123,10 +128,15 @@ func _on_quest_event(quest: QuestInstance) -> void:
 func _refresh_mark_visibility() -> void:
 	if _mark == null or not is_quest_giver:
 		return
-	var q    := QuestManager.get_quest_from_npc(npc_id)
-	var show := QuestManager.can_offer_quest(self) or \
-		(q != null and q.state == QuestInstance.State.READY)
-	_mark.visible = show
+	var q := QuestManager.get_quest_from_npc(npc_id)
+	if q != null and q.state == QuestInstance.State.ACTIVE:
+		_mark.modulate = Color(0.55, 0.55, 0.55)   # gray — quest in progress
+		_mark.visible  = true
+	elif QuestManager.can_offer_quest(self) or (q != null and q.state == QuestInstance.State.READY):
+		_mark.modulate = QUEST_MARK_COLOR           # gold — new quest or ready to collect
+		_mark.visible  = true
+	else:
+		_mark.visible = false
 
 
 func _refresh_name_label() -> void:

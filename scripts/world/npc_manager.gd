@@ -28,6 +28,17 @@ func save() -> void:
 	SaveManager.save_npcs(data)
 
 
+## Read saved NPC data to pre-populate chunk marks and ID counters.
+## Call BEFORE world.start() so chunk_loaded signals never spawn duplicates.
+func pre_mark_from_save() -> void:
+	for entry in SaveManager.load_npcs():
+		var d := entry as Dictionary
+		if d.get("type", "") == "melee":
+			var pos := Vector2(float(d.get("x", 0.0)), float(d.get("y", 0.0)))
+			_melee_spawned[_chunk_of(pos)] = true
+			_bump_counter(str(d.get("npc_id", "")), "melee_", _next_melee_id)
+
+
 ## Spawn NPCs from a previously saved snapshot.
 ## Call after world.start() so the scene tree is ready.
 func load_and_spawn() -> void:

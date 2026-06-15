@@ -75,6 +75,7 @@ func _ready() -> void:
 	# that every chunk_loaded signal fired during startup is received by both.
 	_fog_manager.setup(_world)
 	_npc_manager.setup(_world)
+	_npc_manager.pre_mark_from_save()
 
 	# Load saved inventory (empty Inventory if no save exists).
 	_avatar.inventory = SaveManager.load_inventory()

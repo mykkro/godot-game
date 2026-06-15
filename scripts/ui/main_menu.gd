@@ -56,6 +56,15 @@ func _ready() -> void:
 	_update_label(_music_label,   "Music Volume",   _music_vol   * 100.0)
 	_update_label(_effects_label, "Effects Volume", _effects_vol * 100.0)
 
+	# Menu background music — buses are guaranteed set up by apply_saved_settings().
+	var stream := load("res://media/music/guilhermebernardes-late-hours-108446.mp3") as AudioStreamMP3
+	stream.loop  = true
+	var music    := AudioStreamPlayer.new()
+	music.stream = stream
+	music.bus    = AudioManager.MUSIC_BUS
+	add_child(music)
+	music.play()
+
 	_fullscreen     = bool(settings.get("fullscreen",      false))
 	_resolution_idx = int(settings.get("resolution_index", 2))
 	_fullscreen_btn.button_pressed = _fullscreen
