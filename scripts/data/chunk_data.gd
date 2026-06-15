@@ -31,6 +31,9 @@ var forge_output: Dictionary = {}
 ## Editor-chosen rock sprite variant (1-40) per cell, keyed by lx + ly*CHUNK_SIZE.
 ## 0 means "position-hashed" (no override).
 var rock_variants: Dictionary = {}
+## Editor-placed monster species per cell. key = lx + ly*CHUNK_SIZE → species String.
+## Empty string or absent = no placement (generate randomly on spawn).
+var monster_placements: Dictionary = {}
 
 
 func _init(p_cx: int = 0, p_cy: int = 0) -> void:
@@ -39,6 +42,12 @@ func _init(p_cx: int = 0, p_cy: int = 0) -> void:
 	cells           = []
 	pickable_counts = {}
 	biome           = BiomeDef.Type.PLAINS
+	chest_variants  = {}
+	chest_contents  = {}
+	forge_input     = {}
+	forge_output    = {}
+	rock_variants   = {}
+	monster_placements = {}
 	for _y in range(CHUNK_SIZE):
 		var row: Array = []
 		for _x in range(CHUNK_SIZE):
@@ -126,6 +135,18 @@ func set_rock_variant(lx: int, ly: int, variant: int) -> void:
 		rock_variants[lx + ly * CHUNK_SIZE] = variant
 
 
+func get_monster_placement(lx: int, ly: int) -> String:
+	return str(monster_placements.get(lx + ly * CHUNK_SIZE, ""))
+
+
+func set_monster_placement(lx: int, ly: int, species: String) -> void:
+	var key := lx + ly * CHUNK_SIZE
+	if species.is_empty():
+		monster_placements.erase(key)
+	else:
+		monster_placements[key] = species
+
+
 ## Unique string key for this chunk (used for file naming).
 func get_key() -> String:
 	return "%d_%d" % [chunk_x, chunk_y]
@@ -158,6 +179,9 @@ func to_dict() -> Dictionary:
 	var rv_pairs: Array = []
 	for k in rock_variants:
 		rv_pairs.append([int(k), int(rock_variants[k])])
+	var mp_pairs: Array = []
+	for k in monster_placements:
+		mp_pairs.append([int(k), str(monster_placements[k])])
 	return {
 		"chunk_x":         chunk_x,
 		"chunk_y":         chunk_y,
@@ -169,6 +193,7 @@ func to_dict() -> Dictionary:
 		"forge_input":     fi_pairs,
 		"forge_output":    fo_pairs,
 		"rock_variants":   rv_pairs,
+		"monster_placements": mp_pairs,
 	}
 
 
@@ -207,4 +232,6 @@ static func from_dict(data: Dictionary) -> ChunkData:
 		chunk.forge_output[key] = arr
 	for pair in data.get("rock_variants", []):
 		chunk.rock_variants[int((pair as Array)[0])] = int((pair as Array)[1])
+	for pair in data.get("monster_placements", []):
+		chunk.monster_placements[int((pair as Array)[0])] = str((pair as Array)[1])
 	return chunk
