@@ -188,6 +188,95 @@ enum Type {
 	TICKET             = 161,
 	TORCH              = 162,
 	WILLOW_CHEST       = 163,
+	## Equipment & loot — from ravenmore 128×128 icon pack.
+	WOODEN_SWORD  = 164,
+	## Armor — from flare 5×5 atlas (row=material, col=slot).
+	## Row 0 cloth (col 0 empty), row 1 leather, row 2 hard leather, row 3 chain, row 4 plate.
+	CLOTH_TUNIC           = 179,
+	CLOTH_GLOVES          = 180,
+	CLOTH_TROUSERS        = 181,
+	CLOTH_BOOTS           = 182,
+	LEATHER_HELM          = 183,
+	LEATHER_TUNIC         = 184,
+	LEATHER_GLOVES        = 185,
+	LEATHER_TROUSERS      = 186,
+	LEATHER_BOOTS         = 187,
+	HARD_LEATHER_HELM     = 188,
+	HARD_LEATHER_TUNIC    = 189,
+	HARD_LEATHER_GLOVES   = 190,
+	HARD_LEATHER_TROUSERS = 191,
+	HARD_LEATHER_BOOTS    = 192,
+	CHAIN_COIF            = 193,
+	CHAIN_MAIL            = 194,
+	CHAIN_GLOVES          = 195,
+	CHAIN_TROUSERS        = 196,
+	CHAIN_BOOTS           = 197,
+	PLATE_HELM            = 198,
+	PLATE_MAIL            = 199,
+	PLATE_GAUNTLETS       = 200,
+	PLATE_GREAVES         = 201,
+	PLATE_BOOTS           = 202,
+	SWORD         = 165,
+	AXE           = 166,
+	BOW           = 167,
+	DAGGER        = 168,
+	WAND          = 169,
+	HELMET        = 170,
+	ARMOR         = 171,
+	SHIELD        = 172,
+	SCROLL        = 173,
+	TOME          = 174,
+	GEM_RED       = 175,
+	GEM_GREEN     = 176,
+	GEM_BLUE      = 177,
+	HEART_AMULET  = 178,
+	## Equipment & loot — Kyrise individual PNG icons (media/kyrise/).
+	## Swords.
+	IRON_SWORD      = 203,
+	STEEL_SWORD     = 204,
+	SILVER_SWORD    = 205,
+	## Bows.
+	HUNTING_BOW     = 206,
+	WAR_BOW         = 207,
+	ELVEN_BOW       = 208,
+	## Staves.
+	APPRENTICE_STAFF = 209,
+	WIZARD_STAFF     = 210,
+	ELDER_STAFF      = 211,
+	## Arrows (stackable ammo).
+	WOOD_ARROW      = 212,
+	BONE_ARROW      = 213,
+	SILVER_ARROW    = 214,
+	## Shields.
+	BUCKLER         = 215,
+	ROUND_SHIELD    = 216,
+	KITE_SHIELD     = 217,
+	## Helmets.
+	OPEN_HELMET     = 218,
+	GREAT_HELM      = 219,
+	## Spell books.
+	SPELLBOOK        = 220,
+	ARCANE_TOME      = 221,
+	FORBIDDEN_TOME   = 222,
+	## Rings.
+	IRON_RING        = 223,
+	SILVER_RING      = 224,
+	MAGIC_RING       = 225,
+	## Necklaces.
+	BRONZE_NECKLACE  = 226,
+	SILVER_NECKLACE  = 227,
+	MAGIC_NECKLACE   = 228,
+	## Keys.
+	IRON_KEY         = 229,
+	GOLD_KEY         = 230,
+	## Miscellaneous loot.
+	PEARL            = 231,
+	METAL_INGOT      = 232,
+	RAW_FISH         = 233,
+	SWEET            = 234,
+	GIFT_BOX         = 235,
+	FACETED_GEM      = 236,
+	MAGIC_CRYSTAL    = 237,
 }
 
 ## Returns false when an actor cannot pass through this object type.
@@ -369,4 +458,78 @@ static func get_display_name(obj_type: int) -> String:
 		Type.TICKET:              return "Ticket"
 		Type.TORCH:               return "Torch"
 		Type.WILLOW_CHEST:        return "Willow Chest"
+		Type.WOODEN_SWORD:        return "Wooden Sword"
+		Type.SWORD:               return "Sword"
+		Type.AXE:                 return "Axe"
+		Type.BOW:                 return "Bow"
+		Type.DAGGER:              return "Dagger"
+		Type.WAND:                return "Wand"
+		Type.HELMET:              return "Helmet"
+		Type.ARMOR:               return "Armor"
+		Type.SHIELD:              return "Shield"
+		Type.SCROLL:              return "Scroll"
+		Type.TOME:                return "Tome"
+		Type.GEM_RED:             return "Red Gem"
+		Type.GEM_GREEN:           return "Green Gem"
+		Type.GEM_BLUE:            return "Blue Gem"
+		Type.HEART_AMULET:        return "Heart Amulet"
+		Type.CLOTH_TUNIC:           return "Cloth Tunic"
+		Type.CLOTH_GLOVES:          return "Cloth Gloves"
+		Type.CLOTH_TROUSERS:        return "Cloth Trousers"
+		Type.CLOTH_BOOTS:           return "Cloth Boots"
+		Type.LEATHER_HELM:          return "Leather Helm"
+		Type.LEATHER_TUNIC:         return "Leather Tunic"
+		Type.LEATHER_GLOVES:        return "Leather Gloves"
+		Type.LEATHER_TROUSERS:      return "Leather Trousers"
+		Type.LEATHER_BOOTS:         return "Leather Boots"
+		Type.HARD_LEATHER_HELM:     return "Hard Leather Helm"
+		Type.HARD_LEATHER_TUNIC:    return "Hard Leather Tunic"
+		Type.HARD_LEATHER_GLOVES:   return "Hard Leather Gloves"
+		Type.HARD_LEATHER_TROUSERS: return "Hard Leather Trousers"
+		Type.HARD_LEATHER_BOOTS:    return "Hard Leather Boots"
+		Type.CHAIN_COIF:            return "Chain Coif"
+		Type.CHAIN_MAIL:            return "Chain Mail"
+		Type.CHAIN_GLOVES:          return "Chain Gloves"
+		Type.CHAIN_TROUSERS:        return "Chain Trousers"
+		Type.CHAIN_BOOTS:           return "Chain Boots"
+		Type.PLATE_HELM:            return "Plate Helm"
+		Type.PLATE_MAIL:            return "Plate Mail"
+		Type.PLATE_GAUNTLETS:       return "Plate Gauntlets"
+		Type.PLATE_GREAVES:         return "Plate Greaves"
+		Type.PLATE_BOOTS:           return "Plate Boots"
+		Type.IRON_SWORD:            return "Iron Sword"
+		Type.STEEL_SWORD:           return "Steel Sword"
+		Type.SILVER_SWORD:          return "Silver Sword"
+		Type.HUNTING_BOW:           return "Hunting Bow"
+		Type.WAR_BOW:               return "War Bow"
+		Type.ELVEN_BOW:             return "Elven Bow"
+		Type.APPRENTICE_STAFF:      return "Apprentice Staff"
+		Type.WIZARD_STAFF:          return "Wizard Staff"
+		Type.ELDER_STAFF:           return "Elder Staff"
+		Type.WOOD_ARROW:            return "Wood Arrow"
+		Type.BONE_ARROW:            return "Bone Arrow"
+		Type.SILVER_ARROW:          return "Silver Arrow"
+		Type.BUCKLER:               return "Buckler"
+		Type.ROUND_SHIELD:          return "Round Shield"
+		Type.KITE_SHIELD:           return "Kite Shield"
+		Type.OPEN_HELMET:           return "Open Helmet"
+		Type.GREAT_HELM:            return "Great Helm"
+		Type.SPELLBOOK:             return "Spellbook"
+		Type.ARCANE_TOME:           return "Arcane Tome"
+		Type.FORBIDDEN_TOME:        return "Forbidden Tome"
+		Type.IRON_RING:             return "Iron Ring"
+		Type.SILVER_RING:           return "Silver Ring"
+		Type.MAGIC_RING:            return "Magic Ring"
+		Type.BRONZE_NECKLACE:       return "Bronze Necklace"
+		Type.SILVER_NECKLACE:       return "Silver Necklace"
+		Type.MAGIC_NECKLACE:        return "Magic Necklace"
+		Type.IRON_KEY:              return "Iron Key"
+		Type.GOLD_KEY:              return "Gold Key"
+		Type.PEARL:                 return "Pearl"
+		Type.METAL_INGOT:           return "Metal Ingot"
+		Type.RAW_FISH:              return "Raw Fish"
+		Type.SWEET:                 return "Sweet"
+		Type.GIFT_BOX:              return "Gift Box"
+		Type.FACETED_GEM:           return "Faceted Gem"
+		Type.MAGIC_CRYSTAL:         return "Magic Crystal"
 	return "Unknown"

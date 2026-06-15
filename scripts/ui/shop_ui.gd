@@ -22,6 +22,8 @@ var _shop_orig:   Array = []
 
 ## Cache of all pickable item types except COIN (built once at first open).
 static var _all_pickable_types: Array = []
+## Cache of equipment items (ravenmore + flare armor) for specialist shops.
+static var _all_equip_types: Array = []
 ## Persistent shop state per NPC id — full item array saved on every Trade.
 static var _npc_shop_states: Dictionary = {}
 
@@ -558,23 +560,35 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _generate_shop_items(rng: RandomNumberGenerator) -> Array:
 	_ensure_types_cache()
-	var pool  := _all_pickable_types.duplicate()
-	var count := rng.randi_range(3, 8)
 	var result: Array = []
-	while result.size() < count and not pool.is_empty():
-		var idx       := rng.randi_range(0, pool.size() - 1)
-		var item_type: int = int(pool[idx])
-		pool.remove_at(idx)
-		var max_st := PickableItemDef.max_stack_size(item_type)
-		var quantity: int
-		match max_st:
-			4:   quantity = rng.randi_range(1, 3)
-			8:   quantity = rng.randi_range(1, 5)
-			16:  quantity = rng.randi_range(2, 8)
-			64:  quantity = rng.randi_range(3, 20)
-			100: quantity = rng.randi_range(5, 50)
-			_:   quantity = 1
-		result.append({"type": item_type, "count": quantity})
+
+	# 40 % of shops are equipment specialists: stock only ravenmore/armor items.
+	if rng.randf() < 0.40 and not _all_equip_types.is_empty():
+		var pool  := _all_equip_types.duplicate()
+		var count := rng.randi_range(4, 9)
+		while result.size() < count and not pool.is_empty():
+			var idx       := rng.randi_range(0, pool.size() - 1)
+			var item_type: int = int(pool[idx])
+			pool.remove_at(idx)
+			result.append({"type": item_type, "count": 1})
+	else:
+		var pool  := _all_pickable_types.duplicate()
+		var count := rng.randi_range(3, 8)
+		while result.size() < count and not pool.is_empty():
+			var idx       := rng.randi_range(0, pool.size() - 1)
+			var item_type: int = int(pool[idx])
+			pool.remove_at(idx)
+			var max_st := PickableItemDef.max_stack_size(item_type)
+			var quantity: int
+			match max_st:
+				4:   quantity = rng.randi_range(1, 3)
+				8:   quantity = rng.randi_range(1, 5)
+				16:  quantity = rng.randi_range(2, 8)
+				64:  quantity = rng.randi_range(3, 20)
+				100: quantity = rng.randi_range(5, 50)
+				_:   quantity = 1
+			result.append({"type": item_type, "count": quantity})
+
 	result.append({"type": MapObject.Type.COIN, "count": NPC_COIN_POOL})
 	return result
 
@@ -583,8 +597,12 @@ static func _ensure_types_cache() -> void:
 	if not _all_pickable_types.is_empty():
 		return
 	for val in MapObject.Type.values():
-		if PickableItemDef.is_pickable(val) and val != MapObject.Type.COIN:
-			_all_pickable_types.append(val)
+		if not PickableItemDef.is_pickable(val) or val == MapObject.Type.COIN:
+			continue
+		_all_pickable_types.append(val)
+		# Equipment: ravenmore items (IDs ≥ WOODEN_SWORD) + flare armor.
+		if val >= MapObject.Type.WOODEN_SWORD:
+			_all_equip_types.append(val)
 
 
 func _refresh() -> void:

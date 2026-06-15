@@ -72,6 +72,19 @@ static func max_stack_size(obj_type: int) -> int:
 		MapObject.Type.ELEMENTAL_JAR_LAVA, MapObject.Type.ELEMENTAL_JAR_WATER:
 			return 4
 
+		# Stack 16 — ravenmore gems.
+		MapObject.Type.GEM_RED, MapObject.Type.GEM_GREEN, MapObject.Type.GEM_BLUE:
+			return 16
+
+		# Kyrise stackables.
+		MapObject.Type.WOOD_ARROW,  MapObject.Type.BONE_ARROW,  \
+		MapObject.Type.SILVER_ARROW, MapObject.Type.METAL_INGOT:
+			return 64
+		MapObject.Type.RAW_FISH, MapObject.Type.SWEET,           \
+		MapObject.Type.FACETED_GEM, MapObject.Type.MAGIC_CRYSTAL, \
+		MapObject.Type.PEARL:
+			return 16
+
 	# Default 1 = non-stackable.
 	# Covers: HERB, CRYSTAL, POTION, all weapons, agri-tools, containers,
 	# boats, clothing, books, devices, and unique misc items.
@@ -100,6 +113,98 @@ static func get_sprite(obj_type: int) -> String:
 		MapObject.Type.FEATHER: return "fc7.png"
 		MapObject.Type.POTION:  return "fc50.png"
 	return "fc1.png"
+
+
+## Filename in res://media/kyrise/ for this type, or "" if sourced elsewhere.
+static func _kyrise_file(obj_type: int) -> String:
+	match obj_type:
+		MapObject.Type.IRON_SWORD:        return "sword_01a.png"
+		MapObject.Type.STEEL_SWORD:       return "sword_02a.png"
+		MapObject.Type.SILVER_SWORD:      return "sword_03a.png"
+		MapObject.Type.HUNTING_BOW:       return "bow_01a.png"
+		MapObject.Type.WAR_BOW:           return "bow_02a.png"
+		MapObject.Type.ELVEN_BOW:         return "bow_03a.png"
+		MapObject.Type.APPRENTICE_STAFF:  return "staff_01a.png"
+		MapObject.Type.WIZARD_STAFF:      return "staff_02ab.png"
+		MapObject.Type.ELDER_STAFF:       return "staff_03a.png"
+		MapObject.Type.WOOD_ARROW:        return "arrow_01a.png"
+		MapObject.Type.BONE_ARROW:        return "arrow_02a.png"
+		MapObject.Type.SILVER_ARROW:      return "arrow_03a.png"
+		MapObject.Type.BUCKLER:           return "shield_01a.png"
+		MapObject.Type.ROUND_SHIELD:      return "shield_02a.png"
+		MapObject.Type.KITE_SHIELD:       return "shield_03a.png"
+		MapObject.Type.OPEN_HELMET:       return "helmet_01a.png"
+		MapObject.Type.GREAT_HELM:        return "helmet_02a.png"
+		MapObject.Type.SPELLBOOK:         return "spellbook_01a.png"
+		MapObject.Type.ARCANE_TOME:       return "spellbook_02a.png"
+		MapObject.Type.FORBIDDEN_TOME:    return "spellbook_03a.png"
+		MapObject.Type.IRON_RING:         return "ring_01a.png"
+		MapObject.Type.SILVER_RING:       return "ring_02a.png"
+		MapObject.Type.MAGIC_RING:        return "ring_03a.png"
+		MapObject.Type.BRONZE_NECKLACE:   return "necklace_01a.png"
+		MapObject.Type.SILVER_NECKLACE:   return "necklace_02a.png"
+		MapObject.Type.MAGIC_NECKLACE:    return "necklace_03a.png"
+		MapObject.Type.IRON_KEY:          return "key_01a.png"
+		MapObject.Type.GOLD_KEY:          return "key_02a.png"
+		MapObject.Type.PEARL:             return "pearl_01a.png"
+		MapObject.Type.METAL_INGOT:       return "ingot_01a.png"
+		MapObject.Type.RAW_FISH:          return "fish_01a.png"
+		MapObject.Type.SWEET:             return "candy_01a.png"
+		MapObject.Type.GIFT_BOX:          return "gift_01a.png"
+		MapObject.Type.FACETED_GEM:       return "gem_01a.png"
+		MapObject.Type.MAGIC_CRYSTAL:     return "crystal_01a.png"
+	return ""
+
+
+## [col, row] in the Flare 5×5 armor atlas, or Vector2i(-1,-1) if not armor.
+static func _flare_armor_coord(obj_type: int) -> Vector2i:
+	match obj_type:
+		MapObject.Type.CLOTH_TUNIC:           return Vector2i(1, 0)
+		MapObject.Type.CLOTH_GLOVES:          return Vector2i(2, 0)
+		MapObject.Type.CLOTH_TROUSERS:        return Vector2i(3, 0)
+		MapObject.Type.CLOTH_BOOTS:           return Vector2i(4, 0)
+		MapObject.Type.LEATHER_HELM:          return Vector2i(0, 1)
+		MapObject.Type.LEATHER_TUNIC:         return Vector2i(1, 1)
+		MapObject.Type.LEATHER_GLOVES:        return Vector2i(2, 1)
+		MapObject.Type.LEATHER_TROUSERS:      return Vector2i(3, 1)
+		MapObject.Type.LEATHER_BOOTS:         return Vector2i(4, 1)
+		MapObject.Type.HARD_LEATHER_HELM:     return Vector2i(0, 2)
+		MapObject.Type.HARD_LEATHER_TUNIC:    return Vector2i(1, 2)
+		MapObject.Type.HARD_LEATHER_GLOVES:   return Vector2i(2, 2)
+		MapObject.Type.HARD_LEATHER_TROUSERS: return Vector2i(3, 2)
+		MapObject.Type.HARD_LEATHER_BOOTS:    return Vector2i(4, 2)
+		MapObject.Type.CHAIN_COIF:            return Vector2i(0, 3)
+		MapObject.Type.CHAIN_MAIL:            return Vector2i(1, 3)
+		MapObject.Type.CHAIN_GLOVES:          return Vector2i(2, 3)
+		MapObject.Type.CHAIN_TROUSERS:        return Vector2i(3, 3)
+		MapObject.Type.CHAIN_BOOTS:           return Vector2i(4, 3)
+		MapObject.Type.PLATE_HELM:            return Vector2i(0, 4)
+		MapObject.Type.PLATE_MAIL:            return Vector2i(1, 4)
+		MapObject.Type.PLATE_GAUNTLETS:       return Vector2i(2, 4)
+		MapObject.Type.PLATE_GREAVES:         return Vector2i(3, 4)
+		MapObject.Type.PLATE_BOOTS:           return Vector2i(4, 4)
+	return Vector2i(-1, -1)
+
+
+## Filename in res://media/ravenmore/ for this type, or "" if sourced elsewhere.
+static func _ravenmore_file(obj_type: int) -> String:
+	match obj_type:
+		MapObject.Type.WOODEN_SWORD: return "swordWood.png"
+		MapObject.Type.SWORD:        return "sword.png"
+		MapObject.Type.AXE:          return "axe.png"
+		MapObject.Type.BOW:          return "bow.png"
+		MapObject.Type.DAGGER:       return "dagger.png"
+		MapObject.Type.WAND:         return "wand.png"
+		MapObject.Type.HELMET:       return "helmet.png"
+		MapObject.Type.ARMOR:        return "armor.png"
+		MapObject.Type.SHIELD:       return "shield.png"
+		MapObject.Type.SCROLL:       return "scroll.png"
+		MapObject.Type.TOME:         return "tome.png"
+		MapObject.Type.GEM_RED:      return "gemRed.png"
+		MapObject.Type.GEM_GREEN:    return "gemGreen.png"
+		MapObject.Type.GEM_BLUE:     return "gemBlue.png"
+		MapObject.Type.HEART_AMULET: return "heart.png"
+	return ""
 
 
 ## Filename in res://media/items2/ for this type, or "" if sourced elsewhere.
@@ -308,17 +413,31 @@ static func _atlas_coord(obj_type: int) -> Vector2i:
 
 
 ## World-space render scale multiplier relative to the base SPRITE_SCALE.
-## items2/ PNGs have smaller source dimensions than legacy sprites, so they
-## need upscaling to appear the same visual size on the map.
+## Ravenmore icons are 128×128, so they need downscaling relative to legacy sprites.
 static func get_world_scale(obj_type: int) -> float:
 	if obj_type == MapObject.Type.FEATHER:
 		return 2.0
+	if _ravenmore_file(obj_type) != "":
+		return 0.50   # 128×128 source; halve to match visual size of legacy sprites
+	if _flare_armor_coord(obj_type).x >= 0:
+		return 0.50   # flare atlas cells are large; halve to match legacy sprites
+	if _kyrise_file(obj_type) != "":
+		return 0.50   # kyrise icons are large; halve to match legacy sprites
 	return 1.75 if _items2_file(obj_type) != "" else 1.0
 
 
 ## Returns the icon Texture2D for any pickable item type.
-## Priority: items2 individual PNG → materials atlas → legacy raven-objects sprite.
+## Priority: ravenmore → flare armor → kyrise → items2 PNG → materials atlas → legacy sprite.
 static func get_texture(obj_type: int) -> Texture2D:
+	var r := _ravenmore_file(obj_type)
+	if r != "":
+		return TextureCache.get_ravenmore_texture(r)
+	var ac := _flare_armor_coord(obj_type)
+	if ac.x >= 0:
+		return TextureCache.get_flare_armor_texture(ac.x, ac.y)
+	var k := _kyrise_file(obj_type)
+	if k != "":
+		return TextureCache.get_kyrise_texture(k)
 	var f := _items2_file(obj_type)
 	if f != "":
 		return TextureCache.get_items2_texture(f)
@@ -442,4 +561,116 @@ static func get_coin_value(obj_type: int) -> int:
 			return 150
 		MapObject.Type.JETPACK:
 			return 200
+		# Ravenmore equipment.
+		MapObject.Type.SCROLL:
+			return 15
+		MapObject.Type.WOODEN_SWORD:
+			return 20
+		MapObject.Type.DAGGER:
+			return 25
+		MapObject.Type.GEM_RED, MapObject.Type.GEM_GREEN, MapObject.Type.GEM_BLUE:
+			return 25
+		MapObject.Type.BOW:
+			return 30
+		MapObject.Type.AXE:
+			return 30
+		MapObject.Type.TOME:
+			return 35
+		MapObject.Type.HELMET:
+			return 40
+		MapObject.Type.SHIELD:
+			return 40
+		MapObject.Type.WAND:
+			return 45
+		MapObject.Type.SWORD:
+			return 50
+		MapObject.Type.HEART_AMULET:
+			return 75
+		MapObject.Type.ARMOR:
+			return 60
+		# Flare armor — cloth (cheapest).
+		MapObject.Type.CLOTH_TUNIC:
+			return 15
+		MapObject.Type.CLOTH_GLOVES, MapObject.Type.CLOTH_BOOTS:
+			return 10
+		MapObject.Type.CLOTH_TROUSERS:
+			return 12
+		# Leather.
+		MapObject.Type.LEATHER_HELM:
+			return 20
+		MapObject.Type.LEATHER_TUNIC:
+			return 25
+		MapObject.Type.LEATHER_GLOVES, MapObject.Type.LEATHER_BOOTS:
+			return 18
+		MapObject.Type.LEATHER_TROUSERS:
+			return 20
+		# Hard leather.
+		MapObject.Type.HARD_LEATHER_HELM:
+			return 30
+		MapObject.Type.HARD_LEATHER_TUNIC:
+			return 40
+		MapObject.Type.HARD_LEATHER_GLOVES, MapObject.Type.HARD_LEATHER_BOOTS:
+			return 28
+		MapObject.Type.HARD_LEATHER_TROUSERS:
+			return 32
+		# Chain.
+		MapObject.Type.CHAIN_COIF:
+			return 50
+		MapObject.Type.CHAIN_MAIL:
+			return 70
+		MapObject.Type.CHAIN_GLOVES, MapObject.Type.CHAIN_BOOTS:
+			return 45
+		MapObject.Type.CHAIN_TROUSERS:
+			return 55
+		# Plate (most expensive).
+		MapObject.Type.PLATE_HELM:
+			return 80
+		MapObject.Type.PLATE_MAIL:
+			return 120
+		MapObject.Type.PLATE_GAUNTLETS:
+			return 70
+		MapObject.Type.PLATE_GREAVES:
+			return 90
+		MapObject.Type.PLATE_BOOTS:
+			return 85
+		# Kyrise items.
+		MapObject.Type.WOOD_ARROW:
+			return 2
+		MapObject.Type.BONE_ARROW:
+			return 4
+		MapObject.Type.SILVER_ARROW:
+			return 6
+		MapObject.Type.RAW_FISH:
+			return 3
+		MapObject.Type.SWEET:
+			return 5
+		MapObject.Type.IRON_KEY:
+			return 10
+		MapObject.Type.GIFT_BOX:
+			return 15
+		MapObject.Type.METAL_INGOT:
+			return 15
+		MapObject.Type.PEARL, MapObject.Type.FACETED_GEM:
+			return 20
+		MapObject.Type.MAGIC_CRYSTAL:
+			return 22
+		MapObject.Type.IRON_RING, MapObject.Type.GOLD_KEY:
+			return 25
+		MapObject.Type.IRON_SWORD, MapObject.Type.HUNTING_BOW, MapObject.Type.OPEN_HELMET, \
+		MapObject.Type.BUCKLER:
+			return 30
+		MapObject.Type.APPRENTICE_STAFF, MapObject.Type.SPELLBOOK:
+			return 35
+		MapObject.Type.BRONZE_NECKLACE, MapObject.Type.SILVER_RING, \
+		MapObject.Type.ROUND_SHIELD, MapObject.Type.WAR_BOW:
+			return 40
+		MapObject.Type.STEEL_SWORD, MapObject.Type.WIZARD_STAFF, MapObject.Type.ARCANE_TOME, \
+		MapObject.Type.GREAT_HELM:
+			return 55
+		MapObject.Type.SILVER_NECKLACE, MapObject.Type.MAGIC_RING, \
+		MapObject.Type.KITE_SHIELD, MapObject.Type.ELVEN_BOW:
+			return 60
+		MapObject.Type.SILVER_SWORD, MapObject.Type.ELDER_STAFF, MapObject.Type.FORBIDDEN_TOME, \
+		MapObject.Type.MAGIC_NECKLACE:
+			return 80
 	return 10

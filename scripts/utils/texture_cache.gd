@@ -1,8 +1,9 @@
 class_name TextureCache
 
-const TILES_PATH   := "res://media/rpg-tiles/"
-const OBJECTS_PATH := "res://media/raven-objects/"
-const ITEMS2_PATH  := "res://media/items2/"
+const TILES_PATH      := "res://media/rpg-tiles/"
+const OBJECTS_PATH    := "res://media/raven-objects/"
+const ITEMS2_PATH     := "res://media/items2/"
+const RAVENMORE_PATH  := "res://media/ravenmore/"
 
 ## In-memory cache: full path → Texture2D (or null if load failed).
 static var _cache: Dictionary = {}
@@ -35,6 +36,38 @@ static func get_chest_texture(variant: int) -> Texture2D:
 ## Item sprite from the items2 individual-PNG library (media/items2/).
 static func get_items2_texture(filename: String) -> Texture2D:
 	return _load_texture(ITEMS2_PATH + filename)
+
+
+## Item icon from the Ravenmore 128×128 icon pack (media/ravenmore/).
+static func get_ravenmore_texture(filename: String) -> Texture2D:
+	return _load_texture(RAVENMORE_PATH + filename)
+
+
+## Item icon from the Kyrise individual-PNG pack (media/kyrise/).
+static func get_kyrise_texture(filename: String) -> Texture2D:
+	return _load_texture("res://media/kyrise/" + filename)
+
+
+## One cell from the Flare 5×5 armor atlas (media/flare/flare_armor.png).
+## col = armor slot (0=head, 1=body, 2=gloves, 3=trousers, 4=boots),
+## row = material tier (0=cloth, 1=leather, 2=hard leather, 3=chain, 4=plate).
+static func get_flare_armor_texture(col: int, row: int) -> Texture2D:
+	const COLS := 5
+	const ROWS := 5
+	var key := "flare_armor:%d,%d" % [col, row]
+	if _cache.has(key):
+		return _cache[key]
+	var base := _load_texture("res://media/flare/flare_armor.png")
+	if base == null:
+		_cache[key] = null
+		return null
+	var cell_w := base.get_width()  / COLS
+	var cell_h := base.get_height() / ROWS
+	var at     := AtlasTexture.new()
+	at.atlas   = base
+	at.region  = Rect2(col * cell_w, row * cell_h, cell_w, cell_h)
+	_cache[key] = at
+	return at
 
 
 ## One rock sprite from the two 4×5 rockz spritesheets (rockz.png + rockz2.png).

@@ -88,6 +88,52 @@ static func _place_objects(rng: RandomNumberGenerator, cell: CellData,
 		cell.add_object(MapObject.Type.POTION)
 	elif roll < rock_density + 0.092:
 		cell.add_object(MapObject.Type.CHEST_SMALL)
+	# Ravenmore loot — ordered most-common → rarest.
+	elif roll < rock_density + 0.0955:
+		cell.add_object(MapObject.Type.SCROLL)
+	elif roll < rock_density + 0.0975:
+		cell.add_object(MapObject.Type.GEM_RED)
+	elif roll < rock_density + 0.0990:
+		cell.add_object(MapObject.Type.GEM_GREEN)
+	elif roll < rock_density + 0.1005:
+		cell.add_object(MapObject.Type.GEM_BLUE)
+	elif roll < rock_density + 0.1020:
+		cell.add_object(MapObject.Type.WOODEN_SWORD)
+	elif roll < rock_density + 0.1030:
+		cell.add_object(MapObject.Type.DAGGER)
+	elif roll < rock_density + 0.1038:
+		cell.add_object(MapObject.Type.BOW)
+	elif roll < rock_density + 0.1044:
+		cell.add_object(MapObject.Type.AXE)
+	elif roll < rock_density + 0.1048:
+		cell.add_object(MapObject.Type.SWORD)
+	elif roll < rock_density + 0.1051:
+		cell.add_object(MapObject.Type.HELMET)
+	elif roll < rock_density + 0.1053:
+		cell.add_object(MapObject.Type.ARMOR)
+	elif roll < rock_density + 0.1055:
+		cell.add_object(MapObject.Type.SHIELD)
+	elif roll < rock_density + 0.1057:
+		cell.add_object(MapObject.Type.WAND)
+	elif roll < rock_density + 0.1058:
+		cell.add_object(MapObject.Type.TOME)
+	elif roll < rock_density + 0.1059:
+		cell.add_object(MapObject.Type.HEART_AMULET)
+	# Kyrise loot — arrows (common), accessories (rare).
+	elif roll < rock_density + 0.1080:
+		cell.add_object(MapObject.Type.WOOD_ARROW)
+	elif roll < rock_density + 0.1093:
+		cell.add_object(MapObject.Type.BONE_ARROW)
+	elif roll < rock_density + 0.1100:
+		cell.add_object(MapObject.Type.IRON_KEY)
+	elif roll < rock_density + 0.1104:
+		cell.add_object(MapObject.Type.IRON_RING)
+	elif roll < rock_density + 0.1107:
+		cell.add_object(MapObject.Type.PEARL)
+	elif roll < rock_density + 0.1109:
+		cell.add_object(MapObject.Type.MAGIC_RING)
+	elif roll < rock_density + 0.1110:
+		cell.add_object(MapObject.Type.SILVER_ARROW)
 
 
 ## Returns a fresh mutable copy of a weights array (so blending doesn't mutate the source).
