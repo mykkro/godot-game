@@ -27,6 +27,7 @@ var _char_ui:       CharacterUI     = null
 var _quest_journal: QuestJournalUI  = null
 var _battle_dialog: BattleDialog    = null
 var _hud_stats:     HudStats        = null
+var _monster_book:  MonsterBook     = null
 
 
 func _ready() -> void:
@@ -75,6 +76,9 @@ func _ready() -> void:
 
 	_hud_stats = HudStats.new()
 	add_child(_hud_stats)
+
+	_monster_book = MonsterBook.new()
+	add_child(_monster_book)
 
 	AudioManager.apply_saved_settings()
 	_start_music()
