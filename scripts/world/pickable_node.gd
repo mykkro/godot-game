@@ -3,8 +3,8 @@ extends Area2D
 
 ## Collision layer for pickable items (distinct from physics layer 1).
 const LAYER_PICKABLE := 2
-## Visual scale applied to the sprite (0.5 = half natural size).
-const SPRITE_SCALE   := 0.375
+## Target in-world pixel size: 50 % of one map cell.
+const TARGET_PX      := ChunkData.CELL_SIZE * 0.5   # 32 px
 ## Pickup detection radius.
 const AREA_RADIUS    := 15.0
 
@@ -31,12 +31,14 @@ func initialize(p_item_type: int, p_cx: int, p_cy: int,
 	collision_layer = LAYER_PICKABLE
 	collision_mask  = 0
 
-	# Sprite using the item's sprite sheet entry.
+	# Sprite using the item's sprite sheet entry, auto-scaled to TARGET_PX.
 	var sprite           := Sprite2D.new()
 	sprite.texture        = PickableItemDef.get_texture(item_type)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var ws := PickableItemDef.get_world_scale(item_type)
-	sprite.scale          = Vector2(SPRITE_SCALE * ws, SPRITE_SCALE * ws)
+	var tex := sprite.texture
+	var tex_max := float(max(tex.get_width(), tex.get_height())) if tex != null else float(TARGET_PX)
+	var sf      := float(TARGET_PX) / tex_max if tex_max > 0.0 else 1.0
+	sprite.scale = Vector2(sf, sf)
 	add_child(sprite)
 
 	# Detection area.

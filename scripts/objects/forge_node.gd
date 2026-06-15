@@ -5,7 +5,7 @@ extends StaticBody2D
 ## input_contents:  up to 9 item stacks [{type, count}, ...]
 ## output_contents: up to 5 item stacks [{type, count}, ...]
 
-const SPRITE_SCALE   := 0.60   # 64-px source → 38-px on screen (matches chest)
+const TARGET_PX      := ChunkData.CELL_SIZE * 0.5   # 32 px — 50 % of one map cell
 const COLL_HALF      := 20.0
 const INPUT_SLOTS    := 9
 const OUTPUT_SLOTS   := 5
@@ -38,7 +38,10 @@ func initialize(p_cx: int, p_cy: int,
 	var sprite               := Sprite2D.new()
 	sprite.texture            = PickableItemDef.get_texture(MapObject.Type.FORGE)
 	sprite.texture_filter     = CanvasItem.TEXTURE_FILTER_NEAREST
-	sprite.scale              = Vector2(SPRITE_SCALE, SPRITE_SCALE)
+	var tex      := sprite.texture
+	var tex_max  := float(max(tex.get_width(), tex.get_height())) if tex != null else float(TARGET_PX)
+	var sf       := float(TARGET_PX) / tex_max if tex_max > 0.0 else 1.0
+	sprite.scale  = Vector2(sf, sf)
 	add_child(sprite)
 
 	if p_stored_input != null:

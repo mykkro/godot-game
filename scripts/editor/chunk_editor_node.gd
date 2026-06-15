@@ -81,7 +81,7 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 	if PickableItemDef.is_pickable(obj_type):
 		var tex := PickableItemDef.get_texture(obj_type)
 		if tex != null:
-			var s  := float(CELL_SIZE) * 0.50 * PickableItemDef.get_world_scale(obj_type)
+			var s  := float(CELL_SIZE) * 0.50
 			var ox := px + (CELL_SIZE - s) * 0.5
 			var oy := py + (CELL_SIZE - s) * 0.5
 			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
@@ -94,7 +94,7 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 			variant = ((cx * 7 + cy * 13) % ChestNode.CHEST_VARIANTS) + 1
 		var tex     := TextureCache.get_chest_texture(variant)
 		if tex != null:
-			var s  := float(CELL_SIZE) * 0.65
+			var s  := float(CELL_SIZE) * 0.50
 			var ox := px + (CELL_SIZE - s) * 0.5
 			var oy := py + (CELL_SIZE - s) * 0.5
 			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
@@ -102,7 +102,7 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 	if obj_type == MapObject.Type.FORGE:
 		var tex := TextureCache.get_items2_texture("forge.png")
 		if tex != null:
-			var s  := float(CELL_SIZE) * 0.65
+			var s  := float(CELL_SIZE) * 0.50
 			var ox := px + (CELL_SIZE - s) * 0.5
 			var oy := py + (CELL_SIZE - s) * 0.5
 			draw_texture_rect(tex, Rect2(ox, oy, s, s), false)

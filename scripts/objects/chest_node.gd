@@ -4,7 +4,7 @@ extends StaticBody2D
 ## Impassable interactable chest.  Registered in group "chests".
 ## contents holds up to CAPACITY item stacks: [{"type": int, "count": int}, …]
 
-const SPRITE_SCALE    := 1.2    # 32-px source → 38-px on screen
+const TARGET_PX       := ChunkData.CELL_SIZE * 0.5   # 32 px — 50 % of one map cell
 const COLL_HALF       := 20.0   # half-size of blocking rectangle in px
 const CHEST_VARIANTS  := 12     # number of chest_XX.png files
 const CAPACITY        := 20     # max item stacks
@@ -44,7 +44,9 @@ func initialize(p_cx: int, p_cy: int,
 	var sprite               := Sprite2D.new()
 	sprite.texture            = tex
 	sprite.texture_filter     = CanvasItem.TEXTURE_FILTER_NEAREST
-	sprite.scale              = Vector2(SPRITE_SCALE, SPRITE_SCALE)
+	var tex_max := float(max(tex.get_width(), tex.get_height())) if tex != null else float(TARGET_PX)
+	var sf      := float(TARGET_PX) / tex_max if tex_max > 0.0 else 1.0
+	sprite.scale              = Vector2(sf, sf)
 	add_child(sprite)
 
 	if p_stored_contents == null:

@@ -412,20 +412,6 @@ static func _atlas_coord(obj_type: int) -> Vector2i:
 	return Vector2i(-1, -1)
 
 
-## World-space render scale multiplier relative to the base SPRITE_SCALE.
-## Ravenmore icons are 128×128, so they need downscaling relative to legacy sprites.
-static func get_world_scale(obj_type: int) -> float:
-	if obj_type == MapObject.Type.FEATHER:
-		return 2.0
-	if _ravenmore_file(obj_type) != "":
-		return 0.50   # 128×128 source; halve to match visual size of legacy sprites
-	if _flare_armor_coord(obj_type).x >= 0:
-		return 0.50   # flare atlas cells are large; halve to match legacy sprites
-	if _kyrise_file(obj_type) != "":
-		return 0.50   # kyrise icons are large; halve to match legacy sprites
-	return 1.75 if _items2_file(obj_type) != "" else 1.0
-
-
 ## Returns the icon Texture2D for any pickable item type.
 ## Priority: ravenmore → flare armor → kyrise → items2 PNG → materials atlas → legacy sprite.
 static func get_texture(obj_type: int) -> Texture2D:

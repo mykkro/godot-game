@@ -45,11 +45,19 @@ var _trade_btn:        Button = null
 var _npc_trader_level:    int = 0
 var _player_trader_level: int = 0
 
+var _snd_trade: AudioStreamPlayer = null
+
 
 func _ready() -> void:
 	layer        = 73
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible      = false
+
+	_snd_trade = AudioStreamPlayer.new()
+	_snd_trade.volume_db = linear_to_db(0.7)
+	_snd_trade.bus       = AudioManager.SFX_BUS
+	add_child(_snd_trade)
+
 	_build_ui()
 
 
@@ -448,7 +456,18 @@ func _on_trade_pressed() -> void:
 	_npc_shop_states[_npc_id] = _deep_copy_items(_shop_work)
 	assert(_player_work.size() <= Inventory.MAX_ITEMS, "shop produced oversized player_work")
 	_inventory.items = _player_work
+	_play_coin_sound()
 	close()
+
+
+func _play_coin_sound() -> void:
+	const PATHS := [
+		"res://sounds/RPG Sound Pack/inventory/coin.wav",
+		"res://sounds/RPG Sound Pack/inventory/coin2.wav",
+		"res://sounds/RPG Sound Pack/inventory/coin3.wav",
+	]
+	_snd_trade.stream = load(PATHS[randi() % PATHS.size()])
+	_snd_trade.play()
 
 
 func _on_compact_player() -> void:
