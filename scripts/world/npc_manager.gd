@@ -166,12 +166,14 @@ func _find_spawn_pos(chunk_coord: Vector2i) -> Vector2:
 func _bump_counter(id: String, prefix: String) -> void:
 	if id.begins_with(prefix):
 		var n := int(id.substr(prefix.length()))
-		if n >= counter:
-			if prefix == "melee_":
+		if prefix == "melee_":
+			if n >= _next_melee_id:
 				_next_melee_id = n + 1
-			elif prefix == "monster_":
+		elif prefix == "monster_":
+			if n >= _next_monster_id:
 				_next_monster_id = n + 1
-			else:
+		else:
+			if n >= _next_knight_id:
 				_next_knight_id = n + 1
 
 
