@@ -4,9 +4,16 @@ extends StaticBody2D
 const DISPLAY_SIZE := 48.0   # 75% of ChunkData.CELL_SIZE (64)
 const COLL_RADIUS  := 24.0   # DISPLAY_SIZE / 2
 
-var monster_id:      String = ""
-var species:         String = ""   # filename stem, e.g. "Wolf"
-var is_editor_placed: bool  = false
+var monster_id:       String = ""
+var species:          String = ""   # filename stem, e.g. "Wolf"
+var is_editor_placed: bool   = false
+
+## Combat stats — initialised from MonsterStats on first initialize().
+var max_hp:    int = 0
+var current_hp: int = 0
+var attack:    int = 0
+var defense:   int = 0
+var xp_reward: int = 0
 
 var _sprite: Sprite2D = null
 
@@ -28,6 +35,17 @@ func initialize() -> void:
 	if species.is_empty():
 		species = _pick_random_species()
 	_load_sprite()
+	if max_hp == 0:
+		_init_stats()
+
+
+func _init_stats() -> void:
+	var s  := MonsterStats.for_species(species)
+	max_hp    = int(s.get("hp",      10))
+	current_hp = max_hp
+	attack    = int(s.get("attack",   4))
+	defense   = int(s.get("defense",  1))
+	xp_reward = int(s.get("xp",      10))
 
 
 func to_dict() -> Dictionary:
@@ -36,6 +54,8 @@ func to_dict() -> Dictionary:
 		"monster_id":       monster_id,
 		"species":          species,
 		"is_editor_placed": is_editor_placed,
+		"current_hp":       current_hp,
+		"max_hp":           max_hp,
 		"x":                position.x,
 		"y":                position.y,
 	}
@@ -47,6 +67,10 @@ func restore_from_dict(data: Dictionary) -> void:
 	is_editor_placed = bool(data.get("is_editor_placed", false))
 	position         = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
 	_load_sprite()
+	_init_stats()
+	# Restore saved HP (may be reduced from a previous fight the hero fled).
+	var saved_hp := int(data.get("current_hp", max_hp))
+	current_hp    = clampi(saved_hp, 0, max_hp)
 
 
 static var _species_pool: Array[String] = []

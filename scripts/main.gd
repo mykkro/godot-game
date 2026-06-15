@@ -25,6 +25,8 @@ var _console_ui:    ConsoleUI       = null
 var _wait_ui:       WaitUI          = null
 var _char_ui:       CharacterUI     = null
 var _quest_journal: QuestJournalUI  = null
+var _battle_dialog: BattleDialog    = null
+var _hud_stats:     HudStats        = null
 
 
 func _ready() -> void:
@@ -68,6 +70,12 @@ func _ready() -> void:
 	_quest_journal = QuestJournalUI.new()
 	add_child(_quest_journal)
 
+	_battle_dialog = BattleDialog.new()
+	add_child(_battle_dialog)
+
+	_hud_stats = HudStats.new()
+	add_child(_hud_stats)
+
 	AudioManager.apply_saved_settings()
 	_start_music()
 
@@ -80,6 +88,7 @@ func _ready() -> void:
 	# Load saved inventory (empty Inventory if no save exists).
 	_avatar.inventory = SaveManager.load_inventory()
 	_avatar.perks     = SaveManager.load_perks()
+	_avatar.stats     = SaveManager.load_stats()
 
 	var char_data             := SaveManager.load_character()
 	_avatar.char_name         = char_data.get("name", "")
@@ -96,6 +105,7 @@ func _ready() -> void:
 			_avatar.inventory.items.append({"type": entry[0], "count": entry[1]})
 
 	_char_ui.setup(_avatar)
+	_hud_stats.setup(_avatar.stats)
 
 	# Show name input on new character (no saved name).
 	if _avatar.char_name.is_empty():
@@ -118,8 +128,23 @@ func _ready() -> void:
 			_forge_ui.open(_avatar.inventory, forge)
 	)
 	_avatar.monster_fight_requested.connect(
-		func(_m: MonsterNode) -> void:
-			_pickup_hint.show_message("No mood for fighting today.")
+		func(m: MonsterNode) -> void:
+			_battle_dialog.open(m, _avatar.stats)
+	)
+	_battle_dialog.battle_won.connect(func(m: MonsterNode) -> void:
+		var leveled := _avatar.stats.add_xp(m.xp_reward)
+		if leveled:
+			_pickup_hint.show_message("Level up!  You are now level %d!" % _avatar.stats.level)
+		m.queue_free()
+		SaveManager.save_stats(_avatar.stats)
+	)
+	_battle_dialog.battle_lost.connect(func(m: MonsterNode) -> void:
+		m.current_hp = m.max_hp
+		_pickup_hint.show_message("You were defeated...")
+		SaveManager.save_stats(_avatar.stats)
+	)
+	_battle_dialog.battle_fled.connect(func() -> void:
+		SaveManager.save_stats(_avatar.stats)
 	)
 
 	_npc_dialog.shop_requested.connect(

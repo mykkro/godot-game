@@ -28,6 +28,7 @@ var _inventory_ui: InventoryUI  = null
 
 var inventory:       Inventory      = Inventory.new()
 var perks:           CharacterPerks = CharacterPerks.new()
+var stats:           HeroStats      = HeroStats.new()
 var char_name:       String         = ""
 var char_birth_time: float          = 0.0
 

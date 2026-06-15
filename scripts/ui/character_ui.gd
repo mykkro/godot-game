@@ -14,6 +14,7 @@ var _name_lbl:        Label          = null
 var _time_lbl:        Label          = null
 var _gold_lbl:        Label          = null
 var _perks_vbox:      VBoxContainer  = null
+var _stats_vbox:      VBoxContainer  = null
 var _inv_grid:        GridContainer  = null
 var _inv_icons:       Array          = []   # Array[TextureRect]
 var _knight:          KnightSprite   = null
@@ -98,6 +99,7 @@ func _refresh() -> void:
 	_gold_lbl.text = "Gold:  %d coins" % _count_gold()
 
 	_refresh_perks()
+	_refresh_battle_stats()
 	_refresh_inventory()
 
 
@@ -123,6 +125,27 @@ func _refresh_perks() -> void:
 		lbl.add_theme_font_size_override("font_size", 14)
 		lbl.add_theme_color_override("font_color", Color(0.45, 0.45, 0.55))
 		_perks_vbox.add_child(lbl)
+
+
+func _refresh_battle_stats() -> void:
+	for c in _stats_vbox.get_children():
+		c.queue_free()
+	var s := _avatar.stats
+	var entries: Array = [
+		["Level",   str(s.level)],
+		["XP",      "%d / %d" % [s.xp, s.xp_to_next()]],
+		["HP",      "%d / %d" % [s.current_hp, s.max_hp]],
+		["Mana",    "%d / %d" % [s.current_mana, s.max_mana]],
+		["Attack",  str(s.attack)],
+		["Magic",   str(s.magic)],
+		["Defense", str(s.defense)],
+	]
+	for entry in entries:
+		var lbl := Label.new()
+		lbl.text = "%-10s %s" % [entry[0], entry[1]]
+		lbl.add_theme_font_size_override("font_size", 14)
+		lbl.add_theme_color_override("font_color", Color(0.82, 0.82, 0.90))
+		_stats_vbox.add_child(lbl)
 
 
 func _refresh_inventory() -> void:
@@ -244,6 +267,13 @@ func _build_stats_column() -> VBoxContainer:
 	_gold_lbl = _stat_label("")
 	col.add_child(_time_lbl)
 	col.add_child(_gold_lbl)
+
+	col.add_child(_hsep())
+
+	col.add_child(_section_label("Battle Stats"))
+	_stats_vbox = VBoxContainer.new()
+	_stats_vbox.add_theme_constant_override("separation", 3)
+	col.add_child(_stats_vbox)
 
 	col.add_child(_hsep())
 

@@ -14,6 +14,7 @@ const CLOCK_FILE     := "user://clock.json"
 const PERKS_FILE     := "user://player_perks.json"
 const CHAR_FILE      := "user://character.json"
 const QUESTS_FILE    := "user://quests.json"
+const STATS_FILE     := "user://stats.json"
 
 
 ## Returns true when a previous game session exists (any saved chunk).
@@ -67,7 +68,7 @@ static func load_player() -> Dictionary:
 static func wipe() -> void:
 	_wipe_dir(CHUNKS_DIR)
 	_wipe_dir(FOG_DIR)
-	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE, PERKS_FILE, CHAR_FILE, QUESTS_FILE]:
+	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE, PERKS_FILE, CHAR_FILE, QUESTS_FILE, STATS_FILE]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 
@@ -296,6 +297,27 @@ static func load_quests(manager: QuestManager) -> void:
 	file.close()
 	if parsed is Dictionary:
 		manager.from_dict(parsed as Dictionary)
+
+
+static func save_stats(stats: HeroStats) -> void:
+	var file := FileAccess.open(STATS_FILE, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify(stats.to_dict()))
+	file.close()
+
+
+static func load_stats() -> HeroStats:
+	if not FileAccess.file_exists(STATS_FILE):
+		return HeroStats.new()
+	var file := FileAccess.open(STATS_FILE, FileAccess.READ)
+	if file == null:
+		return HeroStats.new()
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if parsed is Dictionary:
+		return HeroStats.from_dict(parsed as Dictionary)
+	return HeroStats.new()
 
 
 static func _wipe_dir(path: String) -> void:
