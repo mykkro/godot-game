@@ -25,6 +25,7 @@ config/icon="res://icon.svg"
 
 TileRegistry="*res://scripts/editor/tile_registry.gd"
 GameClock="*res://scripts/world/game_clock.gd"
+QuestManager="*res://scripts/quest/quest_manager.gd"
 
 [display]
 

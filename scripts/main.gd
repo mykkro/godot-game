@@ -24,6 +24,7 @@ var _day_night:     DayNightCycle   = null
 var _console_ui:    ConsoleUI       = null
 var _wait_ui:       WaitUI          = null
 var _char_ui:       CharacterUI     = null
+var _quest_journal: QuestJournalUI  = null
 
 
 func _ready() -> void:
@@ -63,6 +64,9 @@ func _ready() -> void:
 
 	_char_ui = CharacterUI.new()
 	add_child(_char_ui)
+
+	_quest_journal = QuestJournalUI.new()
+	add_child(_quest_journal)
 
 	AudioManager.apply_saved_settings()
 	_start_music()
@@ -117,6 +121,12 @@ func _ready() -> void:
 		func(npc: NpcMelee) -> void:
 			_shop_ui.open(_avatar.inventory, npc, _avatar.perks)
 	)
+	_npc_dialog.quest_turn_in_requested.connect(
+		func(npc: NpcMelee) -> void:
+			var gold := QuestManager.try_complete(npc.npc_id, _avatar.inventory)
+			if gold > 0:
+				SaveManager.save_inventory(_avatar.inventory)
+	)
 	_inventory_ui.drop_requested.connect(_avatar.drop_item)
 	_debug.setup(_world, _fog_manager, _avatar)
 	_pause_menu.setup(_fog_manager, _avatar, _npc_manager, _npc_dialog)
@@ -139,8 +149,12 @@ func _ready() -> void:
 	_fog_manager.update_avatar_position(spawn)
 	_npc_manager.load_and_spawn()
 	_npc_dialog.set_visited_data(SaveManager.load_dialog_visited())
+	_npc_dialog._inventory = _avatar.inventory
 	ShopUI.set_shop_states(SaveManager.load_shop_states())
 	GameClock.load_time(SaveManager.load_clock())
+	QuestManager.load_state()
+	QuestManager.check_readiness(_avatar.inventory)
+	_quest_journal.setup(_avatar.inventory)
 
 
 func _input(event: InputEvent) -> void:

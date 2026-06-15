@@ -13,6 +13,7 @@ const SHOPS_FILE     := "user://shops.json"
 const CLOCK_FILE     := "user://clock.json"
 const PERKS_FILE     := "user://player_perks.json"
 const CHAR_FILE      := "user://character.json"
+const QUESTS_FILE    := "user://quests.json"
 
 
 ## Returns true when a previous game session exists (any saved chunk).
@@ -66,7 +67,7 @@ static func load_player() -> Dictionary:
 static func wipe() -> void:
 	_wipe_dir(CHUNKS_DIR)
 	_wipe_dir(FOG_DIR)
-	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE, PERKS_FILE, CHAR_FILE]:
+	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE, PERKS_FILE, CHAR_FILE, QUESTS_FILE]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 
@@ -273,6 +274,28 @@ static func load_character() -> Dictionary:
 	if parsed is Dictionary:
 		return parsed as Dictionary
 	return {}
+
+
+static func save_quests(manager: QuestManager) -> void:
+	var file := FileAccess.open(QUESTS_FILE, FileAccess.WRITE)
+	if file == null:
+		push_error("SaveManager: cannot write quests save (error %d)" \
+				% FileAccess.get_open_error())
+		return
+	file.store_string(JSON.stringify(manager.to_dict()))
+	file.close()
+
+
+static func load_quests(manager: QuestManager) -> void:
+	if not FileAccess.file_exists(QUESTS_FILE):
+		return
+	var file := FileAccess.open(QUESTS_FILE, FileAccess.READ)
+	if file == null:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if parsed is Dictionary:
+		manager.from_dict(parsed as Dictionary)
 
 
 static func _wipe_dir(path: String) -> void:

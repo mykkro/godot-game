@@ -209,13 +209,20 @@ func _cmd_give(parts: Array) -> void:
 	var count   := int(parts[2]) if parts.size() >= 3 else 1
 	count = maxi(1, count)
 
-	var matches: Array[int] = []
+	var exact:   Array[int] = []
+	var partial: Array[int] = []
 	for key in MapObject.Type:
 		var val: int = MapObject.Type[key]
 		if not PickableItemDef.is_pickable(val):
 			continue
-		if MapObject.get_display_name(val).to_lower().contains(query):
-			matches.append(val)
+		var display := MapObject.get_display_name(val).to_lower()
+		if display == query:
+			exact.append(val)
+		elif display.contains(query):
+			partial.append(val)
+
+	# Prefer exact match; fall back to partial only when no exact hit.
+	var matches := exact if not exact.is_empty() else partial
 
 	if matches.is_empty():
 		_print_line("No pickable item matches '%s'" % query)

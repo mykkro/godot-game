@@ -28,11 +28,27 @@ var _chest_badges: Array = []
 var _inv_count_lbl:   Label = null
 var _chest_count_lbl: Label = null
 
+var _snd_open:     AudioStreamPlayer = null
+var _snd_take_all: AudioStreamPlayer = null
+
 
 func _ready() -> void:
 	layer        = 72
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible      = false
+
+	_snd_open = AudioStreamPlayer.new()
+	_snd_open.stream    = load("res://sounds/RPG Sound Pack/world/door.wav")
+	_snd_open.volume_db = linear_to_db(0.7)
+	_snd_open.bus       = AudioManager.SFX_BUS
+	add_child(_snd_open)
+
+	_snd_take_all = AudioStreamPlayer.new()
+	_snd_take_all.stream    = load("res://sounds/RPG Sound Pack/inventory/metal-ringing.wav")
+	_snd_take_all.volume_db = linear_to_db(0.6)
+	_snd_take_all.bus       = AudioManager.SFX_BUS
+	add_child(_snd_take_all)
+
 	_build_ui()
 
 
@@ -41,6 +57,7 @@ func open(inventory: Inventory, chest: ChestNode) -> void:
 	_chest     = chest
 	visible    = true
 	get_tree().paused = true
+	_snd_open.play()
 	_refresh()
 
 
@@ -330,6 +347,7 @@ func _on_sort_chest() -> void:
 func _on_take_all() -> void:
 	if _chest == null or _inventory == null:
 		return
+	var took := false
 	var i := 0
 	while i < _chest.contents.size():
 		var entry: Dictionary = _chest.contents[i]
@@ -340,11 +358,15 @@ func _on_take_all() -> void:
 			if not _inventory.add(obj_type):
 				break
 			added += 1
+		if added > 0:
+			took = true
 		if added >= count:
 			_chest.contents.remove_at(i)
 		else:
 			entry["count"] = count - added
 			i += 1
+	if took:
+		_snd_take_all.play()
 	_refresh()
 
 

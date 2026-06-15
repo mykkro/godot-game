@@ -1,17 +1,21 @@
 class_name NpcDialog
 extends CanvasLayer
 
-var _overlay:      Control       = null
-var _title:        Label         = null
-var _menu_box:     VBoxContainer = null
-var _speech_box:   VBoxContainer = null
-var _speech_label: Label         = null
-var _open:         bool          = false
-var _npc:          Node2D        = null
-## Visited options per NPC: "x,y" position key → {label: true}
-var _visited:      Dictionary    = {}
+var _overlay:        Control       = null
+var _title:          Label         = null
+var _menu_box:       VBoxContainer = null
+var _speech_box:     VBoxContainer = null
+var _speech_label:   Label         = null
+var _speech_actions: HBoxContainer = null
+var _open:           bool          = false
+var _npc:            Node2D        = null
+var _inventory:      Inventory     = null
+var _pending_quest:  QuestInstance = null
+## Visited options per NPC: npc_id key → {label: true}
+var _visited:        Dictionary    = {}
 
 signal shop_requested(npc: NpcMelee)
+signal quest_turn_in_requested(npc: NpcMelee)
 
 
 func _ready() -> void:
@@ -68,15 +72,10 @@ func _ready() -> void:
 	_speech_label.add_theme_color_override("font_color", Color(0.88, 0.92, 0.88))
 	_speech_box.add_child(_speech_label)
 
-	var continue_btn := _make_button("Continue...")
-	continue_btn.pressed.connect(_show_menu)
-	var italic_font := SystemFont.new()
-	italic_font.font_italic = true
-	continue_btn.add_theme_font_override("font", italic_font)
-	continue_btn.add_theme_color_override("font_color",         Color(0.42, 0.58, 0.82))
-	continue_btn.add_theme_color_override("font_hover_color",   Color(0.58, 0.72, 0.95))
-	continue_btn.add_theme_color_override("font_pressed_color", Color(0.32, 0.46, 0.68))
-	_speech_box.add_child(continue_btn)
+	_speech_actions = HBoxContainer.new()
+	_speech_actions.add_theme_constant_override("separation", 10)
+	_speech_box.add_child(_speech_actions)
+	_reset_speech_actions()
 
 	dim.visible = false
 	_overlay    = dim
@@ -98,6 +97,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func open(npc: Node2D) -> void:
 	_npc              = npc
 	_open             = true
+	_pending_quest    = null
 	_title.text       = _npc_label(npc)
 	_overlay.visible  = true
 	get_tree().paused = true
@@ -107,6 +107,7 @@ func open(npc: Node2D) -> void:
 
 func close() -> void:
 	_open             = false
+	_pending_quest    = null
 	_overlay.visible  = false
 	get_tree().paused = false
 
@@ -152,9 +153,62 @@ func _show_menu() -> void:
 
 
 func _show_speech(text: String) -> void:
+	_reset_speech_actions()
 	_speech_label.text  = text
 	_menu_box.visible   = false
 	_speech_box.visible = true
+
+
+func _show_quest_offer(text: String) -> void:
+	_speech_label.text  = text
+	_menu_box.visible   = false
+	_speech_box.visible = true
+
+	for c in _speech_actions.get_children():
+		c.queue_free()
+
+	var accept_btn := _make_speech_btn("Accept")
+	accept_btn.add_theme_color_override("font_color",       Color(0.28, 0.92, 0.42))
+	accept_btn.add_theme_color_override("font_hover_color", Color(0.40, 1.00, 0.55))
+	accept_btn.pressed.connect(_on_quest_accept)
+	_speech_actions.add_child(accept_btn)
+
+	var decline_btn := _make_speech_btn("No thanks")
+	decline_btn.add_theme_color_override("font_color",       Color(0.75, 0.35, 0.35))
+	decline_btn.add_theme_color_override("font_hover_color", Color(0.90, 0.45, 0.45))
+	decline_btn.pressed.connect(_show_menu)
+	_speech_actions.add_child(decline_btn)
+
+
+func _show_quest_turnin(quest: QuestInstance) -> void:
+	var item_name       := PickableItemDef.get_display_name(quest.required_item)
+	_speech_label.text   = "Excellent! You have the %s I needed. Here are your %d coins — well earned." \
+		% [item_name, quest.gold_reward]
+	_menu_box.visible   = false
+	_speech_box.visible = true
+
+	for c in _speech_actions.get_children():
+		c.queue_free()
+
+	var collect_btn := _make_speech_btn("Collect Reward")
+	collect_btn.add_theme_color_override("font_color",       Color(0.95, 0.82, 0.20))
+	collect_btn.add_theme_color_override("font_hover_color", Color(1.00, 0.92, 0.35))
+	collect_btn.pressed.connect(_on_quest_collect)
+	_speech_actions.add_child(collect_btn)
+
+
+func _reset_speech_actions() -> void:
+	for c in _speech_actions.get_children():
+		c.queue_free()
+	var btn := _make_speech_btn("Continue...")
+	var italic_font := SystemFont.new()
+	italic_font.font_italic = true
+	btn.add_theme_font_override("font", italic_font)
+	btn.add_theme_color_override("font_color",         Color(0.42, 0.58, 0.82))
+	btn.add_theme_color_override("font_hover_color",   Color(0.58, 0.72, 0.95))
+	btn.add_theme_color_override("font_pressed_color", Color(0.32, 0.46, 0.68))
+	btn.pressed.connect(_show_menu)
+	_speech_actions.add_child(btn)
 
 
 func _on_hello() -> void:
@@ -181,7 +235,47 @@ func _on_wisdom() -> void:
 
 
 func _on_quest() -> void:
-	_show_speech("I have no quests for you at this time, traveler.")
+	if not (_npc is NpcMelee):
+		return
+	var npc := _npc as NpcMelee
+	if _inventory != null:
+		QuestManager.check_readiness(_inventory)
+	var existing := QuestManager.get_quest_from_npc(npc.npc_id)
+
+	if existing == null:
+		if QuestManager.can_offer_quest(npc):
+			_pending_quest = QuestManager.generate_quest(npc)
+			var item_name  := PickableItemDef.get_display_name(_pending_quest.required_item)
+			_show_quest_offer(
+				"I need %d %s. Bring them to me and I'll pay you %d coins." % [
+					_pending_quest.required_count, item_name, _pending_quest.gold_reward,
+				]
+			)
+		else:
+			_pending_quest = null
+			_show_speech("I have nothing for you right now. Come back next week.")
+	elif existing.state == QuestInstance.State.READY:
+		_show_quest_turnin(existing)
+	else:
+		var have      := 0 if _inventory == null else QuestManager.count_item(_inventory, existing.required_item)
+		var item_name := PickableItemDef.get_display_name(existing.required_item)
+		_show_speech("Still waiting on those %s. You have %d of %d." % [
+			item_name, have, existing.required_count,
+		])
+
+
+func _on_quest_accept() -> void:
+	if _pending_quest == null:
+		_show_menu()
+		return
+	QuestManager.accept_quest(_pending_quest)
+	_pending_quest = null
+	_show_speech("Excellent! Come back once you've gathered everything.")
+
+
+func _on_quest_collect() -> void:
+	quest_turn_in_requested.emit(_npc as NpcMelee)
+	_show_speech("A pleasure doing business with you, traveler.")
 
 
 func _on_shop() -> void:
@@ -208,6 +302,16 @@ func _make_button(label: String) -> Button:
 	btn.alignment           = HORIZONTAL_ALIGNMENT_LEFT
 	btn.custom_minimum_size = Vector2(352, 44)
 	btn.add_theme_font_size_override("font_size", 16)
+	btn.process_mode        = Node.PROCESS_MODE_ALWAYS
+	return btn
+
+
+func _make_speech_btn(label: String) -> Button:
+	var btn := Button.new()
+	btn.text                = label
+	btn.alignment           = HORIZONTAL_ALIGNMENT_CENTER
+	btn.custom_minimum_size = Vector2(160, 40)
+	btn.add_theme_font_size_override("font_size", 15)
 	btn.process_mode        = Node.PROCESS_MODE_ALWAYS
 	return btn
 
