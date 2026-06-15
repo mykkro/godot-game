@@ -141,4 +141,5 @@ func _draw_monster(species: String, px: int, py: int) -> void:
 	var s  := float(CELL_SIZE) * 0.75
 	var ox := px + (CELL_SIZE - s) * 0.5
 	var oy := py + (CELL_SIZE - s) * 0.5
-	draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
+	# Semi-transparent so objects on the same cell (e.g. forge) remain visible.
+	draw_texture_rect(tex, Rect2(ox, oy, s, s), false, Color(1.0, 1.0, 1.0, 0.72))

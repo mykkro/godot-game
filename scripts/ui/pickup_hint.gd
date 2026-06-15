@@ -1,12 +1,20 @@
 class_name PickupHint
 extends CanvasLayer
 
-var _label:  Label = null
-var _avatar: Avatar = null
+var _label:     Label  = null
+var _avatar:    Avatar = null
+var _msg_timer: float  = 0.0
+var _msg_text:  String = ""
 
 
 func setup(avatar: Avatar) -> void:
 	_avatar = avatar
+
+
+## Show a transient message for 3 seconds (overrides the normal hint).
+func show_message(text: String) -> void:
+	_msg_text  = text
+	_msg_timer = 3.0
 
 
 func _ready() -> void:
@@ -30,9 +38,25 @@ func _ready() -> void:
 	anchor.add_child(_label)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _avatar == null:
 		return
+
+	# Transient fight-response message takes priority over everything.
+	if _msg_timer > 0.0:
+		_msg_timer -= delta
+		_label.text    = _msg_text
+		_label.add_theme_color_override("font_color", Color(1.0, 0.75, 0.5))
+		_label.visible = true
+		return
+
+	# Monster nearby → show F hint.
+	if _avatar.get_nearby_monster() != null:
+		_label.text    = "F  fight"
+		_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.35))
+		_label.visible = true
+		return
+
 	# NPC interaction takes priority over chest/pickup.
 	if _avatar.get_interactable_npc() != null:
 		_label.text    = "E  talk"

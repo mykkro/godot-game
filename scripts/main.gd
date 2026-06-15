@@ -117,6 +117,10 @@ func _ready() -> void:
 		func(forge: ForgeNode) -> void:
 			_forge_ui.open(_avatar.inventory, forge)
 	)
+	_avatar.monster_fight_requested.connect(
+		func(_m: MonsterNode) -> void:
+			_pickup_hint.show_message("No mood for fighting today.")
+	)
 
 	_npc_dialog.shop_requested.connect(
 		func(npc: NpcMelee) -> void:

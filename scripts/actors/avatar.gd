@@ -20,6 +20,7 @@ const SHOOT_COOLDOWN      := 0.5
 signal npc_interact_requested(npc: Node2D)
 signal chest_interact_requested(chest: ChestNode)
 signal forge_interact_requested(forge: ForgeNode)
+signal monster_fight_requested(monster: MonsterNode)
 
 var _world:        World        = null
 var _fog_manager:  FogManager   = null
@@ -143,6 +144,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				_try_pickup()
 		get_viewport().set_input_as_handled()
+	elif ke.keycode == KEY_F and ke.pressed and not ke.echo:
+		var monster := get_nearby_monster()
+		if monster != null:
+			monster_fight_requested.emit(monster)
+			get_viewport().set_input_as_handled()
 	elif ke.keycode == KEY_CTRL and ke.pressed and not ke.echo:
 		_try_shoot()
 		get_viewport().set_input_as_handled()
@@ -378,7 +384,7 @@ func get_interactable_npc() -> Node2D:
 	var best:      Node2D = null
 	var best_dist: float  = INF
 	for child in _world.get_children():
-		if not (child is NpcKnight or child is NpcMelee or child is MonsterNode):
+		if not (child is NpcKnight or child is NpcMelee):
 			continue
 		var npc := child as Node2D
 		var d   := position.distance_to(npc.position)
@@ -391,6 +397,25 @@ func get_interactable_npc() -> Node2D:
 		if d < best_dist:
 			best_dist = d
 			best      = npc
+	return best
+
+
+## Returns the nearest MonsterNode within INTERACT_DIST (no arc check).
+func get_nearby_monster() -> MonsterNode:
+	if _world == null:
+		return null
+	var best:      MonsterNode = null
+	var best_dist: float       = INF
+	for child in _world.get_children():
+		if not (child is MonsterNode):
+			continue
+		var m := child as MonsterNode
+		var d := position.distance_to(m.position)
+		if d > INTERACT_DIST:
+			continue
+		if d < best_dist:
+			best_dist = d
+			best      = m
 	return best
 
 
