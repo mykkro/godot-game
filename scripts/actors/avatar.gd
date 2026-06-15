@@ -378,7 +378,7 @@ func get_interactable_npc() -> Node2D:
 	var best:      Node2D = null
 	var best_dist: float  = INF
 	for child in _world.get_children():
-		if not (child is NpcKnight or child is NpcMelee):
+		if not (child is NpcKnight or child is NpcMelee or child is MonsterNode):
 			continue
 		var npc := child as Node2D
 		var d   := position.distance_to(npc.position)
