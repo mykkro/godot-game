@@ -131,8 +131,9 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 	var item_sel:       int    = _ui.get_item_palette().get_selected()
 	var chest_variant:  int    = _ui.get_item_palette().get_selected_chest_variant()
 	var rock_variant:   int    = _ui.get_item_palette().get_selected_rock_variant()
+	var monster_sel:    String = _ui.get_monster_palette().get_selected()
 
-	if terrain_sel == "" and item_sel == ItemPalette.NONE_TYPE:
+	if terrain_sel == "" and item_sel == ItemPalette.NONE_TYPE and monster_sel == "":
 		return
 
 	var chunk_node := _ensure_chunk(cc)
@@ -165,6 +166,9 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 			data.set_chest_contents(lc.x, lc.y, [])
 			data.set_rock_variant(lc.x, lc.y, 0)
 
+	if not monster_sel.is_empty():
+		data.set_monster_placement(lc.x, lc.y, monster_sel)
+
 	chunk_node.set_cell(lc.x, lc.y, cell)
 	_mark_dirty()
 
@@ -193,6 +197,12 @@ func _on_right_click_cell(cc: Vector2i, lc: Vector2i) -> void:
 		data.set_chest_variant(lc.x, lc.y, 0)
 		data.set_chest_contents(lc.x, lc.y, [])
 		data.set_rock_variant(lc.x, lc.y, 0)
+		chunk_node.set_cell(lc.x, lc.y, cell)
+		_mark_dirty()
+
+	# Also erase any editor-placed monster.
+	if not data.get_monster_placement(lc.x, lc.y).is_empty():
+		data.set_monster_placement(lc.x, lc.y, "")
 		chunk_node.set_cell(lc.x, lc.y, cell)
 		_mark_dirty()
 

@@ -16,6 +16,7 @@ var _lbl_status:    Label            = null
 var _chk_autosave:  CheckButton      = null
 var _terrain_pal:   TerrainPalette   = null
 var _item_pal:      ItemPalette      = null
+var _monster_pal:   MonsterPalette   = null
 var _palette_scroll: ScrollContainer = null
 var _confirm_dialog: ConfirmationDialog = null
 
@@ -43,6 +44,10 @@ func get_palette_scroll() -> ScrollContainer:
 
 func get_item_palette() -> ItemPalette:
 	return _item_pal
+
+
+func get_monster_palette() -> MonsterPalette:
+	return _monster_pal
 
 
 func set_chunk_coords(cc: Vector2i) -> void:
@@ -211,6 +216,18 @@ func _build_right_panel() -> void:
 	_item_pal = ItemPalette.new()
 	_item_pal.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_item_pal)
+
+	_add_separator(vbox)
+
+	var lbl_monsters := Label.new()
+	lbl_monsters.text = "MONSTERS"
+	lbl_monsters.add_theme_font_size_override("font_size", 15)
+	lbl_monsters.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
+	vbox.add_child(lbl_monsters)
+
+	_monster_pal = MonsterPalette.new()
+	_monster_pal.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_child(_monster_pal)
 
 	add_child(panel)
 
