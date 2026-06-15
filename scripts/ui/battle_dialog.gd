@@ -162,9 +162,11 @@ func _add_log(text: String) -> void:
 	lbl.add_theme_font_size_override("font_size", 13)
 	lbl.add_theme_color_override("font_color", Color(0.85, 0.88, 0.85))
 	_log_vbox.add_child(lbl)
-	# Keep log bounded
+	# remove_child first so get_child_count() drops immediately, then free
 	while _log_vbox.get_child_count() > LOG_MAX:
-		_log_vbox.get_child(0).queue_free()
+		var oldest := _log_vbox.get_child(0)
+		_log_vbox.remove_child(oldest)
+		oldest.queue_free()
 
 
 # ── Bar updates ───────────────────────────────────────────────────────────────
