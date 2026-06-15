@@ -50,9 +50,10 @@ func _process(delta: float) -> void:
 		_label.visible = true
 		return
 
-	# Monster nearby → show F hint.
-	if _avatar.get_nearby_monster() != null:
-		_label.text    = "F  fight"
+	# Monster nearby → show F hint with species name.
+	var nearby_monster := _avatar.get_nearby_monster()
+	if nearby_monster != null:
+		_label.text    = "F  fight  " + nearby_monster.species
 		_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.35))
 		_label.visible = true
 		return
