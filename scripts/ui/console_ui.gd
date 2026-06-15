@@ -180,6 +180,14 @@ func _execute(text: String) -> void:
 		"clear_inv":  _cmd_clear_inv()
 		"perk":       _cmd_perk(parts)
 		"name":       _cmd_name(parts)
+		"stats":      _cmd_stats()
+		"hp":         _cmd_hp(parts)
+		"heal":       _cmd_heal(parts)
+		"xp":         _cmd_xp(parts)
+		"level":      _cmd_level(parts)
+		"stat":       _cmd_stat(parts)
+		"monsters":   _cmd_monsters()
+		"killall":    _cmd_killall()
 		"help":       _cmd_help()
 		var unknown:  _print_line("Unknown: /" + unknown + "  (try /help)")
 
@@ -187,18 +195,27 @@ func _execute(text: String) -> void:
 # ── Command implementations ───────────────────────────────────────────────────
 
 func _cmd_help() -> void:
-	_print_line("/give <name> [n]   give item(s) — use /items to browse names")
-	_print_line("/coins <n>         add n coins")
-	_print_line("/items [filter]    list item names")
-	_print_line("/pos               show player position")
-	_print_line("/tp <x> <y>        teleport player")
-	_print_line("/day  /night       jump to 8 AM / 10 PM")
-	_print_line("/set_date MM/DD    set date")
-	_print_line("/set_time HH:MM    set time (24 h)")
-	_print_line("/timescale <n>     game clock speed (1=normal, 0=stop)")
-	_print_line("/clear_inv         wipe player inventory")
-	_print_line("/perk [name] [lvl] show or set a perk  (/perk trader 3)")
-	_print_line("/name <new name>   rename your character")
+	_print_line("/give <name> [n]         give item(s) — use /items to browse names")
+	_print_line("/coins <n>               add n coins")
+	_print_line("/items [filter]          list item names")
+	_print_line("/pos                     show player position")
+	_print_line("/tp <x> <y>              teleport player")
+	_print_line("/day  /night             jump to 8 AM / 10 PM")
+	_print_line("/set_date MM/DD          set date")
+	_print_line("/set_time HH:MM          set time (24 h)")
+	_print_line("/timescale <n>           game clock speed (1=normal, 0=stop)")
+	_print_line("/clear_inv               wipe player inventory")
+	_print_line("/perk [name] [lvl]       show or set a perk  (/perk trader 3)")
+	_print_line("/name <new name>         rename your character")
+	_print_line("── battle ──────────────────────────────")
+	_print_line("/stats                   show all battle stats")
+	_print_line("/hp [n]                  show or set current HP")
+	_print_line("/heal [n]                heal n HP (default: full)")
+	_print_line("/xp <n>                  add XP (auto level-up)")
+	_print_line("/level <n>               jump to level n")
+	_print_line("/stat <name> <value>     set a stat (attack magic defense max_hp max_mana)")
+	_print_line("/monsters                list all active monsters with HP")
+	_print_line("/killall                 despawn all active monsters")
 
 
 func _cmd_give(parts: Array) -> void:
@@ -412,6 +429,139 @@ func _cmd_name(parts: Array) -> void:
 	_avatar.char_name = new_name
 	SaveManager.save_character(_avatar.char_name, _avatar.char_birth_time)
 	_print_line("Character renamed to: " + new_name)
+
+
+func _cmd_stats() -> void:
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var s := _avatar.stats
+	_print_line("── Hero Stats ───────────────────────────")
+	_print_line("Level  : %d  (XP %d / %d)" % [s.level, s.xp, s.xp_to_next()])
+	_print_line("HP     : %d / %d" % [s.current_hp, s.max_hp])
+	_print_line("Mana   : %d / %d" % [s.current_mana, s.max_mana])
+	_print_line("Attack : %d   Magic: %d   Defense: %d" % [s.attack, s.magic, s.defense])
+
+
+func _cmd_hp(parts: Array) -> void:
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var s := _avatar.stats
+	if parts.size() < 2:
+		_print_line("HP: %d / %d" % [s.current_hp, s.max_hp])
+		return
+	var val := clampi(int(parts[1] as String), 0, s.max_hp)
+	s.current_hp = val
+	s.changed.emit()
+	SaveManager.save_stats(s)
+	_print_line("HP set to %d / %d" % [s.current_hp, s.max_hp])
+
+
+func _cmd_heal(parts: Array) -> void:
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var s      := _avatar.stats
+	var before := s.current_hp
+	if parts.size() < 2:
+		s.heal(s.max_hp)
+	else:
+		s.heal(maxi(0, int(parts[1] as String)))
+	SaveManager.save_stats(s)
+	_print_line("Healed %d HP  (%d → %d / %d)" % [s.current_hp - before, before, s.current_hp, s.max_hp])
+
+
+func _cmd_xp(parts: Array) -> void:
+	if parts.size() < 2:
+		_print_line("Usage: /xp <amount>")
+		return
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var amount := maxi(0, int(parts[1] as String))
+	var s      := _avatar.stats
+	var before := s.level
+	var leveled := s.add_xp(amount)
+	SaveManager.save_stats(s)
+	if leveled:
+		_print_line("Gained %d XP → Level %d → %d!  HP %d/%d" % [amount, before, s.level, s.current_hp, s.max_hp])
+	else:
+		_print_line("Gained %d XP  (Level %d, %d / %d XP)" % [amount, s.level, s.xp, s.xp_to_next()])
+
+
+func _cmd_level(parts: Array) -> void:
+	if parts.size() < 2:
+		_print_line("Usage: /level <n>")
+		return
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var target := maxi(1, int(parts[1] as String))
+	var s      := _avatar.stats
+	# Recompute base stats for the target level from scratch.
+	s.level    = target
+	s.xp       = 0
+	s.max_hp   = 30 + (target - 1) * 3
+	s.max_mana = 10 + (target - 1) * 1
+	s.current_hp   = s.max_hp
+	s.current_mana = s.max_mana
+	s.changed.emit()
+	SaveManager.save_stats(s)
+	_print_line("Level set to %d  (HP %d/%d, Mana %d/%d)" \
+			% [s.level, s.current_hp, s.max_hp, s.current_mana, s.max_mana])
+
+
+func _cmd_stat(parts: Array) -> void:
+	if parts.size() < 3:
+		_print_line("Usage: /stat <name> <value>")
+		_print_line("Names: attack  magic  defense  max_hp  max_mana")
+		return
+	if _avatar == null:
+		_print_line("No avatar reference")
+		return
+	var s    := _avatar.stats
+	var name := (parts[1] as String).to_lower()
+	var val  := maxi(0, int(parts[2] as String))
+	match name:
+		"attack":   s.attack    = val
+		"magic":    s.magic     = val
+		"defense":  s.defense   = val
+		"max_hp":
+			s.max_hp   = maxi(1, val)
+			s.current_hp = mini(s.current_hp, s.max_hp)
+		"max_mana":
+			s.max_mana   = maxi(0, val)
+			s.current_mana = mini(s.current_mana, s.max_mana)
+		_:
+			_print_line("Unknown stat '%s'.  Use: attack magic defense max_hp max_mana" % name)
+			return
+	s.changed.emit()
+	SaveManager.save_stats(s)
+	_print_line("%s → %d" % [name, val])
+
+
+func _cmd_monsters() -> void:
+	var nodes := get_tree().get_nodes_in_group("monsters")
+	if nodes.is_empty():
+		_print_line("No active monsters")
+		return
+	_print_line("%d active monster(s):" % nodes.size())
+	for node in nodes:
+		var m := node as MonsterNode
+		if m == null:
+			continue
+		_print_line("  %-20s HP %d/%d  id=%s%s" % [
+			m.species, m.current_hp, m.max_hp, m.monster_id,
+			"  [editor]" if m.is_editor_placed else ""])
+
+
+func _cmd_killall() -> void:
+	var nodes := get_tree().get_nodes_in_group("monsters")
+	var count := nodes.size()
+	for node in nodes:
+		node.queue_free()
+	_print_line("Despawned %d monster(s)" % count)
 
 
 func _cmd_clear_inv() -> void:
