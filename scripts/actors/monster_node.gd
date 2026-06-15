@@ -4,8 +4,9 @@ extends StaticBody2D
 const DISPLAY_SIZE := 48.0   # 75% of ChunkData.CELL_SIZE (64)
 const COLL_RADIUS  := 24.0   # DISPLAY_SIZE / 2
 
-var monster_id: String = ""
-var species:    String = ""   # filename stem, e.g. "Wolf"
+var monster_id:      String = ""
+var species:         String = ""   # filename stem, e.g. "Wolf"
+var is_editor_placed: bool  = false
 
 var _sprite: Sprite2D = null
 
@@ -31,18 +32,20 @@ func initialize() -> void:
 
 func to_dict() -> Dictionary:
 	return {
-		"type":       "monster",
-		"monster_id": monster_id,
-		"species":    species,
-		"x":          position.x,
-		"y":          position.y,
+		"type":             "monster",
+		"monster_id":       monster_id,
+		"species":          species,
+		"is_editor_placed": is_editor_placed,
+		"x":                position.x,
+		"y":                position.y,
 	}
 
 
 func restore_from_dict(data: Dictionary) -> void:
-	monster_id = str(data.get("monster_id", ""))
-	species    = str(data.get("species", ""))
-	position   = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
+	monster_id       = str(data.get("monster_id", ""))
+	species          = str(data.get("species", ""))
+	is_editor_placed = bool(data.get("is_editor_placed", false))
+	position         = Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0)))
 	_load_sprite()
 
 

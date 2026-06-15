@@ -21,6 +21,7 @@ func setup(world: World) -> void:
 
 
 ## Collect every live NPC and persist their state.
+## Only editor-placed monsters are saved; random monsters respawn each session.
 func save() -> void:
 	var data: Array = []
 	for child in _world.get_children():
@@ -29,7 +30,8 @@ func save() -> void:
 		elif child is NpcMelee:
 			data.append((child as NpcMelee).to_dict())
 		elif child is MonsterNode:
-			data.append((child as MonsterNode).to_dict())
+			if (child as MonsterNode).is_editor_placed:
+				data.append((child as MonsterNode).to_dict())
 	SaveManager.save_npcs(data)
 
 
@@ -42,10 +44,10 @@ func pre_mark_from_save() -> void:
 			var pos := Vector2(float(d.get("x", 0.0)), float(d.get("y", 0.0)))
 			_melee_spawned[_chunk_of(pos)] = true
 			_bump_counter(str(d.get("npc_id", "")), "melee_")
-		elif d.get("type", "") == "monster":
+		elif d.get("type", "") == "monster" and bool(d.get("is_editor_placed", false)):
 			var pos := Vector2(float(d.get("x", 0.0)), float(d.get("y", 0.0)))
 			_monster_spawned[_chunk_of(pos)] = true
-			_bump_counter(str(d.get("monster_id", "")), "monster_")
+			_bump_monster_counter(str(d.get("monster_id", "")))
 
 
 ## Spawn NPCs from a previously saved snapshot.
@@ -65,10 +67,12 @@ func load_and_spawn() -> void:
 				var cc := _chunk_of(npc.position)
 				_melee_spawned[cc] = true
 			"monster":
+				if not bool(d.get("is_editor_placed", false)):
+					continue  # random monsters are not persisted; they respawn fresh
 				var monster := MonsterNode.new()
 				_world.add_child(monster)
 				monster.restore_from_dict(d)
-				_bump_counter(monster.monster_id, "monster_")
+				_bump_monster_counter(monster.monster_id)
 				_monster_spawned[_chunk_of(monster.position)] = true
 			_:
 				var npc := NpcKnight.new()
@@ -114,28 +118,29 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 					var species := chunk_data.get_monster_placement(lx, ly)
 					if species.is_empty():
 						continue
-					var monster       := MonsterNode.new()
-					monster.monster_id = "monster_%03d" % _next_monster_id
-					_next_monster_id  += 1
-					monster.species    = species
-					monster.position   = Vector2(
+					var monster              := MonsterNode.new()
+					monster.species           = species
+					monster.is_editor_placed  = true
+					monster.position          = Vector2(
 						ox + (lx + 0.5) * ChunkData.CELL_SIZE,
 						oy + (ly + 0.5) * ChunkData.CELL_SIZE
 					)
 					_world.add_child(monster)
 					monster.initialize()
+					monster.monster_id   = "%s_%d" % [monster.species, _next_monster_id]
+					_next_monster_id    += 1
 					_monster_spawned[coord] = true
 
 	# Random monster fallback (skipped if chunk already has an editor-placed monster).
 	if not _monster_spawned.has(coord) and randf() < MONSTER_SPAWN_CHANCE:
 		var spawn := _find_spawn_pos(coord)
 		if is_finite(spawn.x):
-			var monster          := MonsterNode.new()
-			monster.monster_id    = "monster_%03d" % _next_monster_id
-			_next_monster_id     += 1
-			monster.position      = spawn
+			var monster  := MonsterNode.new()
+			monster.position = spawn
 			_world.add_child(monster)
 			monster.initialize()
+			monster.monster_id = "%s_%d" % [monster.species, _next_monster_id]
+			_next_monster_id  += 1
 			_monster_spawned[coord] = true
 
 
@@ -162,19 +167,26 @@ func _find_spawn_pos(chunk_coord: Vector2i) -> Vector2:
 	return Vector2(INF, INF)
 
 
-## Advance the given counter ref past the numeric suffix of a loaded NPC id.
+## Advance knight/melee ID counter past the numeric suffix.
 func _bump_counter(id: String, prefix: String) -> void:
 	if id.begins_with(prefix):
 		var n := int(id.substr(prefix.length()))
 		if prefix == "melee_":
 			if n >= _next_melee_id:
 				_next_melee_id = n + 1
-		elif prefix == "monster_":
-			if n >= _next_monster_id:
-				_next_monster_id = n + 1
 		else:
 			if n >= _next_knight_id:
 				_next_knight_id = n + 1
+
+
+## Advance the monster ID counter.  Works for both "species_n" and legacy
+## "monster_NNN" formats by splitting on the last underscore.
+func _bump_monster_counter(id: String) -> void:
+	var parts := id.rsplit("_", true, 1)
+	if parts.size() == 2 and parts[1].is_valid_int():
+		var n := int(parts[1])
+		if n >= _next_monster_id:
+			_next_monster_id = n + 1
 
 
 static func _roll_trader_perk(npc: NpcMelee) -> void:
