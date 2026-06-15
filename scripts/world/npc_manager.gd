@@ -41,11 +41,11 @@ func pre_mark_from_save() -> void:
 		if d.get("type", "") == "melee":
 			var pos := Vector2(float(d.get("x", 0.0)), float(d.get("y", 0.0)))
 			_melee_spawned[_chunk_of(pos)] = true
-			_bump_counter(str(d.get("npc_id", "")), "melee_", _next_melee_id)
+			_bump_counter(str(d.get("npc_id", "")), "melee_")
 		elif d.get("type", "") == "monster":
 			var pos := Vector2(float(d.get("x", 0.0)), float(d.get("y", 0.0)))
 			_monster_spawned[_chunk_of(pos)] = true
-			_bump_counter(str(d.get("monster_id", "")), "monster_", _next_monster_id)
+			_bump_counter(str(d.get("monster_id", "")), "monster_")
 
 
 ## Spawn NPCs from a previously saved snapshot.
@@ -60,7 +60,7 @@ func load_and_spawn() -> void:
 				npc.restore_from_dict(d)
 				if not d.has("perks"):
 					_roll_trader_perk(npc)
-				_bump_counter(npc.npc_id, "melee_", _next_melee_id)
+				_bump_counter(npc.npc_id, "melee_")
 				# Mark chunk so we don't double-spawn on chunk-load signal.
 				var cc := _chunk_of(npc.position)
 				_melee_spawned[cc] = true
@@ -68,13 +68,13 @@ func load_and_spawn() -> void:
 				var monster := MonsterNode.new()
 				_world.add_child(monster)
 				monster.restore_from_dict(d)
-				_bump_counter(monster.monster_id, "monster_", _next_monster_id)
+				_bump_counter(monster.monster_id, "monster_")
 				_monster_spawned[_chunk_of(monster.position)] = true
 			_:
 				var npc := NpcKnight.new()
 				_world.add_child(npc)
 				npc.restore_from_dict(d)
-				_bump_counter(npc.npc_id, "knight_", _next_knight_id)
+				_bump_counter(npc.npc_id, "knight_")
 
 
 func _on_chunk_loaded(coord: Vector2i) -> void:
@@ -140,7 +140,7 @@ func _find_spawn_pos(chunk_coord: Vector2i) -> Vector2:
 
 
 ## Advance the given counter ref past the numeric suffix of a loaded NPC id.
-func _bump_counter(id: String, prefix: String, counter: int) -> void:
+func _bump_counter(id: String, prefix: String) -> void:
 	if id.begins_with(prefix):
 		var n := int(id.substr(prefix.length()))
 		if n >= counter:
