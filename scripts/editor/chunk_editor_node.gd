@@ -63,6 +63,11 @@ func _draw() -> void:
 			for obj_type in cell.objects:
 				_draw_object(obj_type, px, py)
 
+			# Editor-placed monster overlay.
+			var species := _data.get_monster_placement(x, y)
+			if not species.is_empty():
+				_draw_monster(species, px, py)
+
 	# Hover highlight.
 	if _hover_cell.x >= 0 and _hover_cell.x < CHUNK_SIZE \
 			and _hover_cell.y >= 0 and _hover_cell.y < CHUNK_SIZE:
@@ -127,3 +132,13 @@ func _draw_object(obj_type: int, px: int, py: int) -> void:
 	var col: Color = OBJ_COLORS.get(obj_type, Color(0.7, 0.7, 0.7))
 	var m := CELL_SIZE * 0.2
 	draw_rect(Rect2(px + m, py + m, CELL_SIZE - m * 2, CELL_SIZE - m * 2), col)
+
+
+func _draw_monster(species: String, px: int, py: int) -> void:
+	var tex := TextureCache.get_being_texture(species)
+	if tex == null:
+		return
+	var s  := float(CELL_SIZE) * 0.75
+	var ox := px + (CELL_SIZE - s) * 0.5
+	var oy := py + (CELL_SIZE - s) * 0.5
+	draw_texture_rect(tex, Rect2(ox, oy, s, s), false)
