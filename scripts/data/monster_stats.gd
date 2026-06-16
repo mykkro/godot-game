@@ -93,7 +93,7 @@ static var _table: Dictionary = {
 	"Blue whale":         {hp=50, attack=10, defense=3, magic=0, xp=50, initiative=6, actions=3},
 }
 
-static var _default: Dictionary = {hp=12, attack=4, defense=1, magic=0, xp=10}
+static var _default: Dictionary = {hp=12, attack=4, defense=1, magic=0, xp=10, initiative=5, actions=1}
 
 
 static func for_species(species: String) -> Dictionary:
