@@ -277,9 +277,11 @@ func _on_hover_cell(cc: Vector2i, lc: Vector2i) -> void:
 		if cell != null:
 			var overlay := (_chunks[cc] as ChunkEditorNode).get_data().get_terrain_overlay(lc.x, lc.y)
 			_ui.set_hover_terrain(cell.terrain_type, overlay)
+	var world_center := Vector2i(cc.x * ChunkData.CHUNK_SIZE + lc.x,
+	                             cc.y * ChunkData.CHUNK_SIZE + lc.y)
+	var brush_size   := _ui.get_brush_size()
 	for coord in _chunks.keys():
-		(_chunks[coord] as ChunkEditorNode).set_hover(
-				lc if coord == cc else Vector2i(-1, -1))
+		(_chunks[coord] as ChunkEditorNode).set_hover(world_center, brush_size)
 
 
 # ── Chest editor callbacks ────────────────────────────────────────────────────
