@@ -80,7 +80,7 @@ func _on_attack() -> void:
 	var eff_atk := _hero.attack
 	if _perks != null:
 		var berk_lv := _perks.get_level(PerkDef.ID.BERSERKER)
-		if berk_lv > 0 and float(_hero.current_hp) / float(_hero.max_hp) < 0.30:
+		if berk_lv > 0 and _hero.max_hp > 0 and float(_hero.current_hp) / float(_hero.max_hp) < 0.30:
 			var bonus := PerkDef.get_berserker_bonus(berk_lv)
 			eff_atk += bonus
 			_add_log("Berserker rage!  +%d attack." % bonus)
@@ -139,6 +139,7 @@ func _finish(state: _State) -> void:
 					var heal := PerkDef.get_vampiric_heal(vamp_lv)
 					_hero.heal(heal)
 					_add_log("You drain %d HP." % heal)
+					_refresh_bars()
 			_result_lbl.text = "Victory!  +%d XP" % _monster.xp_reward
 			_result_lbl.add_theme_color_override("font_color", Color(0.5, 1.0, 0.4))
 		_State.LOSE:
