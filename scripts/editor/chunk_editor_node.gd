@@ -58,6 +58,13 @@ func _draw() -> void:
 			else:
 				draw_rect(rect, Color(0.22, 0.65, 0.18))
 
+			# Layer 1 overlay terrain.
+			var overlay := _data.get_terrain_overlay(x, y)
+			if overlay != "":
+				var overlay_tex := TextureCache.get_texture(overlay)
+				if overlay_tex != null:
+					draw_texture_rect(overlay_tex, rect, false)
+
 			draw_rect(rect, Color(0, 0, 0, 0.07), false, 1.0)
 
 			for obj_type in cell.objects:
