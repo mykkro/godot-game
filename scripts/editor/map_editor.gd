@@ -177,6 +177,7 @@ func _pick_at(cc: Vector2i, lc: Vector2i) -> void:
 
 
 func _paint_single_cell(cc: Vector2i, lc: Vector2i) -> void:
+	_snapshot_cell(cc, lc)
 	if _chest_editor.visible:
 		return
 	var terrain_sel:    String = _ui.get_terrain_palette().get_selected()
@@ -242,6 +243,8 @@ func _on_right_click_cell(cc: Vector2i, lc: Vector2i) -> void:
 	var cell       := data.get_cell(lc.x, lc.y)
 	if cell == null:
 		return
+
+	_snapshot_cell(cc, lc)
 
 	if cell.objects.has(MapObject.Type.CHEST_SMALL):
 		_chest_editor.open(data, lc.x, lc.y)
