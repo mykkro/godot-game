@@ -277,6 +277,9 @@ enum Type {
 	GIFT_BOX         = 235,
 	FACETED_GEM      = 236,
 	MAGIC_CRYSTAL    = 237,
+	## Potions — useable consumables.
+	HEALTH_POTION = 238,
+	MANA_POTION   = 239,
 }
 
 ## Returns false when an actor cannot pass through this object type.
@@ -532,4 +535,6 @@ static func get_display_name(obj_type: int) -> String:
 		Type.GIFT_BOX:              return "Gift Box"
 		Type.FACETED_GEM:           return "Faceted Gem"
 		Type.MAGIC_CRYSTAL:         return "Magic Crystal"
+		Type.HEALTH_POTION:         return "Health Potion"
+		Type.MANA_POTION:           return "Mana Potion"
 	return "Unknown"

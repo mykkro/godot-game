@@ -56,7 +56,8 @@ static func max_stack_size(obj_type: int) -> int:
 		MapObject.Type.OATMEAL_BREAD,  MapObject.Type.SMOOTHIE,    \
 		MapObject.Type.SOUP,           MapObject.Type.STEW,        \
 		MapObject.Type.BADGE,          MapObject.Type.MAP_PIN,     \
-		MapObject.Type.RECYCLING_STAMP, MapObject.Type.TICKET:
+		MapObject.Type.RECYCLING_STAMP, MapObject.Type.TICKET, \
+		MapObject.Type.HEALTH_POTION, MapObject.Type.MANA_POTION:
 			return 16
 
 		# Stack 8 — drinks and fragile vials.
@@ -97,6 +98,12 @@ static func is_pickable(obj_type: int) -> bool:
 	return obj_type != MapObject.Type.ROCK \
 		and obj_type != MapObject.Type.CHEST_SMALL \
 		and obj_type != MapObject.Type.FORGE
+
+
+## Returns true when an item can be placed in the belt and used directly.
+static func is_useable(obj_type: int) -> bool:
+	return obj_type == MapObject.Type.HEALTH_POTION \
+		or obj_type == MapObject.Type.MANA_POTION
 
 
 ## Human-readable name shown in the inventory.
@@ -204,6 +211,8 @@ static func _ravenmore_file(obj_type: int) -> String:
 		MapObject.Type.GEM_GREEN:    return "gemGreen.png"
 		MapObject.Type.GEM_BLUE:     return "gemBlue.png"
 		MapObject.Type.HEART_AMULET: return "heart.png"
+		MapObject.Type.HEALTH_POTION: return "potionRed.png"
+		MapObject.Type.MANA_POTION:   return "potionBlue.png"
 	return ""
 
 
