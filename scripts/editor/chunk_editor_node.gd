@@ -13,6 +13,7 @@ const OBJ_COLORS := {
 var _data:               ChunkData = null
 var _hover_world_center: Vector2i  = Vector2i(-1, -1)
 var _hover_brush_size:   int       = 1
+var _has_hover:          bool      = false
 
 
 func initialize(data: ChunkData) -> void:
@@ -22,7 +23,8 @@ func initialize(data: ChunkData) -> void:
 
 
 func set_hover(world_center: Vector2i, brush_size: int) -> void:
-	if world_center != _hover_world_center or brush_size != _hover_brush_size:
+	if not _has_hover or world_center != _hover_world_center or brush_size != _hover_brush_size:
+		_has_hover          = true
 		_hover_world_center = world_center
 		_hover_brush_size   = brush_size
 		queue_redraw()
@@ -78,7 +80,7 @@ func _draw() -> void:
 				_draw_monster(species, px, py)
 
 	# Hover highlight — draw every cell of the brush that falls in this chunk.
-	if _hover_world_center.x >= 0:
+	if _has_hover:
 		var half    := _hover_brush_size / 2
 		var chunk_x := _data.chunk_x
 		var chunk_y := _data.chunk_y
