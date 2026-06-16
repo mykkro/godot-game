@@ -47,6 +47,11 @@ func _ready() -> void:
 
 	_center = CenterContainer.new()
 	_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# IGNORE so the full-screen container doesn't intercept hits outside the
+	# inventory panel — lets belt slot events reach _belt_ui (a sibling, not a
+	# child) when inventory is open. Children (slots inside _panel) are still
+	# found by hit-testing because IGNORE only affects the node itself.
+	_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_center)
 
 	_panel = PanelContainer.new()
