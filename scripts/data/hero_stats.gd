@@ -15,6 +15,7 @@ var current_mana: int = 10
 var attack:       int = 6
 var magic:        int = 4
 var defense:      int = 2
+var initiative:   int = 5
 
 
 func xp_to_next() -> int:
@@ -58,6 +59,7 @@ func to_dict() -> Dictionary:
 		"attack":       attack,
 		"magic":        magic,
 		"defense":      defense,
+		"initiative":   initiative,
 	}
 
 
@@ -72,6 +74,7 @@ static func from_dict(d: Dictionary) -> HeroStats:
 	s.attack       = int(d.get("attack",        6))
 	s.magic        = int(d.get("magic",         4))
 	s.defense      = int(d.get("defense",       2))
+	s.initiative   = int(d.get("initiative",    5))
 	return s
 
 
