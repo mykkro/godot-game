@@ -432,6 +432,7 @@ static func _read_input() -> Vector2:
 	)
 
 
+## Apply the on-use effect of a consumable item to the avatar's stats.
 func apply_item_effect(item_type: int) -> void:
 	match item_type:
 		MapObject.Type.HEALTH_POTION:
@@ -439,8 +440,11 @@ func apply_item_effect(item_type: int) -> void:
 		MapObject.Type.MANA_POTION:
 			stats.current_mana = mini(stats.max_mana, stats.current_mana + 20)
 			stats.changed.emit()
+		_:
+			push_warning("apply_item_effect: unhandled item_type %d" % item_type)
 
 
+## Consume one item from belt slot [index] and apply its effect.
 func use_belt_slot(index: int) -> void:
 	var item_type := belt.consume(index)
 	if item_type < 0:
@@ -449,5 +453,6 @@ func use_belt_slot(index: int) -> void:
 	show_use_feedback(item_type)
 
 
+## Show floating feedback text above the avatar when a consumable is used.
 func show_use_feedback(_item_type: int) -> void:
 	pass  # implemented in Task 5
