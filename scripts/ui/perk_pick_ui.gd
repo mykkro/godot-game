@@ -10,6 +10,7 @@ var _choices:    Array          = []   # Array[PerkDef.ID]
 var _overlay:    Control       = null
 var _header_lbl: Label         = null
 var _cards_hbox: HBoxContainer = null
+var _picking:    bool          = false
 
 
 func _ready() -> void:
@@ -59,6 +60,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _apply_pick(perk_id: PerkDef.ID) -> void:
+    if _picking:
+        return
+    _picking = true
     var new_level := _perks.get_level(perk_id) + 1
     _perks.set_level(perk_id, new_level)
 
@@ -79,10 +83,12 @@ func _apply_pick(perk_id: PerkDef.ID) -> void:
     _overlay.visible  = false
     get_tree().paused = false
     perk_picked.emit()
+    _picking = false
 
 
 func _build_cards() -> void:
     for c in _cards_hbox.get_children():
+        _cards_hbox.remove_child(c)
         c.queue_free()
     for i in range(_choices.size()):
         var perk_id: PerkDef.ID = _choices[i]
