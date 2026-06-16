@@ -1,5 +1,5 @@
 class_name BeltUI
-extends CanvasLayer
+extends Control
 
 const SLOT_SIZE := 44
 const SLOT_GAP  := 6
@@ -22,14 +22,10 @@ func setup(belt: Belt, inventory: Inventory, inv_ui: InventoryUI) -> void:
 
 
 func _ready() -> void:
-	layer        = 60                        # below InventoryUI (layer 70) so inventory draws on top
-	process_mode = Node.PROCESS_MODE_ALWAYS  # keep running while inventory pause is active
-
-	# Full-rect root — transparent, passes mouse events through.
-	var root := Control.new()
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(root)
+	# BeltUI lives inside InventoryUI's CanvasLayer so drag-and-drop between
+	# belt slots and inventory slots works (same canvas layer = same event space).
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	# Bottom strip — full width, fixed height above the screen edge.
 	var bottom := Control.new()
@@ -37,7 +33,7 @@ func _ready() -> void:
 	bottom.offset_top    = -(SLOT_SIZE + 20)
 	bottom.offset_bottom = -8
 	bottom.mouse_filter  = Control.MOUSE_FILTER_IGNORE
-	root.add_child(bottom)
+	add_child(bottom)
 
 	# CenterContainer centres the pill horizontally (and vertically) inside the strip.
 	var center := CenterContainer.new()

@@ -87,7 +87,8 @@ func _ready() -> void:
 	_perk_pick_ui.perk_picked.connect(_on_perk_picked)
 
 	_belt_ui = BeltUI.new()
-	add_child(_belt_ui)
+	_inventory_ui.add_child(_belt_ui)
+	_inventory_ui.move_child(_belt_ui, 0)  # render behind inventory panel and context menu
 
 	AudioManager.apply_saved_settings()
 	_start_music()
