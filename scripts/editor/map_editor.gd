@@ -208,7 +208,7 @@ func _on_right_click_cell(cc: Vector2i, lc: Vector2i) -> void:
 			cell.is_obstacle = not TileRegistry.is_passable(cell.terrain_type)
 			chunk_node.set_cell(lc.x, lc.y, cell)
 			_mark_dirty()
-		return
+			return
 
 	# Layer 0: default erase objects.
 	if not cell.objects.is_empty():

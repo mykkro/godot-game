@@ -262,4 +262,11 @@ static func from_dict(data: Dictionary) -> ChunkData:
 		var val := str((pair as Array)[1])
 		if not val.is_empty():
 			chunk.terrain_overlay[key] = val
+	# Reconcile is_obstacle: overlay (layer 1) wins over base terrain.
+	for key in chunk.terrain_overlay:
+		var lx := key % CHUNK_SIZE
+		var ly := key / CHUNK_SIZE
+		var cell := chunk.get_cell(lx, ly)
+		if cell != null:
+			cell.is_obstacle = not TileRegistry.is_passable(chunk.terrain_overlay[key])
 	return chunk
