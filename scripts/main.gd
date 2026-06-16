@@ -29,6 +29,7 @@ var _battle_dialog: BattleDialog    = null
 var _hud_stats:     HudStats        = null
 var _monster_book:  MonsterBook     = null
 var _perk_pick_ui:  PerkPickUI      = null
+var _belt_ui:       BeltUI          = null
 
 
 func _ready() -> void:
@@ -85,6 +86,9 @@ func _ready() -> void:
 	add_child(_perk_pick_ui)
 	_perk_pick_ui.perk_picked.connect(_on_perk_picked)
 
+	_belt_ui = BeltUI.new()
+	add_child(_belt_ui)
+
 	AudioManager.apply_saved_settings()
 	_start_music()
 
@@ -98,6 +102,7 @@ func _ready() -> void:
 	_avatar.inventory = SaveManager.load_inventory()
 	_avatar.perks     = SaveManager.load_perks()
 	_avatar.stats     = SaveManager.load_stats()
+	_avatar.belt      = SaveManager.load_belt()
 
 	var char_data             := SaveManager.load_character()
 	_avatar.char_name         = char_data.get("name", "")
@@ -112,6 +117,10 @@ func _ready() -> void:
 			[21, 3], [88, 1],         # Cloth Strip
 		]:
 			_avatar.inventory.items.append({"type": entry[0], "count": entry[1]})
+
+	if not _avatar.belt.has_item(0) and not _avatar.belt.has_item(1):
+		_avatar.belt.set_slot(0, MapObject.Type.HEALTH_POTION, 2)
+		_avatar.belt.set_slot(1, MapObject.Type.MANA_POTION,   2)
 
 	_char_ui.setup(_avatar)
 	_hud_stats.setup(_avatar.stats)
@@ -166,11 +175,18 @@ func _ready() -> void:
 			var gold := QuestManager.try_complete(npc.npc_id, _avatar.inventory)
 			if gold > 0:
 				SaveManager.save_inventory(_avatar.inventory)
+				SaveManager.save_belt(_avatar.belt)
 	)
 	_inventory_ui.drop_requested.connect(_avatar.drop_item)
+	_inventory_ui.use_from_inventory.connect(func(item_type: int) -> void:
+		_avatar.apply_item_effect(item_type)
+		_avatar.show_use_feedback(item_type)
+	)
 	_debug.setup(_world, _fog_manager, _avatar)
 	_pause_menu.setup(_fog_manager, _avatar, _npc_manager, _npc_dialog)
 	_inventory_ui.setup(_avatar.inventory)
+	_inventory_ui.setup_belt(_avatar.belt)
+	_belt_ui.setup(_avatar.belt, _avatar.inventory, _inventory_ui)
 	_pickup_hint.setup(_avatar)
 	_minimap.setup(_world, _fog_manager, _avatar)
 
