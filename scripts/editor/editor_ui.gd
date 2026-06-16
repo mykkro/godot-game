@@ -27,6 +27,9 @@ var _btn_layer1: Button = null
 var _brush_size: int = 1
 var _brush_btns: Array = []   # 5 Button nodes
 
+var _pick_mode: bool   = false
+var _btn_pick:  Button = null
+
 # Unsaved exit guard callback — set by map_editor.gd.
 var _exit_guard: Callable = Callable()
 
@@ -47,6 +50,10 @@ func get_active_layer() -> int:
 
 func get_brush_size() -> int:
 	return _brush_size
+
+
+func is_pick_mode() -> bool:
+	return _pick_mode
 
 
 func get_terrain_palette() -> TerrainPalette:
@@ -214,6 +221,15 @@ func _build_right_panel() -> void:
 	_btn_layer1.pressed.connect(_on_layer_btn_pressed.bind(1))
 	layer_row.add_child(_btn_layer1)
 
+	_btn_pick = Button.new()
+	_btn_pick.text = "⛏"
+	_btn_pick.toggle_mode = true
+	_btn_pick.button_pressed = false
+	_btn_pick.tooltip_text = "Pick tile from map (eyedropper)"
+	_btn_pick.custom_minimum_size = Vector2(34, 0)
+	_btn_pick.pressed.connect(_on_pick_btn_pressed)
+	layer_row.add_child(_btn_pick)
+
 	# Brush size row
 	var brush_row := HBoxContainer.new()
 	brush_row.add_theme_constant_override("separation", 3)
@@ -360,6 +376,10 @@ func _build_exit_dialog() -> void:
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+func _on_pick_btn_pressed() -> void:
+	_pick_mode = _btn_pick.button_pressed
+
 
 func _on_layer_btn_pressed(layer: int) -> void:
 	_active_layer = layer

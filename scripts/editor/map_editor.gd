@@ -125,6 +125,9 @@ func _ensure_chunk(cc: Vector2i) -> ChunkEditorNode:
 # ── Edit operations ───────────────────────────────────────────────────────────
 
 func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
+	if _ui.is_pick_mode():
+		_pick_at(cc, lc)
+		return
 	if _chest_editor.visible:
 		return
 	var size := _ui.get_brush_size()
@@ -149,6 +152,20 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 			painted = true
 	if painted:
 		_mark_dirty()
+
+
+func _pick_at(cc: Vector2i, lc: Vector2i) -> void:
+	if not _chunks.has(cc):
+		return
+	var data := (_chunks[cc] as ChunkEditorNode).get_data()
+	var cell := data.get_cell(lc.x, lc.y)
+	if cell == null:
+		return
+	# Pick topmost layer: overlay (layer 1) first, then base (layer 0).
+	var overlay := data.get_terrain_overlay(lc.x, lc.y)
+	var terrain := overlay if overlay != "" else cell.terrain_type
+	if terrain != "":
+		_ui.get_terrain_palette().select_tile(terrain)
 
 
 func _paint_single_cell(cc: Vector2i, lc: Vector2i) -> void:
