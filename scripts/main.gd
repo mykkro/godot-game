@@ -117,8 +117,6 @@ func _ready() -> void:
 			[21, 3], [88, 1],         # Cloth Strip
 		]:
 			_avatar.inventory.items.append({"type": entry[0], "count": entry[1]})
-
-	if not _avatar.belt.has_item(0) and not _avatar.belt.has_item(1):
 		_avatar.belt.set_slot(0, MapObject.Type.HEALTH_POTION, 2)
 		_avatar.belt.set_slot(1, MapObject.Type.MANA_POTION,   2)
 

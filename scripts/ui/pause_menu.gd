@@ -167,6 +167,7 @@ func _save_all() -> void:
 	if _avatar != null:
 		SaveManager.save_player(_avatar.position, _avatar.heading)
 		SaveManager.save_inventory(_avatar.inventory)
+		SaveManager.save_belt(_avatar.belt)
 		SaveManager.save_perks(_avatar.perks)
 		SaveManager.save_character(_avatar.char_name, _avatar.char_birth_time)
 	if _npc_manager != null:
