@@ -10,6 +10,7 @@ const OPEN_SOUND_VOLUME := 0.3
 var _visible_flag: bool              = false
 var _inventory:    Inventory         = null
 var _open_sound:   AudioStreamPlayer = null
+var _belt:         Belt              = null
 
 var _center:      CenterContainer = null
 var _panel:       PanelContainer  = null
@@ -31,6 +32,11 @@ var _cm_btn_drop_all:     Button         = null
 
 func setup(inventory: Inventory) -> void:
 	_inventory = inventory
+
+
+## Store a reference to the belt so inventory slots can accept belt drag-and-drop.
+func setup_belt(belt: Belt) -> void:
+	_belt = belt
 
 
 func _ready() -> void:
@@ -416,18 +422,60 @@ func _setup_slot_drag(slot: PanelContainer, slot_index: int) -> void:
 			slot.set_drag_preview(preview)
 			return {"inv_src_slot": slot_index},
 
-		# can_drop_data — accept another inventory slot being dragged here.
+		# can_drop_data — accept inventory or belt drag-and-drop.
 		func(_pos: Vector2, data: Variant) -> bool:
-			if not (data is Dictionary) or not data.has("inv_src_slot"):
+			if not (data is Dictionary):
 				return false
-			var src: int = data["inv_src_slot"]
-			return src != slot_index,
+			var d := data as Dictionary
+			if d.has("inv_src_slot"):
+				return int(d["inv_src_slot"]) != slot_index
+			if d.has("belt_src_slot"):
+				return _belt != null and _belt.has_item(int(d["belt_src_slot"]))
+			return false,
 
-		# drop_data — merge if same stackable type, otherwise move/swap.
+		# drop_data — handle belt→inventory and inventory→inventory moves.
 		func(_pos: Vector2, data: Variant) -> void:
 			if _inventory == null:
 				return
-			var src: int = int(data["inv_src_slot"])
+			var d := data as Dictionary
+
+			# ── Belt → Inventory ──────────────────────────────────────────
+			if d.has("belt_src_slot") and _belt != null:
+				var belt_idx   := int(d["belt_src_slot"])
+				var item_type  := _belt.get_type(belt_idx)
+				var item_count := _belt.get_count(belt_idx)
+				var dst: int   := slot_index
+				if dst < _inventory.count():
+					var dst_type  := _inventory.get_type(dst)
+					var dst_count := _inventory.get_count(dst)
+					if dst_type == item_type:
+						# Merge same type.
+						var max_st := PickableItemDef.max_stack_size(item_type)
+						var space  := max_st - dst_count
+						var move   := mini(item_count, space)
+						if move > 0:
+							_inventory.items[dst]["count"] += move
+							if move >= item_count:
+								_belt.clear_slot(belt_idx)
+							else:
+								_belt.set_slot(belt_idx, item_type, item_count - move)
+					elif PickableItemDef.is_useable(dst_type):
+						# Swap: put belt item into inv slot, inv item into belt.
+						_inventory.items[dst] = {"type": item_type, "count": item_count}
+						_belt.set_slot(belt_idx, dst_type, dst_count)
+					else:
+						# Non-useable inv item can't go into belt — move belt to end of inv.
+						_inventory.items.append({"type": item_type, "count": item_count})
+						_belt.clear_slot(belt_idx)
+				else:
+					# Drop into empty slot at end of inventory.
+					_inventory.items.append({"type": item_type, "count": item_count})
+					_belt.clear_slot(belt_idx)
+				_refresh()
+				return
+
+			# ── Inventory → Inventory (existing logic) ────────────────────
+			var src: int = int(d["inv_src_slot"])
 			var dst: int = slot_index
 			if src < _inventory.count() and dst < _inventory.count():
 				var src_type := _inventory.get_type(src)
