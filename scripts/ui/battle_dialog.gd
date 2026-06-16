@@ -28,6 +28,8 @@ var _hero_hp_bar:   ProgressBar   = null
 var _hero_hp_lbl:   Label         = null
 var _hero_mp_bar:   ProgressBar   = null
 var _hero_mp_lbl:   Label         = null
+var _mon_ini_lbl:   Label         = null
+var _hero_ini_lbl:  Label         = null
 var _btn_attack:    Button        = null
 var _btn_defend:    Button        = null
 var _btn_flee:      Button        = null
@@ -55,6 +57,8 @@ func open(monster: MonsterNode, hero: HeroStats, perks: CharacterPerks, belt: Be
 
 	_mon_sprite.texture = TextureCache.get_being_texture(monster.species)
 	_mon_name.text      = monster.species
+	_mon_ini_lbl.text  = "⚡%d" % monster.initiative
+	_hero_ini_lbl.text = "⚡%d" % mini(hero.initiative, 10)
 
 	_mon_hp_bar.max_value = monster.max_hp
 	_mon_hp_bar.value     = monster.current_hp
@@ -296,6 +300,11 @@ func _build_ui() -> void:
 	_mon_name.add_theme_color_override("font_color", Color(1.0, 0.55, 0.40))
 	mon_info.add_child(_mon_name)
 
+	_mon_ini_lbl = Label.new()
+	_mon_ini_lbl.add_theme_font_size_override("font_size", 11)
+	_mon_ini_lbl.add_theme_color_override("font_color", Color(0.70, 0.85, 1.0))
+	mon_info.add_child(_mon_ini_lbl)
+
 	var mon_hp_row := HBoxContainer.new()
 	mon_hp_row.add_theme_constant_override("h_separation", 8)
 	mon_info.add_child(mon_hp_row)
@@ -358,6 +367,11 @@ func _build_ui() -> void:
 			func() -> Label:       return _hero_mp_lbl,
 			func(b: ProgressBar) -> void: _hero_mp_bar = b,
 			func(l: Label)       -> void: _hero_mp_lbl = l)
+
+	_hero_ini_lbl = Label.new()
+	_hero_ini_lbl.add_theme_font_size_override("font_size", 11)
+	_hero_ini_lbl.add_theme_color_override("font_color", Color(0.70, 0.85, 1.0))
+	hero_row.add_child(_hero_ini_lbl)
 
 	vbox.add_child(_hsep())
 
