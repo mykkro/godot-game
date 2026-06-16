@@ -244,13 +244,13 @@ func _on_right_click_cell(cc: Vector2i, lc: Vector2i) -> void:
 	if cell == null:
 		return
 
-	_snapshot_cell(cc, lc)
-
 	if cell.objects.has(MapObject.Type.CHEST_SMALL):
 		_chest_editor.open(data, lc.x, lc.y)
 		# Store the current chunk coord so we know which node to redraw on close.
 		_chest_editor.set_meta("chunk_coord", cc)
 		return
+
+	_snapshot_cell(cc, lc)
 
 	var active_layer := _ui.get_active_layer()
 	if active_layer == 1:
