@@ -15,38 +15,51 @@ func _init() -> void:
 
 
 func has_item(index: int) -> bool:
+	if index < 0 or index >= SLOT_COUNT:
+		return false
 	return slots[index] != null
 
 
 func get_type(index: int) -> int:
+	if index < 0 or index >= SLOT_COUNT:
+		return -1
 	if slots[index] == null:
 		return -1
 	return int(slots[index]["type"])
 
 
 func get_count(index: int) -> int:
+	if index < 0 or index >= SLOT_COUNT:
+		return 0
 	if slots[index] == null:
 		return 0
 	return int(slots[index]["count"])
 
 
 func set_slot(index: int, item_type: int, count: int) -> void:
+	if index < 0 or index >= SLOT_COUNT:
+		return
 	slots[index] = {"type": item_type, "count": count}
 	belt_changed.emit()
 
 
 func clear_slot(index: int) -> void:
+	if index < 0 or index >= SLOT_COUNT:
+		return
 	slots[index] = null
 	belt_changed.emit()
 
 
 ## Consume one item from slot. Returns the item type consumed, or -1 if empty.
 func consume(index: int) -> int:
+	if index < 0 or index >= SLOT_COUNT:
+		return -1
 	if slots[index] == null:
 		return -1
 	var item_type: int = int(slots[index]["type"])
-	slots[index]["count"] = int(slots[index]["count"]) - 1
-	if int(slots[index]["count"]) <= 0:
+	var new_count: int = int(slots[index]["count"]) - 1
+	slots[index]["count"] = new_count
+	if new_count <= 0:
 		slots[index] = null
 	belt_changed.emit()
 	return item_type
