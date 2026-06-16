@@ -30,10 +30,12 @@ func _ready() -> void:
 	_label.set_anchors_preset(Control.PRESET_CENTER)
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.add_theme_font_size_override("font_size", 16)
-	_label.add_theme_color_override("font_color",       Color(1.0, 0.95, 0.5))
-	_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
-	_label.add_theme_constant_override("shadow_offset_x", 1)
-	_label.add_theme_constant_override("shadow_offset_y", 1)
+	_label.add_theme_color_override("font_color",         Color(1.0, 0.95, 0.5))
+	_label.add_theme_color_override("font_shadow_color",  Color(0, 0, 0, 1.0))
+	_label.add_theme_constant_override("shadow_offset_x", 2)
+	_label.add_theme_constant_override("shadow_offset_y", 2)
+	_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
+	_label.add_theme_constant_override("outline_size",    3)
 	_label.visible = false
 	anchor.add_child(_label)
 
@@ -58,18 +60,27 @@ func _process(delta: float) -> void:
 		_label.visible = true
 		return
 
-	# NPC interaction takes priority over chest/pickup.
+	# NPC interaction takes priority over forge/chest/pickup.
 	if _avatar.get_interactable_npc() != null:
 		_label.text    = "E  talk"
 		_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.7))
 		_label.visible = true
 		return
+
+	# Forge interaction takes priority over chest/pickup.
+	if _avatar.get_interactable_forge() != null:
+		_label.text    = "E  forge"
+		_label.add_theme_color_override("font_color", Color(1.0, 0.65, 0.2))
+		_label.visible = true
+		return
+
 	# Chest interaction takes priority over item pickup.
 	if _avatar.get_interactable_chest() != null:
 		_label.text    = "E  open"
 		_label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.3))
 		_label.visible = true
 		return
+
 	var nearby      := _avatar.get_nearest_pickable_name()
 	var nearby_type := _avatar.get_nearest_pickable_type()
 	if nearby.is_empty():
