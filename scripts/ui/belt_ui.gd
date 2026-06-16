@@ -10,6 +10,7 @@ var _inventory_ui_ref: InventoryUI = null
 
 var _slot_icons:  Array = []   # Array of TextureRect
 var _slot_badges: Array = []   # Array of Label (stack count)
+var _slots:       Array = []   # Array of PanelContainer — wired for drag in setup()
 
 
 ## Call from main after belt and inventory are loaded.
@@ -18,6 +19,10 @@ func setup(belt: Belt, inventory: Inventory, inv_ui: InventoryUI) -> void:
 	_inventory        = inventory
 	_inventory_ui_ref = inv_ui
 	belt.belt_changed.connect(_refresh)
+	# Wire drag-and-drop here (not in _ready) and pass data as explicit params
+	# so lambdas close over non-null local variables rather than instance vars.
+	for i in _slots.size():
+		_setup_slot_drag(_slots[i] as PanelContainer, i, belt, inventory, inv_ui)
 	_refresh()
 
 
@@ -66,8 +71,8 @@ func _ready() -> void:
 		var slot_data := _make_slot(i)
 		_slot_icons.append(slot_data[1])
 		_slot_badges.append(slot_data[2])
+		_slots.append(slot_data[0])
 		inner_hbox.add_child(slot_data[0])
-		_setup_slot_drag(slot_data[0] as PanelContainer, i)
 
 
 func _make_slot(index: int) -> Array:
@@ -132,13 +137,15 @@ func _make_slot(index: int) -> Array:
 	return [slot, icon, badge]
 
 
-func _setup_slot_drag(slot: PanelContainer, index: int) -> void:
+func _setup_slot_drag(
+		slot: PanelContainer, index: int,
+		belt: Belt, inventory: Inventory, inv_ui: InventoryUI) -> void:
 	slot.set_drag_forwarding(
 		# get_drag_data — start drag when belt slot has an item.
 		func(_pos: Vector2) -> Variant:
-			if _belt == null or not _belt.has_item(index):
+			if not belt.has_item(index):
 				return null
-			var item_type := _belt.get_type(index)
+			var item_type := belt.get_type(index)
 			var preview := TextureRect.new()
 			preview.texture             = PickableItemDef.get_texture(item_type)
 			preview.custom_minimum_size = Vector2(44, 44)
@@ -153,51 +160,48 @@ func _setup_slot_drag(slot: PanelContainer, index: int) -> void:
 			if not (data is Dictionary):
 				return false
 			var d := data as Dictionary
-			if d.has("inv_src_slot") and _inventory != null:
+			if d.has("inv_src_slot"):
 				var src: int = int(d["inv_src_slot"])
-				if src >= _inventory.count():
+				if src >= inventory.count():
 					return false
-				return PickableItemDef.is_useable(_inventory.get_type(src))
+				return PickableItemDef.is_useable(inventory.get_type(src))
 			return false,
 
 		# drop_data — move inventory item into this belt slot.
 		func(_pos: Vector2, data: Variant) -> void:
-			if _belt == null or _inventory == null:
-				return
 			var d := data as Dictionary
 			if not d.has("inv_src_slot"):
 				return
 			var src: int = int(d["inv_src_slot"])
-			if src >= _inventory.count():
+			if src >= inventory.count():
 				return
-			var item_type  := _inventory.get_type(src)
-			var item_count := _inventory.get_count(src)
+			var item_type  := inventory.get_type(src)
+			var item_count := inventory.get_count(src)
 			if not PickableItemDef.is_useable(item_type):
 				return
 			# If same type already in belt slot: merge (capped at max stack).
-			if _belt.has_item(index) and _belt.get_type(index) == item_type:
+			if belt.has_item(index) and belt.get_type(index) == item_type:
 				var max_st   := PickableItemDef.max_stack_size(item_type)
-				var existing := _belt.get_count(index)
+				var existing := belt.get_count(index)
 				var space    := max_st - existing
 				if space <= 0:
 					return
 				var move := mini(item_count, space)
-				_belt.set_slot(index, item_type, existing + move)
-				_inventory.remove_from_slot(src, move)
-			elif not _belt.has_item(index):
+				belt.set_slot(index, item_type, existing + move)
+				inventory.remove_from_slot(src, move)
+			elif not belt.has_item(index):
 				# Empty belt slot: move entire inventory stack.
-				_belt.set_slot(index, item_type, item_count)
-				_inventory.remove_from_slot(src, item_count)
+				belt.set_slot(index, item_type, item_count)
+				inventory.remove_from_slot(src, item_count)
 			else:
 				# Different item in belt slot: swap if belt item is also useable.
-				var belt_type  := _belt.get_type(index)
-				var belt_count := _belt.get_count(index)
-				_belt.set_slot(index, item_type, item_count)
-				_inventory.remove_from_slot(src, item_count)
+				var belt_type  := belt.get_type(index)
+				var belt_count := belt.get_count(index)
+				belt.set_slot(index, item_type, item_count)
+				inventory.remove_from_slot(src, item_count)
 				# Belt item goes back to inventory.
-				_inventory.items.append({"type": belt_type, "count": belt_count})
-			if _inventory_ui_ref != null:
-				_inventory_ui_ref.notify_changed()
+				inventory.items.append({"type": belt_type, "count": belt_count})
+			inv_ui.notify_changed()
 	)
 
 
