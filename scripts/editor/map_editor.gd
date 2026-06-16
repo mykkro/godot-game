@@ -143,12 +143,20 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 		return
 
 	if terrain_sel != "":
-		cell.terrain_type = terrain_sel
-		cell.is_obstacle  = not TileRegistry.is_passable(terrain_sel)
-		cell.objects.clear()
-		data.set_chest_variant(lc.x, lc.y, 0)
-		data.set_chest_contents(lc.x, lc.y, [])
-		data.set_rock_variant(lc.x, lc.y, 0)
+		var active_layer := _ui.get_active_layer()
+		if active_layer == 0:
+			# Layer 0: set base terrain, clear overlay, clear objects
+			cell.terrain_type = terrain_sel
+			cell.is_obstacle  = not TileRegistry.is_passable(terrain_sel)
+			cell.objects.clear()
+			data.set_chest_variant(lc.x, lc.y, 0)
+			data.set_chest_contents(lc.x, lc.y, [])
+			data.set_rock_variant(lc.x, lc.y, 0)
+			data.erase_terrain_overlay(lc.x, lc.y)
+		else:
+			# Layer 1: set overlay only, update passability from topmost layer
+			data.set_terrain_overlay(lc.x, lc.y, terrain_sel)
+			cell.is_obstacle = not TileRegistry.is_passable(terrain_sel)
 
 	if item_sel != ItemPalette.NONE_TYPE:
 		cell.objects.clear()   # one object per cell
@@ -191,7 +199,18 @@ func _on_right_click_cell(cc: Vector2i, lc: Vector2i) -> void:
 		_chest_editor.set_meta("chunk_coord", cc)
 		return
 
-	# Default: erase objects.
+	var active_layer := _ui.get_active_layer()
+	if active_layer == 1:
+		# Layer 1: right-click erases overlay and restores layer 0 passability.
+		var overlay := data.get_terrain_overlay(lc.x, lc.y)
+		if overlay != "":
+			data.erase_terrain_overlay(lc.x, lc.y)
+			cell.is_obstacle = not TileRegistry.is_passable(cell.terrain_type)
+			chunk_node.set_cell(lc.x, lc.y, cell)
+			_mark_dirty()
+		return
+
+	# Layer 0: default erase objects.
 	if not cell.objects.is_empty():
 		cell.objects.clear()
 		data.set_chest_variant(lc.x, lc.y, 0)
@@ -214,7 +233,8 @@ func _on_hover_cell(cc: Vector2i, lc: Vector2i) -> void:
 	if _chunks.has(cc):
 		var cell := (_chunks[cc] as ChunkEditorNode).get_data().get_cell(lc.x, lc.y)
 		if cell != null:
-			_ui.set_hover_terrain(cell.terrain_type)
+			var overlay := (_chunks[cc] as ChunkEditorNode).get_data().get_terrain_overlay(lc.x, lc.y)
+			_ui.set_hover_terrain(cell.terrain_type, overlay)
 	for coord in _chunks.keys():
 		(_chunks[coord] as ChunkEditorNode).set_hover(
 				lc if coord == cc else Vector2i(-1, -1))

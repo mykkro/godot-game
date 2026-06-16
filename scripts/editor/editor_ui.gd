@@ -4,6 +4,7 @@ extends CanvasLayer
 signal save_pressed
 signal menu_pressed
 signal autosave_toggled(enabled: bool)
+signal layer_changed(layer: int)
 
 const PANEL_WIDTH := 260
 
@@ -20,6 +21,10 @@ var _monster_pal:   MonsterPalette   = null
 var _palette_scroll: ScrollContainer = null
 var _confirm_dialog: ConfirmationDialog = null
 
+var _active_layer: int = 0
+var _btn_layer0: Button = null
+var _btn_layer1: Button = null
+
 # Unsaved exit guard callback — set by map_editor.gd.
 var _exit_guard: Callable = Callable()
 
@@ -33,6 +38,10 @@ func _ready() -> void:
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
+
+func get_active_layer() -> int:
+	return _active_layer
+
 
 func get_terrain_palette() -> TerrainPalette:
 	return _terrain_pal
@@ -65,9 +74,12 @@ func set_world_coords(wx: int, wy: int) -> void:
 		_lbl_world.text = "World: (%d, %d)" % [wx, wy]
 
 
-func set_hover_terrain(terrain: String) -> void:
+func set_hover_terrain(terrain: String, overlay: String = "") -> void:
 	if _lbl_terrain != null:
-		_lbl_terrain.text = "Terrain: %s" % terrain
+		if overlay.is_empty():
+			_lbl_terrain.text = "L0: %s" % terrain
+		else:
+			_lbl_terrain.text = "L0: %s  |  L1: %s" % [terrain, overlay]
 
 
 func set_unsaved(dirty: bool) -> void:
@@ -194,11 +206,34 @@ func _build_right_panel() -> void:
 
 	_add_separator(vbox)
 
+	var terrain_header := HBoxContainer.new()
+	terrain_header.add_theme_constant_override("separation", 6)
+	vbox.add_child(terrain_header)
+
 	var lbl_terrain := Label.new()
 	lbl_terrain.text = "TERRAIN"
 	lbl_terrain.add_theme_font_size_override("font_size", 15)
 	lbl_terrain.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
-	vbox.add_child(lbl_terrain)
+	lbl_terrain.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	terrain_header.add_child(lbl_terrain)
+
+	_btn_layer0 = Button.new()
+	_btn_layer0.text = "L0"
+	_btn_layer0.toggle_mode = true
+	_btn_layer0.button_pressed = true
+	_btn_layer0.tooltip_text = "Edit base terrain (layer 0)"
+	_btn_layer0.custom_minimum_size = Vector2(32, 0)
+	_btn_layer0.pressed.connect(_on_layer_btn_pressed.bind(0))
+	terrain_header.add_child(_btn_layer0)
+
+	_btn_layer1 = Button.new()
+	_btn_layer1.text = "L1"
+	_btn_layer1.toggle_mode = true
+	_btn_layer1.button_pressed = false
+	_btn_layer1.tooltip_text = "Edit overlay terrain (layer 1)"
+	_btn_layer1.custom_minimum_size = Vector2(32, 0)
+	_btn_layer1.pressed.connect(_on_layer_btn_pressed.bind(1))
+	terrain_header.add_child(_btn_layer1)
 
 	_terrain_pal = TerrainPalette.new()
 	_terrain_pal.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -249,7 +284,7 @@ func _build_status_bar() -> void:
 	bar.add_child(hbox)
 
 	var lbl_hint := Label.new()
-	lbl_hint.text = "LMB: paint  |  RMB: remove object / open chest  |  MMB: pan  |  Scroll: zoom"
+	lbl_hint.text = "LMB: paint  |  RMB: erase (L0: objects; L1: overlay)  |  MMB: pan  |  Scroll: zoom  |  L0/L1: layer"
 	lbl_hint.add_theme_font_size_override("font_size", 12)
 	lbl_hint.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
 	hbox.add_child(lbl_hint)
@@ -273,6 +308,13 @@ func _build_exit_dialog() -> void:
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+func _on_layer_btn_pressed(layer: int) -> void:
+	_active_layer = layer
+	_btn_layer0.button_pressed = (layer == 0)
+	_btn_layer1.button_pressed = (layer == 1)
+	layer_changed.emit(layer)
+
 
 func _add_separator(parent: Control) -> void:
 	var sep := HSeparator.new()
