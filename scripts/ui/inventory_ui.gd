@@ -452,24 +452,23 @@ func _setup_slot_drag(slot: PanelContainer, slot_index: int) -> void:
 				var belt_idx   := int(d["belt_src_slot"])
 				var item_type  := _belt.get_type(belt_idx)
 				var item_count := _belt.get_count(belt_idx)
-				var dst: int   := slot_index
-				if dst < _inventory.count():
-					var dst_type  := _inventory.get_type(dst)
-					var dst_count := _inventory.get_count(dst)
+				if slot_index < _inventory.count():
+					var dst_type  := _inventory.get_type(slot_index)
+					var dst_count := _inventory.get_count(slot_index)
 					if dst_type == item_type:
 						# Merge same type.
 						var max_st := PickableItemDef.max_stack_size(item_type)
 						var space  := max_st - dst_count
 						var move   := mini(item_count, space)
 						if move > 0:
-							_inventory.items[dst]["count"] += move
+							_inventory.items[slot_index]["count"] += move
 							if move >= item_count:
 								_belt.clear_slot(belt_idx)
 							else:
 								_belt.set_slot(belt_idx, item_type, item_count - move)
 					elif PickableItemDef.is_useable(dst_type):
 						# Swap: put belt item into inv slot, inv item into belt.
-						_inventory.items[dst] = {"type": item_type, "count": item_count}
+						_inventory.items[slot_index] = {"type": item_type, "count": item_count}
 						_belt.set_slot(belt_idx, dst_type, dst_count)
 					else:
 						# Non-useable inv item can't go into belt — move belt to end of inv.
