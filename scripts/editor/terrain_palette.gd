@@ -47,6 +47,19 @@ func get_selected() -> String:
 	return _selected
 
 
+func select_tile(filename: String) -> void:
+	# Deselect current
+	if _selected_overlay != null:
+		_selected_overlay.visible = false
+	_selected = filename
+	_selected_overlay = null
+	# Rebuild so overlays reset correctly
+	_build_palette(_search.text)
+	# Re-emit so map_editor updates its selection display
+	if filename != "":
+		terrain_selected.emit(filename)
+
+
 func _build_palette(filter: String) -> void:
 	for child in _content.get_children():
 		child.queue_free()
@@ -110,15 +123,22 @@ func _add_group(title: String, tiles: Array) -> void:
 	if tiles.is_empty():
 		return
 
-	var lbl := Label.new()
-	lbl.text = title
-	lbl.add_theme_font_size_override("font_size", 13)
-	lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.9))
-	_content.add_child(lbl)
-
 	var grid := GridContainer.new()
 	grid.columns = GRID_COLUMNS
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var header := Button.new()
+	header.text = "▼ " + title
+	header.flat = true
+	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	header.add_theme_font_size_override("font_size", 13)
+	header.add_theme_color_override("font_color", Color(0.75, 0.75, 0.9))
+	header.add_theme_color_override("font_hover_color", Color(0.90, 0.90, 1.0))
+	header.pressed.connect(func() -> void:
+		grid.visible = not grid.visible
+		header.text = ("▼ " if grid.visible else "▶ ") + title
+	)
+	_content.add_child(header)
 	_content.add_child(grid)
 
 	for tile in tiles:
@@ -139,7 +159,6 @@ func _add_group(title: String, tiles: Array) -> void:
 		tex_rect.mouse_filter   = Control.MOUSE_FILTER_IGNORE
 		btn.add_child(tex_rect)
 
-		# Cyan outline drawn on top of the icon when this tile is selected.
 		var overlay := Panel.new()
 		overlay.add_theme_stylebox_override("panel", _style_overlay)
 		overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
