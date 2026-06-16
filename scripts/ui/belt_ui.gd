@@ -14,37 +14,36 @@ var _slots:       Array = []   # Array of PanelContainer — wired for drag in s
 
 
 ## Call from main after belt and inventory are loaded.
-func setup(belt: Belt, inventory: Inventory, inv_ui: InventoryUI) -> void:
+## use_fn(item_type) is called when the player double-clicks a belt item to use it.
+func setup(belt: Belt, inventory: Inventory, inv_ui: InventoryUI,
+		use_fn: Callable = Callable()) -> void:
 	_belt             = belt
 	_inventory        = inventory
 	_inventory_ui_ref = inv_ui
 	belt.belt_changed.connect(_refresh)
-	# Wire drag-and-drop here (not in _ready) and pass data as explicit params
+	# Wire drag-and-drop here (not in _ready) and pass all data as explicit params
 	# so lambdas close over non-null local variables rather than instance vars.
 	for i in _slots.size():
-		_setup_slot_drag(_slots[i] as PanelContainer, i, belt, inventory, inv_ui)
+		_setup_slot_drag(_slots[i] as PanelContainer, i, belt, inventory, inv_ui, use_fn)
 	_refresh()
 
 
 func _ready() -> void:
-	# BeltUI lives inside InventoryUI's CanvasLayer so drag-and-drop between
-	# belt slots and inventory slots works (same canvas layer = same event space).
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# BeltUI lives inside InventoryUI's CanvasLayer (same canvas layer as
+	# inventory slots) so drag-and-drop works between them.
+	# Sized to the bottom strip only — avoids intercepting full-screen events.
+	# MOUSE_FILTER_PASS (not IGNORE): IGNORE silently blocks the entire subtree
+	# in Godot 4, including the slot children.
+	set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	offset_top    = -(SLOT_SIZE + 20)
+	offset_bottom = -8
+	mouse_filter  = Control.MOUSE_FILTER_PASS
 
-	# Bottom strip — full width, fixed height above the screen edge.
-	var bottom := Control.new()
-	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom.offset_top    = -(SLOT_SIZE + 20)
-	bottom.offset_bottom = -8
-	bottom.mouse_filter  = Control.MOUSE_FILTER_IGNORE
-	add_child(bottom)
-
-	# CenterContainer centres the pill horizontally (and vertically) inside the strip.
+	# CenterContainer centres the pill within the strip.
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bottom.add_child(center)
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(center)
 
 	# Outer pill background.
 	var pill := PanelContainer.new()
@@ -139,7 +138,21 @@ func _make_slot(index: int) -> Array:
 
 func _setup_slot_drag(
 		slot: PanelContainer, index: int,
-		belt: Belt, inventory: Inventory, inv_ui: InventoryUI) -> void:
+		belt: Belt, inventory: Inventory, inv_ui: InventoryUI,
+		use_fn: Callable) -> void:
+	# Double-click to use/consume the item in this belt slot.
+	slot.gui_input.connect(func(event: InputEvent) -> void:
+		if not (event is InputEventMouseButton):
+			return
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT and mb.double_click and mb.pressed:
+			if belt.has_item(index):
+				var consumed_type := belt.consume(index)
+				if consumed_type >= 0 and use_fn.is_valid():
+					use_fn.call(consumed_type)
+			slot.accept_event()
+	)
+
 	slot.set_drag_forwarding(
 		# get_drag_data — start drag when belt slot has an item.
 		func(_pos: Vector2) -> Variant:

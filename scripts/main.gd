@@ -185,7 +185,11 @@ func _ready() -> void:
 	_pause_menu.setup(_fog_manager, _avatar, _npc_manager, _npc_dialog)
 	_inventory_ui.setup(_avatar.inventory)
 	_inventory_ui.setup_belt(_avatar.belt)
-	_belt_ui.setup(_avatar.belt, _avatar.inventory, _inventory_ui)
+	_belt_ui.setup(_avatar.belt, _avatar.inventory, _inventory_ui,
+		func(item_type: int) -> void:
+			_avatar.apply_item_effect(item_type)
+			_avatar.show_use_feedback(item_type)
+	)
 	_pickup_hint.setup(_avatar)
 	_minimap.setup(_world, _fog_manager, _avatar)
 
