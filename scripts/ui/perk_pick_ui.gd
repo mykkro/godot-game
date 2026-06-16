@@ -78,6 +78,8 @@ func _apply_pick(perk_id: PerkDef.ID) -> void:
         _stats.defense += delta["defense"]
     if delta.has("magic"):
         _stats.magic   += delta["magic"]
+    if delta.has("initiative"):
+        _stats.initiative = mini(10, _stats.initiative + delta["initiative"])
     _stats.changed.emit()
 
     _overlay.visible  = false

@@ -14,6 +14,7 @@ enum ID {
 	VAMPIRIC         = 7,
 	EFFICIENT_CASTER = 8,
 	BERSERKER        = 9,
+	QUICK            = 10,
 }
 
 
@@ -29,6 +30,7 @@ static func get_perk_name(perk: ID) -> String:
 		ID.VAMPIRIC:         return "Vampiric"
 		ID.EFFICIENT_CASTER: return "Efficient Caster"
 		ID.BERSERKER:        return "Berserker"
+		ID.QUICK:            return "Quick"
 	return "Unknown"
 
 
@@ -38,7 +40,7 @@ static func get_max_level(perk: ID) -> int:
 		ID.SWIFT_WALKER: return 3
 		ID.STRONG, ID.TOUGH, ID.WISE, ID.ARMORED, \
 		ID.SPELL_FOCUS, ID.VAMPIRIC, \
-		ID.EFFICIENT_CASTER, ID.BERSERKER: return 3
+		ID.EFFICIENT_CASTER, ID.BERSERKER, ID.QUICK: return 3
 	return 0
 
 
@@ -98,6 +100,11 @@ static func get_level_name(perk: ID, level: int) -> String:
 				1: return "Hot-Blooded"
 				2: return "Frenzy"
 				3: return "Berserker"
+		ID.QUICK:
+			match level:
+				1: return "Nimble"
+				2: return "Swift"
+				3: return "Lightning Reflexes"
 	return ""
 
 
@@ -135,6 +142,7 @@ static func get_stat_delta(perk: ID) -> Dictionary:
 		ID.WISE:        return {"max_mana": 3}
 		ID.ARMORED:     return {"defense":  1}
 		ID.SPELL_FOCUS: return {"magic":    1}
+		ID.QUICK:       return {"initiative": 1}
 	return {}
 
 
@@ -160,4 +168,5 @@ static func perk_description(perk: ID, new_level: int) -> String:
 		ID.VAMPIRIC:         return "Heal %d HP after killing a monster" % new_level
 		ID.EFFICIENT_CASTER: return "Spells cost %d less mana (min 1)" % new_level
 		ID.BERSERKER:        return "+%d Attack when below 30%% HP" % (new_level * 3)
+		ID.QUICK:            return "+1 Initiative"
 	return ""
