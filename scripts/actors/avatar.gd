@@ -27,6 +27,7 @@ var _fog_manager:  FogManager   = null
 var _inventory_ui: InventoryUI  = null
 
 var inventory:       Inventory      = Inventory.new()
+var belt:            Belt           = Belt.new()
 var perks:           CharacterPerks = CharacterPerks.new()
 var stats:           HeroStats      = HeroStats.new()
 var char_name:       String         = ""
@@ -153,6 +154,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif ke.keycode == KEY_CTRL and ke.pressed and not ke.echo:
 		_try_shoot()
 		get_viewport().set_input_as_handled()
+	elif ke.keycode >= KEY_1 and ke.keycode <= KEY_5 and ke.pressed and not ke.echo:
+		if not get_tree().paused:
+			use_belt_slot(ke.keycode - KEY_1)
+			get_viewport().set_input_as_handled()
 
 
 ## Returns the hint label for the nearest pickable ("12 × Coin"), or "".
@@ -425,3 +430,24 @@ static func _read_input() -> Vector2:
 		float(Input.is_action_pressed("ui_right")) - float(Input.is_action_pressed("ui_left")),
 		float(Input.is_action_pressed("ui_down"))  - float(Input.is_action_pressed("ui_up"))
 	)
+
+
+func apply_item_effect(item_type: int) -> void:
+	match item_type:
+		MapObject.Type.HEALTH_POTION:
+			stats.heal(20)
+		MapObject.Type.MANA_POTION:
+			stats.current_mana = mini(stats.max_mana, stats.current_mana + 20)
+			stats.changed.emit()
+
+
+func use_belt_slot(index: int) -> void:
+	var item_type := belt.consume(index)
+	if item_type < 0:
+		return
+	apply_item_effect(item_type)
+	show_use_feedback(item_type)
+
+
+func show_use_feedback(_item_type: int) -> void:
+	pass  # implemented in Task 5
