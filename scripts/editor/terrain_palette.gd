@@ -10,7 +10,7 @@ const TAG_GROUPS := [
 	"grass", "mud", "sand", "gravel", "path", "wood",
 	"cave", "rock", "aquatic", "swamp", "highland",
 	"arctic", "ice", "jungle", "volcanic", "constructed",
-	"hyptosis",
+	"hyptosis", "lpc",
 ]
 
 var _search:           LineEdit      = null

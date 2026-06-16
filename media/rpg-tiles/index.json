@@ -169,6 +169,16 @@
       "passable":       true,
       "speed_modifier": 1.0,
       "tags":           ["hyptosis"]
+    },
+    {
+      "file":           "media/lpc_terrain/terrain.png",
+      "prefix":         "lpc",
+      "tile_width":     32,
+      "tile_height":    32,
+      "category":       "terrain",
+      "passable":       true,
+      "speed_modifier": 1.0,
+      "tags":           ["lpc"]
     }
   ]
 }
