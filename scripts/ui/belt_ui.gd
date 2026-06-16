@@ -24,17 +24,25 @@ func setup(belt: Belt, inventory: Inventory, inv_ui: InventoryUI) -> void:
 func _ready() -> void:
 	layer = 60   # below InventoryUI (layer 70) so inventory draws on top
 
-	var anchor := Control.new()
-	anchor.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	anchor.custom_minimum_size = Vector2(0, SLOT_SIZE + 16)
-	add_child(anchor)
+	# Full-rect root — transparent, passes mouse events through.
+	var root := Control.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(root)
 
-	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", SLOT_GAP)
-	hbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	hbox.offset_top    = -(SLOT_SIZE + 20)
-	hbox.offset_bottom = -8
-	anchor.add_child(hbox)
+	# Bottom strip — full width, fixed height above the screen edge.
+	var bottom := Control.new()
+	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	bottom.offset_top    = -(SLOT_SIZE + 20)
+	bottom.offset_bottom = -8
+	bottom.mouse_filter  = Control.MOUSE_FILTER_IGNORE
+	root.add_child(bottom)
+
+	# CenterContainer centres the pill horizontally (and vertically) inside the strip.
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bottom.add_child(center)
 
 	# Outer pill background.
 	var pill := PanelContainer.new()
@@ -51,7 +59,7 @@ func _ready() -> void:
 	pill_style.corner_radius_bottom_right = 8
 	pill_style.set_content_margin_all(6)
 	pill.add_theme_stylebox_override("panel", pill_style)
-	hbox.add_child(pill)
+	center.add_child(pill)
 
 	var inner_hbox := HBoxContainer.new()
 	inner_hbox.add_theme_constant_override("separation", SLOT_GAP)
