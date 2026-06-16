@@ -22,7 +22,8 @@ func setup(belt: Belt, inventory: Inventory, inv_ui: InventoryUI) -> void:
 
 
 func _ready() -> void:
-	layer = 60   # below InventoryUI (layer 70) so inventory draws on top
+	layer        = 60                        # below InventoryUI (layer 70) so inventory draws on top
+	process_mode = Node.PROCESS_MODE_ALWAYS  # keep running while inventory pause is active
 
 	# Full-rect root — transparent, passes mouse events through.
 	var root := Control.new()
