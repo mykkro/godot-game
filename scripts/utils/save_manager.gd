@@ -15,6 +15,7 @@ const PERKS_FILE     := "user://player_perks.json"
 const CHAR_FILE      := "user://character.json"
 const QUESTS_FILE    := "user://quests.json"
 const STATS_FILE     := "user://stats.json"
+const BELT_FILE      := "user://belt.json"
 
 
 ## Returns true when a previous game session exists (any saved chunk).
@@ -68,7 +69,7 @@ static func load_player() -> Dictionary:
 static func wipe() -> void:
 	_wipe_dir(CHUNKS_DIR)
 	_wipe_dir(FOG_DIR)
-	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE, PERKS_FILE, CHAR_FILE, QUESTS_FILE, STATS_FILE]:
+	for path in [PLAYER_FILE, INVENTORY_FILE, NPCS_FILE, DIALOG_FILE, SHOPS_FILE, CLOCK_FILE, PERKS_FILE, CHAR_FILE, QUESTS_FILE, STATS_FILE, BELT_FILE]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 
@@ -318,6 +319,31 @@ static func load_stats() -> HeroStats:
 	if parsed is Dictionary:
 		return HeroStats.from_dict(parsed as Dictionary)
 	return HeroStats.new()
+
+
+static func save_belt(belt: Belt) -> void:
+	var file := FileAccess.open(BELT_FILE, FileAccess.WRITE)
+	if file == null:
+		push_error("SaveManager: cannot write belt save (error %d)" \
+				% FileAccess.get_open_error())
+		return
+	file.store_string(JSON.stringify(belt.to_dict()))
+	file.close()
+
+
+static func load_belt() -> Belt:
+	if not FileAccess.file_exists(BELT_FILE):
+		return Belt.new()
+	var file := FileAccess.open(BELT_FILE, FileAccess.READ)
+	if file == null:
+		return Belt.new()
+	var text := file.get_as_text()
+	file.close()
+	var json := JSON.new()
+	if json.parse(text) != OK:
+		push_error("SaveManager: failed to parse belt save")
+		return Belt.new()
+	return Belt.from_dict(json.data as Dictionary)
 
 
 static func _wipe_dir(path: String) -> void:
