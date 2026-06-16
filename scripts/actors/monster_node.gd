@@ -13,7 +13,9 @@ var max_hp:    int = 0
 var current_hp: int = 0
 var attack:    int = 0
 var defense:   int = 0
-var xp_reward: int = 0
+var xp_reward:  int = 0
+var initiative: int = 5
+var actions:    int = 1
 
 var _sprite: Sprite2D = null
 
@@ -40,12 +42,14 @@ func initialize() -> void:
 
 
 func _init_stats() -> void:
-	var s  := MonsterStats.for_species(species)
-	max_hp    = int(s.get("hp",      10))
+	var s      := MonsterStats.for_species(species)
+	max_hp     = int(s.get("hp",         10))
 	current_hp = max_hp
-	attack    = int(s.get("attack",   4))
-	defense   = int(s.get("defense",  1))
-	xp_reward = int(s.get("xp",      10))
+	attack     = int(s.get("attack",      4))
+	defense    = int(s.get("defense",     1))
+	xp_reward  = int(s.get("xp",        10))
+	initiative = int(s.get("initiative",  5))
+	actions    = int(s.get("actions",     1))
 
 
 func to_dict() -> Dictionary:
