@@ -10,11 +10,13 @@ const FLEE_ODDS := 0.50 # probability of successful flee
 
 enum _State { CHOOSING, WIN, LOSE, FLED }
 
-var _hero:         HeroStats   = null
-var _monster:      MonsterNode = null
-var _defend_bonus: bool        = false
-var _perks:        CharacterPerks = null
-var _state:        _State      = _State.CHOOSING
+var _hero:            HeroStats      = null
+var _monster:         MonsterNode    = null
+var _defend_bonus:    bool           = false
+var _perks:           CharacterPerks = null
+var _belt:            Belt           = null
+var _hero_goes_first: bool           = true
+var _state:           _State         = _State.CHOOSING
 
 ## UI nodes
 var _overlay:       Control       = null
@@ -40,10 +42,11 @@ func _ready() -> void:
 	_build_ui()
 
 
-func open(monster: MonsterNode, hero: HeroStats, perks: CharacterPerks) -> void:
+func open(monster: MonsterNode, hero: HeroStats, perks: CharacterPerks, belt: Belt) -> void:
 	_hero          = hero
 	_monster       = monster
 	_perks         = perks
+	_belt          = belt
 	_defend_bonus  = false
 	_state         = _State.CHOOSING
 
@@ -59,12 +62,31 @@ func open(monster: MonsterNode, hero: HeroStats, perks: CharacterPerks) -> void:
 	_clear_log()
 	_add_log("A %s appears!" % monster.species)
 
-	_set_action_ui(true)
+	_set_action_ui(false)
 	_result_lbl.visible = false
 	_ok_btn.visible     = false
 	_refresh_bars()
 	_overlay.visible    = true
 	get_tree().paused   = true
+
+	# Resolve initiative — who goes first this fight
+	var hero_ini := mini(hero.initiative, 10)
+	var mon_ini  := monster.initiative
+	if hero_ini > mon_ini:
+		_hero_goes_first = true
+	elif mon_ini > hero_ini:
+		_hero_goes_first = false
+	else:
+		_hero_goes_first = randf() < 0.5
+
+	if _hero_goes_first:
+		_add_log("You seize the initiative!  (⚡%d vs ⚡%d)" % [hero_ini, mon_ini])
+		_set_action_ui(true)
+	else:
+		_add_log("%s strikes first!  (⚡%d vs ⚡%d)" % [monster.species, mon_ini, hero_ini])
+		_monster_turn_sequence()
+		if not _hero.is_dead():
+			_set_action_ui(true)
 
 
 func close() -> void:
@@ -91,14 +113,14 @@ func _on_attack() -> void:
 	if _monster.current_hp <= 0:
 		_finish(_State.WIN)
 		return
-	_monster_turn()
+	_after_hero_action()
 
 
 func _on_defend() -> void:
 	_set_action_ui(false)
 	_defend_bonus = true
 	_add_log("You brace yourself.")
-	_monster_turn()
+	_after_hero_action()
 
 
 func _on_flee() -> void:
@@ -108,20 +130,26 @@ func _on_flee() -> void:
 		_finish(_State.FLED)
 	else:
 		_add_log("You can't escape!")
-		_monster_turn()
+		_after_hero_action()
 
 
-func _monster_turn() -> void:
-	var eff_def := _hero.defense * (2 if _defend_bonus else 1)
-	var dmg     := _calc_damage(_monster.attack, eff_def)
-	_hero.take_damage(dmg)
-	_add_log("%s hits you for %d damage." % [_monster.species, dmg])
-	_defend_bonus = false
-	_refresh_bars()
-	if _hero.is_dead():
-		_finish(_State.LOSE)
-	else:
+func _after_hero_action() -> void:
+	_monster_turn_sequence()
+	if not _hero.is_dead():
 		_set_action_ui(true)
+
+
+func _monster_turn_sequence() -> void:
+	for i in _monster.actions:
+		var eff_def := _hero.defense * (2 if _defend_bonus else 1)
+		var dmg     := _calc_damage(_monster.attack, eff_def)
+		_hero.take_damage(dmg)
+		_add_log("%s hits you for %d damage." % [_monster.species, dmg])
+		_defend_bonus = false
+		_refresh_bars()
+		if _hero.is_dead():
+			_finish(_State.LOSE)
+			return
 
 
 static func _calc_damage(atk: int, def: int) -> int:

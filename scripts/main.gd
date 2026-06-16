@@ -148,7 +148,7 @@ func _ready() -> void:
 	)
 	_avatar.monster_fight_requested.connect(
 		func(m: MonsterNode) -> void:
-			_battle_dialog.open(m, _avatar.stats, _avatar.perks)
+			_battle_dialog.open(m, _avatar.stats, _avatar.perks, _avatar.belt)
 	)
 	_battle_dialog.battle_won.connect(func(m: MonsterNode) -> void:
 		var leveled := _avatar.stats.add_xp(m.xp_reward)
