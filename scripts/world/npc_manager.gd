@@ -143,6 +143,19 @@ func _on_chunk_loaded(coord: Vector2i) -> void:
 			_next_monster_id  += 1
 			_monster_spawned[coord] = true
 
+	# Guarantee several monsters in the starting chunk so combat is always available.
+	if coord == Vector2i(0, 0):
+		for _i in range(3):
+			var spawn := _find_spawn_pos(coord)
+			if not is_finite(spawn.x):
+				break
+			var monster := MonsterNode.new()
+			monster.position   = spawn
+			_world.add_child(monster)
+			monster.initialize()
+			monster.monster_id = "%s_%d" % [monster.species, _next_monster_id]
+			_next_monster_id  += 1
+
 
 ## Returns world-space centre of a random passable, empty cell in the chunk,
 ## or Vector2(INF, INF) if none found within 20 attempts.

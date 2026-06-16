@@ -148,8 +148,8 @@ func _build_ui() -> void:
 
 func _make_card(perk_id: PerkDef.ID, cur_lv: int, new_lv: int, key_num: int) -> Button:
     var btn := Button.new()
-    btn.custom_minimum_size    = Vector2(0, 80)
-    btn.size_flags_horizontal  = Control.SIZE_EXPAND_FILL
+    btn.custom_minimum_size   = Vector2(0, 90)
+    btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     btn.process_mode = Node.PROCESS_MODE_ALWAYS
 
     var normal := StyleBoxFlat.new()
@@ -166,25 +166,27 @@ func _make_card(perk_id: PerkDef.ID, cur_lv: int, new_lv: int, key_num: int) -> 
     btn.add_theme_stylebox_override("focus",   hover)
     btn.add_theme_stylebox_override("pressed", hover)
 
-    var vbox := VBoxContainer.new()
-    vbox.add_theme_constant_override("separation", 6)
-    vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    btn.add_child(vbox)
+    # Two-column layout: left = name+level, right = description
+    var hbox := HBoxContainer.new()
+    hbox.add_theme_constant_override("h_separation", 14)
+    hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    btn.add_child(hbox)
 
-    var key_lbl := Label.new()
-    key_lbl.text = "[%d]" % key_num
-    key_lbl.add_theme_font_size_override("font_size", 11)
-    key_lbl.add_theme_color_override("font_color", Color(0.50, 0.50, 0.60))
-    key_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    vbox.add_child(key_lbl)
+    # Left column — key number, perk name, level badge
+    var left := VBoxContainer.new()
+    left.add_theme_constant_override("separation", 4)
+    left.custom_minimum_size = Vector2(170, 0)
+    left.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    hbox.add_child(left)
 
     var name_lbl := Label.new()
-    name_lbl.text = PerkDef.get_perk_name(perk_id)
-    name_lbl.add_theme_font_size_override("font_size", 17)
+    name_lbl.text = "[%d]  %s" % [key_num, PerkDef.get_perk_name(perk_id)]
+    name_lbl.add_theme_font_size_override("font_size", 16)
     name_lbl.add_theme_color_override("font_color", Color(0.92, 0.78, 0.30))
-    name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
-    name_lbl.mouse_filter  = Control.MOUSE_FILTER_IGNORE
-    vbox.add_child(name_lbl)
+    name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    left.add_child(name_lbl)
 
     var lvl_lbl := Label.new()
     if cur_lv == 0:
@@ -195,20 +197,24 @@ func _make_card(perk_id: PerkDef.ID, cur_lv: int, new_lv: int, key_num: int) -> 
         lvl_lbl.add_theme_color_override("font_color", Color(0.65, 0.75, 0.95))
     lvl_lbl.add_theme_font_size_override("font_size", 13)
     lvl_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    vbox.add_child(lvl_lbl)
+    left.add_child(lvl_lbl)
 
-    var sep := HSeparator.new()
-    sep.add_theme_color_override("color", Color(0.30, 0.28, 0.42, 0.55))
-    sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    vbox.add_child(sep)
+    # Divider
+    var vsep := VSeparator.new()
+    vsep.add_theme_color_override("color", Color(0.30, 0.28, 0.42, 0.55))
+    vsep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    hbox.add_child(vsep)
 
+    # Right column — description, expands to fill remaining width
     var desc_lbl := Label.new()
     desc_lbl.text = PerkDef.perk_description(perk_id, new_lv)
-    desc_lbl.add_theme_font_size_override("font_size", 13)
+    desc_lbl.add_theme_font_size_override("font_size", 14)
     desc_lbl.add_theme_color_override("font_color", Color(0.82, 0.82, 0.90))
-    desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
-    desc_lbl.mouse_filter  = Control.MOUSE_FILTER_IGNORE
-    vbox.add_child(desc_lbl)
+    desc_lbl.autowrap_mode        = TextServer.AUTOWRAP_WORD
+    desc_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    desc_lbl.size_flags_vertical   = Control.SIZE_SHRINK_CENTER
+    desc_lbl.mouse_filter          = Control.MOUSE_FILTER_IGNORE
+    hbox.add_child(desc_lbl)
 
     var id_captured := perk_id
     btn.pressed.connect(func() -> void: _apply_pick(id_captured))
