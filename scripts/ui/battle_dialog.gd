@@ -476,7 +476,7 @@ func _build_belt_strip(parent_vbox: VBoxContainer) -> void:
 						and PickableItemDef.is_useable(_belt.get_type(idx)) \
 						and _btn_attack.visible:
 					_on_use_belt_item(idx)
-				panel.accept_event()
+					panel.accept_event()
 		)
 
 		_belt_slot_panels.append(panel)
