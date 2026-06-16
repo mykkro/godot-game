@@ -9,7 +9,7 @@ var _choices:    Array          = []   # Array[PerkDef.ID]
 
 var _overlay:    Control       = null
 var _header_lbl: Label         = null
-var _cards_hbox: HBoxContainer = null
+var _cards_vbox: VBoxContainer = null
 var _picking:    bool          = false
 
 
@@ -87,15 +87,15 @@ func _apply_pick(perk_id: PerkDef.ID) -> void:
 
 
 func _build_cards() -> void:
-    for c in _cards_hbox.get_children():
-        _cards_hbox.remove_child(c)
+    for c in _cards_vbox.get_children():
+        _cards_vbox.remove_child(c)
         c.queue_free()
     for i in range(_choices.size()):
         var perk_id: PerkDef.ID = _choices[i]
         var cur_lv  := _perks.get_level(perk_id)
-        _cards_hbox.add_child(_make_card(perk_id, cur_lv, cur_lv + 1, i + 1))
-    if _cards_hbox.get_child_count() > 0:
-        (_cards_hbox.get_child(0) as Button).grab_focus()
+        _cards_vbox.add_child(_make_card(perk_id, cur_lv, cur_lv + 1, i + 1))
+    if _cards_vbox.get_child_count() > 0:
+        (_cards_vbox.get_child(0) as Button).grab_focus()
 
 
 func _build_ui() -> void:
@@ -132,10 +132,9 @@ func _build_ui() -> void:
 
     vbox.add_child(_hsep())
 
-    _cards_hbox = HBoxContainer.new()
-    _cards_hbox.add_theme_constant_override("h_separation", 14)
-    _cards_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-    vbox.add_child(_cards_hbox)
+    _cards_vbox = VBoxContainer.new()
+    _cards_vbox.add_theme_constant_override("separation", 10)
+    vbox.add_child(_cards_vbox)
 
     var key_hint := Label.new()
     key_hint.text = "1 / 2 / 3  —  select"
@@ -149,7 +148,8 @@ func _build_ui() -> void:
 
 func _make_card(perk_id: PerkDef.ID, cur_lv: int, new_lv: int, key_num: int) -> Button:
     var btn := Button.new()
-    btn.custom_minimum_size = Vector2(148, 170)
+    btn.custom_minimum_size    = Vector2(0, 80)
+    btn.size_flags_horizontal  = Control.SIZE_EXPAND_FILL
     btn.process_mode = Node.PROCESS_MODE_ALWAYS
 
     var normal := StyleBoxFlat.new()
