@@ -34,6 +34,10 @@ var _btn_flee:      Button        = null
 var _result_lbl:    Label         = null
 var _ok_btn:        Button        = null
 
+var _belt_slot_panels: Array = []   # 5 PanelContainers
+var _belt_slot_icons:  Array = []   # 5 TextureRect
+var _belt_slot_badges: Array = []   # 5 Label (count)
+
 
 func _ready() -> void:
 	layer        = 72
@@ -65,6 +69,7 @@ func open(monster: MonsterNode, hero: HeroStats, perks: CharacterPerks, belt: Be
 	_result_lbl.visible = false
 	_ok_btn.visible     = false
 	_refresh_bars()
+	_refresh_belt_strip()
 	_overlay.visible    = true
 	get_tree().paused   = true
 
@@ -356,6 +361,10 @@ func _build_ui() -> void:
 
 	vbox.add_child(_hsep())
 
+	# Belt strip
+	_build_belt_strip(vbox)
+	vbox.add_child(_hsep())
+
 	# Action buttons
 	var btn_row := HBoxContainer.new()
 	btn_row.add_theme_constant_override("h_separation", 12)
@@ -386,6 +395,127 @@ func _build_ui() -> void:
 	vbox.add_child(_ok_btn)
 
 	_overlay.visible = false
+
+
+func _build_belt_strip(parent_vbox: VBoxContainer) -> void:
+	var lbl := Label.new()
+	lbl.text = "QUICK USE"
+	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.add_theme_color_override("font_color", Color(0.50, 0.50, 0.62))
+	lbl.uppercase = true
+	parent_vbox.add_child(lbl)
+
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("h_separation", 6)
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	parent_vbox.add_child(hbox)
+
+	for i in 5:
+		var panel := PanelContainer.new()
+		panel.custom_minimum_size = Vector2(38, 38)
+		panel.process_mode = Node.PROCESS_MODE_ALWAYS
+
+		var bg := StyleBoxFlat.new()
+		bg.bg_color     = Color(0.10, 0.10, 0.12, 0.90)
+		bg.border_color = Color(0.26, 0.26, 0.28, 0.8)
+		bg.set_border_width_all(1)
+		bg.set_corner_radius_all(3)
+		panel.add_theme_stylebox_override("panel", bg)
+		hbox.add_child(panel)
+
+		var icon := TextureRect.new()
+		icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		icon.expand_mode    = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		icon.stretch_mode   = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		icon.mouse_filter   = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(icon)
+
+		var badge := Label.new()
+		badge.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+		badge.offset_left   = -22; badge.offset_top    = -12
+		badge.offset_right  = -1;  badge.offset_bottom = -1
+		badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		badge.add_theme_font_size_override("font_size", 9)
+		badge.add_theme_color_override("font_color", Color(1.0, 1.0, 0.65))
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		badge.visible      = false
+		panel.add_child(badge)
+
+		var key_lbl := Label.new()
+		key_lbl.text = str(i + 1)
+		key_lbl.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		key_lbl.offset_left   = 2;  key_lbl.offset_top    = 1
+		key_lbl.offset_right  = 10; key_lbl.offset_bottom = 10
+		key_lbl.add_theme_font_size_override("font_size", 8)
+		key_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+		key_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(key_lbl)
+
+		var idx := i
+		panel.gui_input.connect(func(event: InputEvent) -> void:
+			if not (event is InputEventMouseButton):
+				return
+			var mb := event as InputEventMouseButton
+			if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+				if _belt != null and _belt.has_item(idx) \
+						and PickableItemDef.is_useable(_belt.get_type(idx)) \
+						and _btn_attack.visible:
+					_on_use_belt_item(idx)
+				panel.accept_event()
+		)
+
+		_belt_slot_panels.append(panel)
+		_belt_slot_icons.append(icon)
+		_belt_slot_badges.append(badge)
+
+
+func _refresh_belt_strip() -> void:
+	if _belt == null:
+		return
+	for i in 5:
+		var icon  := _belt_slot_icons[i]  as TextureRect
+		var badge := _belt_slot_badges[i] as Label
+		var panel := _belt_slot_panels[i] as PanelContainer
+
+		if _belt.has_item(i) and PickableItemDef.is_useable(_belt.get_type(i)):
+			icon.texture = PickableItemDef.get_texture(_belt.get_type(i))
+			var cnt := _belt.get_count(i)
+			badge.text    = str(cnt) if cnt > 1 else ""
+			badge.visible = cnt > 1
+			var bg := StyleBoxFlat.new()
+			bg.bg_color     = Color(0.12, 0.12, 0.18, 0.95)
+			bg.border_color = Color(0.65, 0.55, 0.20, 0.90)
+			bg.set_border_width_all(1)
+			bg.set_corner_radius_all(3)
+			panel.add_theme_stylebox_override("panel", bg)
+		else:
+			icon.texture  = null
+			badge.visible = false
+			var bg := StyleBoxFlat.new()
+			bg.bg_color     = Color(0.10, 0.10, 0.12, 0.90)
+			bg.border_color = Color(0.20, 0.20, 0.22, 0.6)
+			bg.set_border_width_all(1)
+			bg.set_corner_radius_all(3)
+			panel.add_theme_stylebox_override("panel", bg)
+
+
+func _on_use_belt_item(index: int) -> void:
+	_set_action_ui(false)
+	var item_type := _belt.consume(index)
+	match item_type:
+		MapObject.Type.HEALTH_POTION:
+			var amt := 20
+			_hero.heal(amt)
+			_add_log("You drink a Health Potion.  +%d HP." % amt)
+		MapObject.Type.MANA_POTION:
+			var amt := 15
+			_hero.current_mana = mini(_hero.max_mana, _hero.current_mana + amt)
+			_hero.changed.emit()
+			_add_log("You drink a Mana Potion.  +%d MP." % amt)
+	_refresh_bars()
+	_refresh_belt_strip()
+	_after_hero_action()
 
 
 func _build_hero_bar_col(
