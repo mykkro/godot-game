@@ -16,6 +16,12 @@ var _timer:      Timer         = null
 
 var _chest_editor: ChestInventoryEditor = null
 
+const UNDO_MAX := 50
+
+var _undo_stack:        Array      = []   # Array of Array[Dictionary] — per-stroke records
+var _pending_record:    Array      = []   # Snapshots for the in-progress stroke
+var _stroke_cells_seen: Dictionary = {}   # Keys already snapshotted this stroke
+
 
 func _ready() -> void:
 	_build_scene_tree()
@@ -97,6 +103,8 @@ func _connect_signals() -> void:
 	_input_node.paint_cell.connect(_on_paint_cell)
 	_input_node.erase_cell.connect(_on_right_click_cell)
 	_input_node.hover_cell.connect(_on_hover_cell)
+	_input_node.stroke_started.connect(_on_stroke_started)
+	_input_node.stroke_ended.connect(_on_stroke_ended)
 
 	_ui.save_pressed.connect(_on_save)
 	_ui.menu_pressed.connect(_on_go_to_menu)
@@ -335,6 +343,46 @@ func _mark_dirty() -> void:
 	if not _dirty:
 		_dirty = true
 		_ui.set_unsaved(true)
+
+
+func _on_stroke_started() -> void:
+	_pending_record    = []
+	_stroke_cells_seen = {}
+
+
+func _on_stroke_ended() -> void:
+	if _pending_record.is_empty():
+		return
+	_undo_stack.append(_pending_record)
+	if _undo_stack.size() > UNDO_MAX:
+		_undo_stack.pop_front()
+	_pending_record    = []
+	_stroke_cells_seen = {}
+
+
+func _snapshot_cell(cc: Vector2i, lc: Vector2i) -> void:
+	var key := "%d,%d:%d,%d" % [cc.x, cc.y, lc.x, lc.y]
+	if _stroke_cells_seen.has(key):
+		return
+	if not _chunks.has(cc):
+		return
+	var data := (_chunks[cc] as ChunkEditorNode).get_data()
+	var cell := data.get_cell(lc.x, lc.y)
+	if cell == null:
+		return
+	_stroke_cells_seen[key] = true
+	_pending_record.append({
+		"cc":             cc,
+		"lc":             lc,
+		"terrain":        cell.terrain_type,
+		"is_obstacle":    cell.is_obstacle,
+		"objects":        cell.objects.duplicate(),
+		"overlay":        data.get_terrain_overlay(lc.x, lc.y),
+		"chest_variant":  data.get_chest_variant(lc.x, lc.y),
+		"chest_contents": data.get_chest_contents(lc.x, lc.y),
+		"rock_variant":   data.get_rock_variant(lc.x, lc.y),
+		"monster":        data.get_monster_placement(lc.x, lc.y),
+	})
 
 
 # ── Navigation ────────────────────────────────────────────────────────────────
