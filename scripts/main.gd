@@ -28,6 +28,7 @@ var _quest_journal: QuestJournalUI  = null
 var _battle_dialog: BattleDialog    = null
 var _hud_stats:     HudStats        = null
 var _monster_book:  MonsterBook     = null
+var _perk_pick_ui:  PerkPickUI      = null
 
 
 func _ready() -> void:
@@ -79,6 +80,10 @@ func _ready() -> void:
 
 	_monster_book = MonsterBook.new()
 	add_child(_monster_book)
+
+	_perk_pick_ui = PerkPickUI.new()
+	add_child(_perk_pick_ui)
+	_perk_pick_ui.perk_picked.connect(_on_perk_picked)
 
 	AudioManager.apply_saved_settings()
 	_start_music()
@@ -133,14 +138,15 @@ func _ready() -> void:
 	)
 	_avatar.monster_fight_requested.connect(
 		func(m: MonsterNode) -> void:
-			_battle_dialog.open(m, _avatar.stats)
+			_battle_dialog.open(m, _avatar.stats, _avatar.perks)
 	)
 	_battle_dialog.battle_won.connect(func(m: MonsterNode) -> void:
 		var leveled := _avatar.stats.add_xp(m.xp_reward)
-		if leveled:
-			_pickup_hint.show_message("Level up!  You are now level %d!" % _avatar.stats.level)
 		m.queue_free()
-		SaveManager.save_stats(_avatar.stats)
+		if leveled:
+			_perk_pick_ui.open(_avatar.stats, _avatar.perks)
+		else:
+			SaveManager.save_stats(_avatar.stats)
 	)
 	_battle_dialog.battle_lost.connect(func(m: MonsterNode) -> void:
 		m.current_hp = m.max_hp
@@ -296,3 +302,8 @@ static func _is_cell_clear(cell: CellData) -> bool:
 		if not MapObject.is_type_passable(obj_type):
 			return false
 	return true
+
+
+func _on_perk_picked() -> void:
+	SaveManager.save_stats(_avatar.stats)
+	SaveManager.save_perks(_avatar.perks)
