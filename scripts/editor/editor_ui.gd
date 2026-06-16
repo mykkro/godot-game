@@ -24,6 +24,8 @@ var _confirm_dialog: ConfirmationDialog = null
 var _active_layer: int = 0
 var _btn_layer0: Button = null
 var _btn_layer1: Button = null
+var _brush_size: int = 1
+var _brush_btns: Array = []   # 5 Button nodes
 
 # Unsaved exit guard callback — set by map_editor.gd.
 var _exit_guard: Callable = Callable()
@@ -41,6 +43,10 @@ func _ready() -> void:
 
 func get_active_layer() -> int:
 	return _active_layer
+
+
+func get_brush_size() -> int:
+	return _brush_size
 
 
 func get_terrain_palette() -> TerrainPalette:
@@ -168,10 +174,79 @@ func _build_right_panel() -> void:
 	bg.content_margin_left = 8.0
 	panel.add_theme_stylebox_override("panel", bg)
 
+	var outer_vbox := VBoxContainer.new()
+	outer_vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	outer_vbox.add_theme_constant_override("separation", 0)
+	panel.add_child(outer_vbox)
+
+	# ── Fixed header (always visible) ─────────────────────────────────────────
+	var header := VBoxContainer.new()
+	header.add_theme_constant_override("separation", 4)
+	outer_vbox.add_child(header)
+
+	# Layer row
+	var layer_row := HBoxContainer.new()
+	layer_row.add_theme_constant_override("separation", 4)
+	header.add_child(layer_row)
+
+	var lbl_layer := Label.new()
+	lbl_layer.text = "LAYER"
+	lbl_layer.add_theme_font_size_override("font_size", 12)
+	lbl_layer.add_theme_color_override("font_color", Color(0.70, 0.70, 0.80))
+	lbl_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layer_row.add_child(lbl_layer)
+
+	_btn_layer0 = Button.new()
+	_btn_layer0.text = "L0"
+	_btn_layer0.toggle_mode = true
+	_btn_layer0.button_pressed = true
+	_btn_layer0.tooltip_text = "Edit base terrain (layer 0)"
+	_btn_layer0.custom_minimum_size = Vector2(34, 0)
+	_btn_layer0.pressed.connect(_on_layer_btn_pressed.bind(0))
+	layer_row.add_child(_btn_layer0)
+
+	_btn_layer1 = Button.new()
+	_btn_layer1.text = "L1"
+	_btn_layer1.toggle_mode = true
+	_btn_layer1.button_pressed = false
+	_btn_layer1.tooltip_text = "Edit overlay terrain (layer 1)"
+	_btn_layer1.custom_minimum_size = Vector2(34, 0)
+	_btn_layer1.pressed.connect(_on_layer_btn_pressed.bind(1))
+	layer_row.add_child(_btn_layer1)
+
+	# Brush size row
+	var brush_row := HBoxContainer.new()
+	brush_row.add_theme_constant_override("separation", 3)
+	header.add_child(brush_row)
+
+	var lbl_brush := Label.new()
+	lbl_brush.text = "BRUSH"
+	lbl_brush.add_theme_font_size_override("font_size", 12)
+	lbl_brush.add_theme_color_override("font_color", Color(0.70, 0.70, 0.80))
+	lbl_brush.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	brush_row.add_child(lbl_brush)
+
+	for sz in [1, 3, 5, 7, 9]:
+		var btn := Button.new()
+		btn.text = str(sz)
+		btn.toggle_mode = true
+		btn.button_pressed = (sz == 1)
+		btn.tooltip_text = "%dx%d brush" % [sz, sz]
+		btn.custom_minimum_size = Vector2(28, 0)
+		btn.add_theme_font_size_override("font_size", 11)
+		btn.pressed.connect(_on_brush_btn_pressed.bind(sz))
+		brush_row.add_child(btn)
+		_brush_btns.append(btn)
+
+	var header_sep := HSeparator.new()
+	header_sep.add_theme_color_override("color", Color(0.3, 0.3, 0.4))
+	outer_vbox.add_child(header_sep)
+
+	# ── Scrollable palette ─────────────────────────────────────────────────────
 	var scroll := ScrollContainer.new()
-	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	panel.add_child(scroll)
+	outer_vbox.add_child(scroll)
 	_palette_scroll = scroll
 
 	var vbox := VBoxContainer.new()
@@ -206,34 +281,11 @@ func _build_right_panel() -> void:
 
 	_add_separator(vbox)
 
-	var terrain_header := HBoxContainer.new()
-	terrain_header.add_theme_constant_override("separation", 6)
-	vbox.add_child(terrain_header)
-
 	var lbl_terrain := Label.new()
 	lbl_terrain.text = "TERRAIN"
 	lbl_terrain.add_theme_font_size_override("font_size", 15)
 	lbl_terrain.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
-	lbl_terrain.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	terrain_header.add_child(lbl_terrain)
-
-	_btn_layer0 = Button.new()
-	_btn_layer0.text = "L0"
-	_btn_layer0.toggle_mode = true
-	_btn_layer0.button_pressed = true
-	_btn_layer0.tooltip_text = "Edit base terrain (layer 0)"
-	_btn_layer0.custom_minimum_size = Vector2(32, 0)
-	_btn_layer0.pressed.connect(_on_layer_btn_pressed.bind(0))
-	terrain_header.add_child(_btn_layer0)
-
-	_btn_layer1 = Button.new()
-	_btn_layer1.text = "L1"
-	_btn_layer1.toggle_mode = true
-	_btn_layer1.button_pressed = false
-	_btn_layer1.tooltip_text = "Edit overlay terrain (layer 1)"
-	_btn_layer1.custom_minimum_size = Vector2(32, 0)
-	_btn_layer1.pressed.connect(_on_layer_btn_pressed.bind(1))
-	terrain_header.add_child(_btn_layer1)
+	vbox.add_child(lbl_terrain)
 
 	_terrain_pal = TerrainPalette.new()
 	_terrain_pal.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -314,6 +366,12 @@ func _on_layer_btn_pressed(layer: int) -> void:
 	_btn_layer0.button_pressed = (layer == 0)
 	_btn_layer1.button_pressed = (layer == 1)
 	layer_changed.emit(layer)
+
+
+func _on_brush_btn_pressed(size: int) -> void:
+	_brush_size = size
+	for i in _brush_btns.size():
+		(_brush_btns[i] as Button).button_pressed = ([1, 3, 5, 7, 9][i] == size)
 
 
 func _add_separator(parent: Control) -> void:
