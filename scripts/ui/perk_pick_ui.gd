@@ -210,7 +210,7 @@ func _make_card(perk_id: PerkDef.ID, cur_lv: int, new_lv: int, key_num: int) -> 
     desc_lbl.text = PerkDef.perk_description(perk_id, new_lv)
     desc_lbl.add_theme_font_size_override("font_size", 14)
     desc_lbl.add_theme_color_override("font_color", Color(0.82, 0.82, 0.90))
-    desc_lbl.autowrap_mode        = TextServer.AUTOWRAP_WORD
+    desc_lbl.autowrap_mode        = TextServer.AUTOWRAP_OFF
     desc_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     desc_lbl.size_flags_vertical   = Control.SIZE_SHRINK_CENTER
     desc_lbl.mouse_filter          = Control.MOUSE_FILTER_IGNORE
