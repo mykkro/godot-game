@@ -30,6 +30,13 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var ke := event as InputEventKey
+		if ke.pressed and not ke.echo and ke.ctrl_pressed and ke.keycode == KEY_Z:
+			_undo()
+			get_viewport().set_input_as_handled()
+			return
+
 	if not (event is InputEventMouseButton):
 		return
 	var mb := event as InputEventMouseButton
@@ -346,6 +353,34 @@ func _mark_dirty() -> void:
 	if not _dirty:
 		_dirty = true
 		_ui.set_unsaved(true)
+
+
+func _undo() -> void:
+	if _undo_stack.is_empty():
+		return
+	var record: Array = _undo_stack.pop_back()
+	for snap in record:
+		var cc: Vector2i = snap["cc"]
+		var lc: Vector2i = snap["lc"]
+		var chunk_node   := _ensure_chunk(cc)
+		var data         := chunk_node.get_data()
+		var cell         := data.get_cell(lc.x, lc.y)
+		if cell == null:
+			continue
+		cell.terrain_type = snap["terrain"]
+		cell.is_obstacle  = snap["is_obstacle"]
+		cell.objects      = (snap["objects"] as Array).duplicate()
+		data.set_terrain_overlay(lc.x, lc.y, snap["overlay"])
+		data.set_chest_variant(lc.x, lc.y, snap["chest_variant"])
+		var cc_val = snap["chest_contents"]
+		if cc_val == null:
+			data.chest_contents.erase(lc.x + lc.y * ChunkData.CHUNK_SIZE)
+		else:
+			data.set_chest_contents(lc.x, lc.y, (cc_val as Array).duplicate())
+		data.set_rock_variant(lc.x, lc.y, snap["rock_variant"])
+		data.set_monster_placement(lc.x, lc.y, snap["monster"])
+		chunk_node.set_cell(lc.x, lc.y, cell)
+	_mark_dirty()
 
 
 func _on_stroke_started() -> void:
