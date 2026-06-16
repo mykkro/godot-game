@@ -4,6 +4,8 @@ extends Node
 signal paint_cell(chunk_coord: Vector2i, local_coord: Vector2i)
 signal erase_cell(chunk_coord: Vector2i, local_coord: Vector2i)
 signal hover_cell(chunk_coord: Vector2i, local_coord: Vector2i)
+signal stroke_started
+signal stroke_ended
 
 const CELL_SIZE  := ChunkData.CELL_SIZE
 const CHUNK_SIZE := ChunkData.CHUNK_SIZE
@@ -28,11 +30,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			MOUSE_BUTTON_LEFT:
 				_paint_held = mb.pressed
 				if mb.pressed:
+					stroke_started.emit()
 					_emit_paint(mb.position)
+				else:
+					stroke_ended.emit()
 			MOUSE_BUTTON_RIGHT:
 				_erase_held = mb.pressed
 				if mb.pressed:
+					stroke_started.emit()
 					_emit_erase(mb.position)
+				else:
+					stroke_ended.emit()
 
 	elif event is InputEventMouseMotion:
 		var mm := event as InputEventMouseMotion
