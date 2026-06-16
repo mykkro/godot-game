@@ -42,6 +42,7 @@ var _pickup_sound: AudioStreamPlayer = null
 var _shoot_sound:  AudioStreamPlayer = null
 var _drop_sound:   AudioStreamPlayer = null
 var _shoot_cooldown: float           = 0.0
+var _floating_text: Label            = null
 
 
 ## Must be called after the node is in the scene tree (from Main._ready).
@@ -81,6 +82,15 @@ func _ready() -> void:
 	_drop_sound.volume_db = linear_to_db(DROP_SOUND_VOLUME)
 	_drop_sound.bus       = AudioManager.SFX_BUS
 	add_child(_drop_sound)
+
+	_floating_text = Label.new()
+	_floating_text.z_index = 10
+	_floating_text.visible = false
+	_floating_text.add_theme_font_size_override("font_size", 14)
+	_floating_text.add_theme_constant_override("shadow_offset_x", 1)
+	_floating_text.add_theme_constant_override("shadow_offset_y", 1)
+	_floating_text.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	add_child(_floating_text)
 
 
 func _physics_process(delta: float) -> void:
@@ -454,5 +464,24 @@ func use_belt_slot(index: int) -> void:
 
 
 ## Show floating feedback text above the avatar when a consumable is used.
-func show_use_feedback(_item_type: int) -> void:
-	pass  # implemented in Task 5
+func show_use_feedback(item_type: int) -> void:
+	if _floating_text == null:
+		return
+	match item_type:
+		MapObject.Type.HEALTH_POTION:
+			_floating_text.text = "+20 HP"
+			_floating_text.add_theme_color_override("font_color", Color(0.306, 0.858, 0.416))
+		MapObject.Type.MANA_POTION:
+			_floating_text.text = "+20 Mana"
+			_floating_text.add_theme_color_override("font_color", Color(0.204, 0.596, 0.859))
+		_:
+			return
+	_floating_text.position = Vector2(-20.0, -60.0)
+	_floating_text.modulate = Color(1, 1, 1, 1)
+	_floating_text.visible  = true
+
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(_floating_text, "position:y", -90.0, 0.7)
+	tw.tween_property(_floating_text, "modulate:a",  0.0,  0.7)
+	tw.finished.connect(func() -> void: _floating_text.visible = false, CONNECT_ONE_SHOT)
