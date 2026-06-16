@@ -17,6 +17,8 @@ var _perks_vbox:      VBoxContainer  = null
 var _stats_vbox:      VBoxContainer  = null
 var _inv_grid:        GridContainer  = null
 var _inv_icons:       Array          = []   # Array[TextureRect]
+var _belt_icons:      Array          = []   # Array[TextureRect]
+var _belt_badges:     Array          = []   # Array[Label]
 var _knight:          KnightSprite   = null
 
 
@@ -101,6 +103,7 @@ func _refresh() -> void:
 	_refresh_perks()
 	_refresh_battle_stats()
 	_refresh_inventory()
+	_refresh_belt()
 
 
 func _refresh_perks() -> void:
@@ -156,6 +159,24 @@ func _refresh_inventory() -> void:
 			icon.texture = PickableItemDef.get_texture(inv.get_type(i))
 		else:
 			icon.texture = null
+
+
+func _refresh_belt() -> void:
+	var belt := _avatar.belt
+	for i in Belt.SLOT_COUNT:
+		var icon  := _belt_icons[i]  as TextureRect
+		var badge := _belt_badges[i] as Label
+		if belt.has_item(i):
+			icon.texture = PickableItemDef.get_texture(belt.get_type(i))
+			var cnt := belt.get_count(i)
+			if cnt > 1:
+				badge.text    = str(cnt)
+				badge.visible = true
+			else:
+				badge.visible = false
+		else:
+			icon.texture  = null
+			badge.visible = false
 
 
 func _count_gold() -> int:
@@ -225,6 +246,16 @@ func _build_content() -> void:
 	for i in range(ROWS * COLS):
 		_inv_grid.add_child(_make_inv_slot())
 
+	# ── Belt ──
+	outer.add_child(_section_label("Belt"))
+
+	var belt_hbox := HBoxContainer.new()
+	belt_hbox.add_theme_constant_override("separation", SLOT_SEP)
+	outer.add_child(belt_hbox)
+
+	for i in Belt.SLOT_COUNT:
+		belt_hbox.add_child(_make_belt_slot(i))
+
 	# ── Close hint ──
 	var hint := Label.new()
 	hint.text = "C  /  Escape  —  close"
@@ -283,6 +314,60 @@ func _build_stats_column() -> VBoxContainer:
 	col.add_child(_perks_vbox)
 
 	return col
+
+
+func _make_belt_slot(index: int) -> PanelContainer:
+	var slot := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color                   = Color(0.10, 0.10, 0.16, 0.88)
+	style.border_width_left          = 1; style.border_width_right  = 1
+	style.border_width_top           = 1; style.border_width_bottom = 1
+	style.border_color               = Color(0.28, 0.28, 0.38, 0.55)
+	style.corner_radius_top_left     = 3; style.corner_radius_top_right    = 3
+	style.corner_radius_bottom_left  = 3; style.corner_radius_bottom_right = 3
+	slot.add_theme_stylebox_override("panel", style)
+	slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
+
+	var wrap := Control.new()
+	wrap.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
+	wrap.mouse_filter        = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(wrap)
+
+	var icon := TextureRect.new()
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.expand_mode    = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	icon.stretch_mode   = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.mouse_filter   = Control.MOUSE_FILTER_IGNORE
+	wrap.add_child(icon)
+	_belt_icons.append(icon)
+
+	var key_lbl := Label.new()
+	key_lbl.text = str(index + 1)
+	key_lbl.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	key_lbl.offset_left = 1; key_lbl.offset_top    = 1
+	key_lbl.offset_right = 10; key_lbl.offset_bottom = 10
+	key_lbl.add_theme_font_size_override("font_size", 7)
+	key_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	key_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wrap.add_child(key_lbl)
+
+	var badge := Label.new()
+	badge.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	badge.offset_left   = -20; badge.offset_top    = -11
+	badge.offset_right  = -1;  badge.offset_bottom = -1
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	badge.add_theme_font_size_override("font_size", 8)
+	badge.add_theme_color_override("font_color",        Color(1.0, 1.0, 0.65))
+	badge.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 1.0))
+	badge.add_theme_constant_override("shadow_offset_x", 1)
+	badge.add_theme_constant_override("shadow_offset_y", 1)
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.visible = false
+	wrap.add_child(badge)
+	_belt_badges.append(badge)
+
+	return slot
 
 
 func _make_inv_slot() -> PanelContainer:
