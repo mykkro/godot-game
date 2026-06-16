@@ -126,7 +126,34 @@ func _ensure_chunk(cc: Vector2i) -> ChunkEditorNode:
 
 func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 	if _chest_editor.visible:
-		return   # block painting while chest editor is open
+		return
+	var size := _ui.get_brush_size()
+	if size == 1:
+		_paint_single_cell(cc, lc)
+		_mark_dirty()
+		return
+
+	var half  := size / 2
+	var world := Vector2i(cc.x * ChunkData.CHUNK_SIZE + lc.x,
+	                      cc.y * ChunkData.CHUNK_SIZE + lc.y)
+	var painted := false
+	for dy in range(-half, half + 1):
+		for dx in range(-half, half + 1):
+			var wgx := world.x + dx
+			var wgy := world.y + dy
+			var bcc_x := floori(float(wgx) / ChunkData.CHUNK_SIZE)
+			var bcc_y := floori(float(wgy) / ChunkData.CHUNK_SIZE)
+			var blc_x := wgx - bcc_x * ChunkData.CHUNK_SIZE
+			var blc_y := wgy - bcc_y * ChunkData.CHUNK_SIZE
+			_paint_single_cell(Vector2i(bcc_x, bcc_y), Vector2i(blc_x, blc_y))
+			painted = true
+	if painted:
+		_mark_dirty()
+
+
+func _paint_single_cell(cc: Vector2i, lc: Vector2i) -> void:
+	if _chest_editor.visible:
+		return
 	var terrain_sel:    String = _ui.get_terrain_palette().get_selected()
 	var item_sel:       int    = _ui.get_item_palette().get_selected()
 	var chest_variant:  int    = _ui.get_item_palette().get_selected_chest_variant()
@@ -142,10 +169,10 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 	if cell == null:
 		return
 
+	var active_layer := _ui.get_active_layer()
+
 	if terrain_sel != "":
-		var active_layer := _ui.get_active_layer()
 		if active_layer == 0:
-			# Layer 0: set base terrain, clear overlay, clear objects
 			cell.terrain_type = terrain_sel
 			cell.is_obstacle  = not TileRegistry.is_passable(terrain_sel)
 			cell.objects.clear()
@@ -154,12 +181,11 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 			data.set_rock_variant(lc.x, lc.y, 0)
 			data.erase_terrain_overlay(lc.x, lc.y)
 		else:
-			# Layer 1: set overlay only, update passability from topmost layer
 			data.set_terrain_overlay(lc.x, lc.y, terrain_sel)
 			cell.is_obstacle = not TileRegistry.is_passable(terrain_sel)
 
 	if item_sel != ItemPalette.NONE_TYPE:
-		cell.objects.clear()   # one object per cell
+		cell.objects.clear()
 		cell.add_object(item_sel)
 		if item_sel == MapObject.Type.CHEST_SMALL:
 			data.set_chest_variant(lc.x, lc.y, chest_variant)
@@ -178,7 +204,6 @@ func _on_paint_cell(cc: Vector2i, lc: Vector2i) -> void:
 		data.set_monster_placement(lc.x, lc.y, monster_sel)
 
 	chunk_node.set_cell(lc.x, lc.y, cell)
-	_mark_dirty()
 
 
 ## Right-click: open chest editor if cell contains a chest, otherwise erase objects.
