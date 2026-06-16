@@ -10,8 +10,9 @@ const OBJ_COLORS := {
 	6: Color(0.75, 0.55, 0.20),  # CHEST_SMALL
 }
 
-var _data:        ChunkData = null
-var _hover_cell:  Vector2i  = Vector2i(-1, -1)
+var _data:               ChunkData = null
+var _hover_world_center: Vector2i  = Vector2i(-1, -1)
+var _hover_brush_size:   int       = 1
 
 
 func initialize(data: ChunkData) -> void:
@@ -20,9 +21,10 @@ func initialize(data: ChunkData) -> void:
 	queue_redraw()
 
 
-func set_hover(local_cell: Vector2i) -> void:
-	if local_cell != _hover_cell:
-		_hover_cell = local_cell
+func set_hover(world_center: Vector2i, brush_size: int) -> void:
+	if world_center != _hover_world_center or brush_size != _hover_brush_size:
+		_hover_world_center = world_center
+		_hover_brush_size   = brush_size
 		queue_redraw()
 
 
@@ -75,15 +77,23 @@ func _draw() -> void:
 			if not species.is_empty():
 				_draw_monster(species, px, py)
 
-	# Hover highlight.
-	if _hover_cell.x >= 0 and _hover_cell.x < CHUNK_SIZE \
-			and _hover_cell.y >= 0 and _hover_cell.y < CHUNK_SIZE:
-		var hx := _hover_cell.x * CELL_SIZE
-		var hy := _hover_cell.y * CELL_SIZE
-		draw_rect(Rect2(hx, hy, CELL_SIZE, CELL_SIZE),
-				Color(1.0, 1.0, 0.5, 0.30), true)
-		draw_rect(Rect2(hx, hy, CELL_SIZE, CELL_SIZE),
-				Color(1.0, 1.0, 0.5, 0.80), false, 1.5)
+	# Hover highlight — draw every cell of the brush that falls in this chunk.
+	if _hover_world_center.x >= 0:
+		var half    := _hover_brush_size / 2
+		var chunk_x := _data.chunk_x
+		var chunk_y := _data.chunk_y
+		for dy in range(-half, half + 1):
+			for dx in range(-half, half + 1):
+				var lx := (_hover_world_center.x + dx) - chunk_x * CHUNK_SIZE
+				var ly := (_hover_world_center.y + dy) - chunk_y * CHUNK_SIZE
+				if lx < 0 or lx >= CHUNK_SIZE or ly < 0 or ly >= CHUNK_SIZE:
+					continue
+				var hx := lx * CELL_SIZE
+				var hy := ly * CELL_SIZE
+				draw_rect(Rect2(hx, hy, CELL_SIZE, CELL_SIZE),
+						Color(1.0, 1.0, 0.5, 0.30), true)
+				draw_rect(Rect2(hx, hy, CELL_SIZE, CELL_SIZE),
+						Color(1.0, 1.0, 0.5, 0.80), false, 1.5)
 
 	# Chunk border.
 	draw_rect(Rect2(0, 0, chunk_px, chunk_px), Color(0.6, 0.6, 0.6, 0.5), false, 1.5)
