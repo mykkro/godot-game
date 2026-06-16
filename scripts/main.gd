@@ -116,6 +116,8 @@ func _ready() -> void:
 			[15, 2], [16, 1], [9, 1], # Bronze Axe
 			[63, 2], [7,  1],         # Glass Vial
 			[21, 3], [88, 1],         # Cloth Strip
+			[MapObject.Type.HEALTH_POTION, 2],
+			[MapObject.Type.MANA_POTION,   2],
 		]:
 			_avatar.inventory.items.append({"type": entry[0], "count": entry[1]})
 		_avatar.belt.set_slot(0, MapObject.Type.HEALTH_POTION, 2)

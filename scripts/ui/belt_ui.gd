@@ -134,36 +134,39 @@ func _make_slot(index: int) -> Array:
 	return [slot, icon, badge]
 
 
-## Same pattern as InventoryUI._setup_slot_drag: called from _ready(), uses
-## instance vars (_belt, _inventory, _inventory_ui_ref, _use_fn) in lambdas.
 func _setup_slot_drag(slot: PanelContainer, index: int) -> void:
-	# Double-click to use/consume the item in this belt slot.
+	# gui_input: double-click consumes the item; mouse drag via force_drag.
+	# force_drag is used instead of set_drag_forwarding's get_drag_data because
+	# dynamically-added Controls have unreliable _get_drag_data forwarding in
+	# Godot 4 — force_drag is the authoritative way to start a drag explicitly.
 	slot.gui_input.connect(func(event: InputEvent) -> void:
-		if not (event is InputEventMouseButton):
-			return
-		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_LEFT and mb.double_click and mb.pressed:
-			if _belt != null and _belt.has_item(index):
-				var consumed_type := _belt.consume(index)
-				if consumed_type >= 0 and _use_fn.is_valid():
-					_use_fn.call(consumed_type)
-			slot.accept_event()
+		if event is InputEventMouseButton:
+			var mb := event as InputEventMouseButton
+			if mb.button_index == MOUSE_BUTTON_LEFT and mb.double_click and mb.pressed:
+				if _belt != null and _belt.has_item(index):
+					var consumed_type := _belt.consume(index)
+					if consumed_type >= 0 and _use_fn.is_valid():
+						_use_fn.call(consumed_type)
+				slot.accept_event()
+		elif event is InputEventMouseMotion:
+			var mm := event as InputEventMouseMotion
+			if mm.button_mask & MOUSE_BUTTON_MASK_LEFT:
+				if _belt != null and _belt.has_item(index):
+					var item_type := _belt.get_type(index)
+					var preview := TextureRect.new()
+					preview.texture             = PickableItemDef.get_texture(item_type)
+					preview.custom_minimum_size = Vector2(44, 44)
+					preview.expand_mode         = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+					preview.stretch_mode        = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+					preview.texture_filter      = CanvasItem.TEXTURE_FILTER_NEAREST
+					slot.force_drag({"belt_src_slot": index}, preview)
+					slot.get_viewport().set_input_as_handled()
 	)
 
+	# Only the drop callbacks are registered via set_drag_forwarding (drag
+	# initiation is handled by force_drag in gui_input above).
 	slot.set_drag_forwarding(
-		# get_drag_data — start drag when belt slot has an item.
-		func(_pos: Vector2) -> Variant:
-			if _belt == null or not _belt.has_item(index):
-				return null
-			var item_type := _belt.get_type(index)
-			var preview := TextureRect.new()
-			preview.texture             = PickableItemDef.get_texture(item_type)
-			preview.custom_minimum_size = Vector2(44, 44)
-			preview.expand_mode         = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-			preview.stretch_mode        = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			preview.texture_filter      = CanvasItem.TEXTURE_FILTER_NEAREST
-			slot.set_drag_preview(preview)
-			return {"belt_src_slot": index},
+		Callable(),
 
 		# can_drop_data — accept inventory items that are useable.
 		func(_pos: Vector2, data: Variant) -> bool:
