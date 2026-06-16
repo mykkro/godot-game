@@ -13,6 +13,7 @@ enum _State { CHOOSING, WIN, LOSE, FLED }
 var _hero:         HeroStats   = null
 var _monster:      MonsterNode = null
 var _defend_bonus: bool        = false
+var _perks:        CharacterPerks = null
 var _state:        _State      = _State.CHOOSING
 
 ## UI nodes
@@ -39,9 +40,10 @@ func _ready() -> void:
 	_build_ui()
 
 
-func open(monster: MonsterNode, hero: HeroStats) -> void:
+func open(monster: MonsterNode, hero: HeroStats, perks: CharacterPerks) -> void:
 	_hero          = hero
 	_monster       = monster
+	_perks         = perks
 	_defend_bonus  = false
 	_state         = _State.CHOOSING
 
@@ -75,7 +77,14 @@ func close() -> void:
 func _on_attack() -> void:
 	_set_action_ui(false)
 	_defend_bonus = false
-	var dmg := _calc_damage(_hero.attack, _monster.defense)
+	var eff_atk := _hero.attack
+	if _perks != null:
+		var berk_lv := _perks.get_level(PerkDef.ID.BERSERKER)
+		if berk_lv > 0 and float(_hero.current_hp) / float(_hero.max_hp) < 0.30:
+			var bonus := PerkDef.get_berserker_bonus(berk_lv)
+			eff_atk += bonus
+			_add_log("Berserker rage!  +%d attack." % bonus)
+	var dmg := _calc_damage(eff_atk, _monster.defense)
 	_monster.current_hp = maxi(0, _monster.current_hp - dmg)
 	_add_log("You strike %s for %d damage." % [_monster.species, dmg])
 	_refresh_bars()
@@ -124,7 +133,13 @@ func _finish(state: _State) -> void:
 	_state = state
 	match state:
 		_State.WIN:
-			_result_lbl.text                   = "Victory!  +%d XP" % _monster.xp_reward
+			if _perks != null:
+				var vamp_lv := _perks.get_level(PerkDef.ID.VAMPIRIC)
+				if vamp_lv > 0:
+					var heal := PerkDef.get_vampiric_heal(vamp_lv)
+					_hero.heal(heal)
+					_add_log("You drain %d HP." % heal)
+			_result_lbl.text = "Victory!  +%d XP" % _monster.xp_reward
 			_result_lbl.add_theme_color_override("font_color", Color(0.5, 1.0, 0.4))
 		_State.LOSE:
 			_result_lbl.text                   = "You were defeated..."
