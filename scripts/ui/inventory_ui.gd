@@ -20,10 +20,12 @@ var _slot_labels:       Array = []   # Array of Label
 var _slot_count_badges: Array = []   # Array of Label (stack size overlays)
 
 signal drop_requested(slot_index: int, count: int)
+signal use_from_inventory(item_type: int)
 
 var _context_backdrop:    Button         = null
 var _context_menu:        PanelContainer = null
 var _context_slot_index:  int            = -1
+var _cm_btn_use:          Button         = null
 var _cm_btn_split:        Button         = null
 var _cm_btn_drop_1:       Button         = null
 var _cm_btn_drop_half:    Button         = null
@@ -146,10 +148,12 @@ func _ready() -> void:
 	cm_vbox.add_theme_constant_override("separation", 2)
 	_context_menu.add_child(cm_vbox)
 
+	_cm_btn_use       = _make_cm_button("Use",       _on_use_pressed)
 	_cm_btn_split     = _make_cm_button("Split",     _on_split_pressed)
 	_cm_btn_drop_1    = _make_cm_button("Drop 1",    _on_drop_1_pressed)
 	_cm_btn_drop_half = _make_cm_button("Drop Half", _on_drop_half_pressed)
 	_cm_btn_drop_all  = _make_cm_button("Drop All",  _on_drop_all_pressed)
+	cm_vbox.add_child(_cm_btn_use)
 	cm_vbox.add_child(_cm_btn_split)
 	cm_vbox.add_child(_cm_btn_drop_1)
 	cm_vbox.add_child(_cm_btn_drop_half)
@@ -256,6 +260,10 @@ func _show_context_menu(pos: Vector2) -> void:
 	_cm_btn_drop_1.visible     = item_count > 1
 	_cm_btn_drop_all.visible   = true
 	_cm_btn_split.visible      = item_count > 1
+
+	var item_type := _inventory.get_type(_context_slot_index) \
+			if _context_slot_index < _inventory.count() else -1
+	_cm_btn_use.visible = PickableItemDef.is_useable(item_type)
 
 	const MENU_W := 140.0
 	const MENU_H := 120.0
@@ -492,6 +500,21 @@ func _setup_slot_drag(slot: PanelContainer, slot_index: int) -> void:
 			_inventory.move_slot(src, dst)
 			_refresh()
 	)
+
+
+func _on_use_pressed() -> void:
+	var idx := _context_slot_index
+	_close_context_menu()
+	if idx < 0 or _inventory == null:
+		return
+	if idx >= _inventory.count():
+		return
+	var item_type := _inventory.get_type(idx)
+	if not PickableItemDef.is_useable(item_type):
+		return
+	_inventory.remove_from_slot(idx, 1)
+	use_from_inventory.emit(item_type)
+	_refresh()
 
 
 func _make_cm_button(label: String, callback: Callable) -> Button:
