@@ -15,7 +15,6 @@ var _monster:         MonsterNode    = null
 var _defend_bonus:    bool           = false
 var _perks:           CharacterPerks = null
 var _belt:            Belt           = null
-var _hero_goes_first: bool           = true
 var _state:           _State         = _State.CHOOSING
 
 ## UI nodes
@@ -72,14 +71,15 @@ func open(monster: MonsterNode, hero: HeroStats, perks: CharacterPerks, belt: Be
 	# Resolve initiative — who goes first this fight
 	var hero_ini := mini(hero.initiative, 10)
 	var mon_ini  := monster.initiative
+	var hero_goes_first: bool
 	if hero_ini > mon_ini:
-		_hero_goes_first = true
+		hero_goes_first = true
 	elif mon_ini > hero_ini:
-		_hero_goes_first = false
+		hero_goes_first = false
 	else:
-		_hero_goes_first = randf() < 0.5
+		hero_goes_first = randf() < 0.5
 
-	if _hero_goes_first:
+	if hero_goes_first:
 		_add_log("You seize the initiative!  (⚡%d vs ⚡%d)" % [hero_ini, mon_ini])
 		_set_action_ui(true)
 	else:
