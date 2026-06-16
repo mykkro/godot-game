@@ -34,6 +34,9 @@ var rock_variants: Dictionary = {}
 ## Editor-placed monster species per cell. key = lx + ly*CHUNK_SIZE → species String.
 ## Empty string or absent = no placement (generate randomly on spawn).
 var monster_placements: Dictionary = {}
+## Overlay terrain per cell (layer 1). key = lx + ly*CHUNK_SIZE → String filename.
+## Absent or empty string means no overlay on that cell.
+var terrain_overlay: Dictionary = {}
 
 
 func _init(p_cx: int = 0, p_cy: int = 0) -> void:
@@ -48,6 +51,7 @@ func _init(p_cx: int = 0, p_cy: int = 0) -> void:
 	forge_output    = {}
 	rock_variants   = {}
 	monster_placements = {}
+	terrain_overlay = {}
 	for _y in range(CHUNK_SIZE):
 		var row: Array = []
 		for _x in range(CHUNK_SIZE):
@@ -147,6 +151,21 @@ func set_monster_placement(lx: int, ly: int, species: String) -> void:
 		monster_placements[key] = species
 
 
+func get_terrain_overlay(lx: int, ly: int) -> String:
+	return str(terrain_overlay.get(lx + ly * CHUNK_SIZE, ""))
+
+
+func set_terrain_overlay(lx: int, ly: int, terrain: String) -> void:
+	if terrain.is_empty():
+		terrain_overlay.erase(lx + ly * CHUNK_SIZE)
+	else:
+		terrain_overlay[lx + ly * CHUNK_SIZE] = terrain
+
+
+func erase_terrain_overlay(lx: int, ly: int) -> void:
+	terrain_overlay.erase(lx + ly * CHUNK_SIZE)
+
+
 ## Unique string key for this chunk (used for file naming).
 func get_key() -> String:
 	return "%d_%d" % [chunk_x, chunk_y]
@@ -182,6 +201,9 @@ func to_dict() -> Dictionary:
 	var mp_pairs: Array = []
 	for k in monster_placements:
 		mp_pairs.append([int(k), str(monster_placements[k])])
+	var to_pairs: Array = []
+	for k in terrain_overlay:
+		to_pairs.append([int(k), str(terrain_overlay[k])])
 	return {
 		"chunk_x":         chunk_x,
 		"chunk_y":         chunk_y,
@@ -194,6 +216,7 @@ func to_dict() -> Dictionary:
 		"forge_output":    fo_pairs,
 		"rock_variants":   rv_pairs,
 		"monster_placements": mp_pairs,
+		"terrain_overlay": to_pairs,
 	}
 
 
@@ -234,4 +257,9 @@ static func from_dict(data: Dictionary) -> ChunkData:
 		chunk.rock_variants[int((pair as Array)[0])] = int((pair as Array)[1])
 	for pair in data.get("monster_placements", []):
 		chunk.monster_placements[int((pair as Array)[0])] = str((pair as Array)[1])
+	for pair in data.get("terrain_overlay", []):
+		var key := int((pair as Array)[0])
+		var val := str((pair as Array)[1])
+		if not val.is_empty():
+			chunk.terrain_overlay[key] = val
 	return chunk
