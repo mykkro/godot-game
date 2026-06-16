@@ -8,7 +8,6 @@ var _belt:      Belt      = null
 var _inventory: Inventory = null
 var _inventory_ui_ref: InventoryUI = null
 
-var _slot_panels: Array = []   # Array of PanelContainer
 var _slot_icons:  Array = []   # Array of TextureRect
 var _slot_badges: Array = []   # Array of Label (stack count)
 
@@ -60,7 +59,6 @@ func _ready() -> void:
 
 	for i in Belt.SLOT_COUNT:
 		var slot_data := _make_slot(i)
-		_slot_panels.append(slot_data[0])
 		_slot_icons.append(slot_data[1])
 		_slot_badges.append(slot_data[2])
 		inner_hbox.add_child(slot_data[0])
@@ -192,8 +190,7 @@ func _setup_slot_drag(slot: PanelContainer, index: int) -> void:
 				_belt.set_slot(index, item_type, item_count)
 				_inventory.remove_from_slot(src, item_count)
 				# Belt item goes back to inventory.
-				for _i in range(belt_count):
-					_inventory.add(belt_type)
+				_inventory.items.append({"type": belt_type, "count": belt_count})
 			if _inventory_ui_ref != null:
 				_inventory_ui_ref.notify_changed()
 	)
