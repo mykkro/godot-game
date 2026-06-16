@@ -22,8 +22,8 @@ func _ready() -> void:
 
 	var anchor := Control.new()
 	anchor.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	anchor.offset_bottom = -32
-	anchor.offset_top    = -72
+	anchor.offset_bottom = -72   # clear the belt strip (which ends 64 px above bottom)
+	anchor.offset_top    = -112
 	add_child(anchor)
 
 	_label = Label.new()

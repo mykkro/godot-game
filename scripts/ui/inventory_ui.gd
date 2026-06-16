@@ -31,6 +31,8 @@ var _cm_btn_drop_1:       Button         = null
 var _cm_btn_drop_half:    Button         = null
 var _cm_btn_drop_all:     Button         = null
 
+var _forbidden_icon: Control = null   # shown near cursor during drag over invalid targets
+
 
 func setup(inventory: Inventory) -> void:
 	_inventory = inventory
@@ -173,6 +175,31 @@ func _ready() -> void:
 	_open_sound.bus       = AudioManager.SFX_BUS
 	add_child(_open_sound)
 
+	# ── Drag-forbidden indicator ─────────────────────────────────────────────────
+	# Positioned in _process(); MOUSE_FILTER_IGNORE so it never intercepts events.
+	var fi := PanelContainer.new()
+	fi.custom_minimum_size = Vector2(44, 44)
+	fi.mouse_filter        = Control.MOUSE_FILTER_IGNORE
+	var fi_style := StyleBoxFlat.new()
+	fi_style.bg_color                   = Color(0.85, 0.1, 0.1, 0.9)
+	fi_style.corner_radius_top_left     = 22
+	fi_style.corner_radius_top_right    = 22
+	fi_style.corner_radius_bottom_left  = 22
+	fi_style.corner_radius_bottom_right = 22
+	fi.add_theme_stylebox_override("panel", fi_style)
+	var fi_lbl := Label.new()
+	fi_lbl.text                 = "✕"
+	fi_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fi_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	fi_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	fi_lbl.add_theme_font_size_override("font_size", 22)
+	fi_lbl.add_theme_color_override("font_color", Color(1, 1, 1))
+	fi_lbl.mouse_filter         = Control.MOUSE_FILTER_IGNORE
+	fi.add_child(fi_lbl)
+	fi.visible = false
+	add_child(fi)
+	_forbidden_icon = fi
+
 	_center.visible = false
 
 
@@ -207,6 +234,25 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_close_context_menu()
 		get_viewport().set_input_as_handled()
+
+
+func _process(_delta: float) -> void:
+	if _forbidden_icon == null:
+		return
+	if not get_viewport().gui_is_dragging():
+		_forbidden_icon.visible = false
+		return
+	var cursor := get_viewport().get_mouse_position()
+	# Valid drop targets: the inventory panel and any BeltUI sibling.
+	var over_valid := _panel != null and _panel.get_global_rect().has_point(cursor)
+	if not over_valid:
+		for child in get_children():
+			if child is BeltUI:
+				over_valid = (child as BeltUI).get_global_rect().has_point(cursor)
+				break
+	_forbidden_icon.visible  = not over_valid
+	if not over_valid:
+		_forbidden_icon.position = cursor + Vector2(16, 8)
 
 
 ## Call after picking up or dropping an item to update the display if open.
