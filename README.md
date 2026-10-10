@@ -106,29 +106,41 @@ The **code, scenes, data and documentation** in this repository are released und
 ### Third-party assets
 
 The art, audio and quote files under `media/`, `sounds/` and `fortunes/` are
-**not** covered by the MIT license. They belong to their original authors. Every
-bundled pack is used by the game:
+**not** covered by the MIT license. They belong to their original authors and are
+used under their own licenses. Every bundled pack is used by the game.
 
-| Folder | Used for | License |
+#### Identified sources
+
+| Folder | Used for | Source and author | License |
+|---|---|---|---|
+| `media/rpg-tiles/` | Terrain tiles (`index.json` is ours) | [Seamless 64px RPG Tiles](https://opengameart.org/content/seamless-64px-rpg-tiles) by CodeSpree | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| `media/items2/` | Item icons | [154 Free RPG Items](https://opengameart.org/content/154-free-rpg-items) by CodeSpree | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| `media/rpg-beings/` | Monster sprites | [84 Free RPG Beings and Monsters](https://opengameart.org/content/84-free-rpg-beings-and-monsters) by CodeSpree. Some are based on [game-icons.net](https://game-icons.net) icons by Lorc and Delapouite | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| `media/cobbleset/` | Cobblestone terrain | [Cobblestone Tileset](https://opengameart.org/content/cobblestone-tileset): tileset by Cem Kalyoncu, textures by Lamoot and West | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| `media/hyptosis/` | Terrain tiles | [Lots of free 2d tiles and sprites by Hyptosis](https://opengameart.org/content/lots-of-free-2d-tiles-and-sprites-by-hyptosis) by Hyptosis (submitted by Zabin) | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| `media/lpc_terrain/` | Terrain transition tiles | [LPC terrain extension](https://opengameart.org/content/lpc-terrain-extension) by Cem Kalyoncu, Connor Sherson, Daniel Eddeland, Johann Charlot, Jonas Klinger, Juan Rodriguez, Lanea Zimmerman, Mark Weyer and Skyler Robert Colladay (per-file credits in `COPYRIGHT`) | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) or [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) |
+| `media/ravenmore/` | Weapon and armour icons | [Fantasy Icon Pack](https://opengameart.org/content/fantasy-icon-pack-by-ravenmore-0) by [Ravenmore](https://ravenmore.itch.io) | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| `media/kyrise/` | Arrows, rings, keys and other small icons | [Kyrise's Free 16x16 RPG Icon Pack](https://opengameart.org/content/kyrises-free-16x16-rpg-icon-pack) by [Kyrise](https://kyrise.itch.io/) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `media/flare/` | Armour icons | [Armor Icons by Equipment Slot](https://opengameart.org/content/armor-icons-by-equipment-slot) by Clint Bellanger, Blarumyrran, crowline and Justin Nichol | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sounds/RPG Sound Pack/` | Sound effects | [RPG Sound Pack](https://opengameart.org/content/rpg-sound-pack) by artisticdude | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `media/knight-basic/` | Player avatar animations | [8 Directional Knight Character](https://hormelz.itch.io/8-directional-knight) by Hormelz | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `media/knight-greatsword/` | Knight NPC animations | [8 Directional Greatsword Knight Character](https://hormelz.itch.io/8-directional-great-sword-knight-character) by Hormelz | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `media/melee/` | Villager NPC animations | [Free 8-Directional Melee Character](https://hormelz.itch.io/8-directional-melee-character) by Hormelz | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `media/cursors/` | Mouse cursor, quest marker | [Cursor Pack](https://kenney.nl/assets/cursor-pack) by Kenney | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `media/chests/` | Chest sprites | [PixelExplosive](https://pixelexplosive.itch.io) (12 Pixel Chest Sprites) | Custom (`LICENSE.txt`): free to use, **no redistribution** |
+
+#### Not yet verified
+
+| Folder | Used for | Notes |
 |---|---|---|
-| `media/chests/` | Chest sprites | PixelExplosive. Custom license (`LICENSE.txt`): free to use, **no redistribution** |
-| `media/rpg-tiles/` | Terrain tiles and the tile index (`index.json`) | No license file |
-| `media/cobbleset/`, `media/hyptosis/`, `media/lpc_terrain/` | Extra terrain tiles (loaded through `rpg-tiles/index.json`) | No license file |
-| `media/rockz/` | Rock obstacle sprites | No license file |
-| `media/raven-objects/`, `media/items2/`, `media/kyrise/`, `media/ravenmore/`, `media/flare/`, `media/materials/` | Item and object icons | No license file |
-| `media/knight-basic/` | Player avatar animations | No license file |
-| `media/knight-greatsword/` | Knight NPC animations | No license file |
-| `media/melee/` | Villager NPC animations | No license file |
-| `media/rpg-beings/` | Monster sprites | No license file |
-| `media/cursors/` | Mouse cursor, quest marker | No license file |
-| `media/music/` | Background music (the filenames suggest Pixabay) | No license file |
-| `media/title/` | Title screen art | No license file |
-| `sounds/RPG Sound Pack/` | Sound effects | No license file |
-| `fortunes/` | NPC small-talk quotes | No license file |
+| `media/raven-objects/` | Item and object icons (`fc*.png`) | Probably the free version of [Raven Fantasy Icons](https://clockworkraven.itch.io/raven-fantasy-icons) by Clockwork Raven. Its terms allow use in projects but **not redistribution as a separate asset pack** |
+| `media/music/` | Background music | The filenames match Pixabay downloads (artists guilhermebernardes and composiia). Not confirmed |
+| `media/materials/` | Crafting material icons | Source unknown |
+| `media/rockz/` | Rock obstacle sprites | Source unknown |
+| `media/title/` | Title screen art | Source unknown |
+| `fortunes/` | NPC small-talk quotes | Source unknown |
 
-For every pack marked "No license file", look up the original source and its terms
-before you reuse or redistribute it.
-
-> ⚠️ Some of these packs do not allow redistribution. Before you publish this
-> repository or a build of it, check every asset pack's terms and replace or remove
-> any asset whose license does not allow it.
+Before you publish this repository or a build of it, confirm the sources marked as
+unverified, and replace any asset that does not allow redistribution (chests, and
+probably raven-objects). The CC BY and CC BY-SA licenses require you to credit the
+authors listed above in the game itself, for example on a credits screen.
