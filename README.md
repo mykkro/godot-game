@@ -9,6 +9,8 @@ A small rogue-like / top-down RPG engine built with **Godot 4.6** (GDScript, GL 
 > into a real game loop. You can walk around, fight, trade and craft, but there is
 > no goal, no ending and no real failure state yet.
 
+![Title screen](docs/images/title-screen.png)
+
 ## Features
 
 - **Endless procedural world.** The map is streamed in 16×16-cell chunks around the
@@ -103,16 +105,29 @@ The **code, scenes, data and documentation** in this repository are released und
 
 ### Third-party assets
 
-The art, audio, fonts and quote files under `media/`, `sounds/` and `fortunes/` are
-**not** covered by the MIT license. They belong to their original authors. Where a
-pack ships with its own license or credits file, that file is in the pack's folder:
+The art, audio and quote files under `media/`, `sounds/` and `fortunes/` are
+**not** covered by the MIT license. They belong to their original authors. Every
+bundled pack is used by the game:
 
-| Folder | Author / source | License (per included file) |
+| Folder | Used for | License |
 |---|---|---|
-| `media/LPC Base Assets/` | Liberated Pixel Cup contributors (Lanea Zimmerman, Stephen Challener, et al.) | See `CREDITS.TXT` (CC-BY-SA / GPL / OGA-BY) |
-| `media/chests/` | PixelExplosive | Custom: free to use, no redistribution |
-| `media/spells/` | DustyChest | CC0 |
-| other `media/`, `sounds/`, `fortunes/` folders | various | No license file included. Check the original source before reusing |
+| `media/chests/` | Chest sprites | PixelExplosive. Custom license (`LICENSE.txt`): free to use, **no redistribution** |
+| `media/rpg-tiles/` | Terrain tiles and the tile index (`index.json`) | No license file |
+| `media/cobbleset/`, `media/hyptosis/`, `media/lpc_terrain/` | Extra terrain tiles (loaded through `rpg-tiles/index.json`) | No license file |
+| `media/rockz/` | Rock obstacle sprites | No license file |
+| `media/raven-objects/`, `media/items2/`, `media/kyrise/`, `media/ravenmore/`, `media/flare/`, `media/materials/` | Item and object icons | No license file |
+| `media/knight-basic/` | Player avatar animations | No license file |
+| `media/knight-greatsword/` | Knight NPC animations | No license file |
+| `media/melee/` | Villager NPC animations | No license file |
+| `media/rpg-beings/` | Monster sprites | No license file |
+| `media/cursors/` | Mouse cursor, quest marker | No license file |
+| `media/music/` | Background music (the filenames suggest Pixabay) | No license file |
+| `media/title/` | Title screen art | No license file |
+| `sounds/RPG Sound Pack/` | Sound effects | No license file |
+| `fortunes/` | NPC small-talk quotes | No license file |
+
+For every pack marked "No license file", look up the original source and its terms
+before you reuse or redistribute it.
 
 > ⚠️ Some of these packs do not allow redistribution. Before you publish this
 > repository or a build of it, check every asset pack's terms and replace or remove
