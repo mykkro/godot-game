@@ -31,7 +31,7 @@ func to_dict() -> Dictionary:
 static func from_dict(data: Dictionary) -> CellData:
 	var raw: Variant = data.get("terrain_type", "grass.png")
 	var terrain: String
-	if raw is int:
+	if raw is int or raw is float:  # JSON numbers parse as float
 		terrain = _migrate_terrain(int(raw))
 	else:
 		terrain = str(raw)
